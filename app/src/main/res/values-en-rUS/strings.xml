@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Chart Pattern Tracker</string>
+    <string name="main_menu">MAIN MENU</string>
+    <string name="pattern_tracker">Pattern Tracker</string>
+    <string name="financial_news">Financial News</string>
+    <string name="real_time_quotes">Real-Time Quotes</string>
+    <string name="technical_indicators">Technical Indicators</string>
+    <string name="logout">Logout</string>
+</resources>

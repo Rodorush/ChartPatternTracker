@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rastreador de Patrones Gráficos</string>
+    <string name="main_menu">MENÚ PRINCIPAL</string>
+    <string name="pattern_tracker">Rastreador de Patrones Gráficos</string>
+    <string name="financial_news">Noticias Financieras</string>
+    <string name="real_time_quotes">Cotizaciones en Tiempo Real</string>
+    <string name="technical_indicators">Indicadores Técnicos</string>
+    <string name="logout">Cerrar sesión</string>
+</resources>
