@@ -7,4 +7,19 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary Color (Botões e elementos principais) -->
+    <color name="primaryColor">#2D7DD2</color>
+
+    <!-- Primary Variant (Variante da cor primária, para sombreamento ou destaque) -->
+    <color name="primaryVariant">#1A5A99</color>
+
+    <!-- Secondary Color (Botões secundários ou elementos complementares) -->
+    <color name="secondaryColor">#5DADE2</color>
+
+    <!-- Background Color (Cor de fundo principal do app) -->
+    <color name="backgroundColor">#F5F5F5</color>
+
+    <!-- Text Color (Cor para texto principal ou cabeçalhos) -->
+    <color name="textColor">#4A4A4A</color>
 </resources>

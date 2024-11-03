@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="br.com.rodorush.chartpatterntracker" />
+                  <option name="mobileSdkAppId" value="1:476679241113:android:addc2ad844abb17c11e708" />
+                  <option name="projectId" value="chartpatterntracker" />
+                  <option name="projectNumber" value="476679241113" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker
+package br.com.rodorush.chartpatterntracker.activities
 
 import android.content.Context
 import android.os.Bundle
@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 
 class MainActivity : ComponentActivity() {

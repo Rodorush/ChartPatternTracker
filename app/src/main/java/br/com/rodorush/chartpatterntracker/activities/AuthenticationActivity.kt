@@ -1,8 +1,9 @@
-package br.com.rodorush.chartpatterntracker
+package br.com.rodorush.chartpatterntracker.activities
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,15 +15,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import br.com.rodorush.chartpatterntracker.viewmodels.AuthenticationViewModel
 
 class AuthenticationActivity : ComponentActivity() {
+
+    private val viewModel: AuthenticationViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                viewModel.isLoading.value
+            }
+        }
+
         super.onCreate(savedInstanceState)
+
         setContent {
             ChartPatternTrackerTheme {
                 AuthenticationNavHost()

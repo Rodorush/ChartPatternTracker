@@ -3,9 +3,9 @@
     <!-- Tema principal do aplicativo -->
     <style name="Theme.ChartPatternTracker" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Cor de fundo principal do aplicativo -->
-        <item name="android:colorBackground">@color/backgroundColor</item>
+        <item name="android:colorBackground">@color/textColor</item>
         <!-- Cor do texto principal -->
-        <item name="android:textColorPrimary">@color/textColor</item>
+        <item name="android:textColorPrimary">@color/backgroundColor</item>
         <!-- Cor primária (para botões e elementos principais) -->
         <item name="colorPrimary">@color/primaryColor</item>
         <item name="colorPrimaryDark">@color/primaryVariant</item>
