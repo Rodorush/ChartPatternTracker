@@ -17,7 +17,7 @@ class AuthenticationViewModel: ViewModel() {
 
     private fun getData() {
         viewModelScope.launch {
-            delay(2000)
+//            delay(2000)
             _isLoading.value = false
         }
     }

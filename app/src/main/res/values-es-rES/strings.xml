@@ -8,4 +8,5 @@
     <string name="technical_indicators">Indicadores Técnicos</string>
     <string name="logout">Cerrar sesión</string>
     <string name="splash_slogan">Prepárate para descubrir nuevas oportunidades</string>
+    <string name="sign_in_your_account">Inicia sesión en tu cuenta.</string>
 </resources>
