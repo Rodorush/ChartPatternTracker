@@ -9,4 +9,9 @@
     <string name="logout">Cerrar sesión</string>
     <string name="splash_slogan">Prepárate para descubrir nuevas oportunidades</string>
     <string name="sign_in_your_account">Inicia sesión en tu cuenta.</string>
+    <string name="password">Contraseña</string>
+    <string name="sign_in">INICIAR SESIÓN</string>
+    <string name="or_sign_in_with">o inicia sesión con</string>
+    <string name="don_t_have_an_account">¿No tienes una cuenta?</string>
+    <string name="sign_up">REGÍSTRATE</string>
 </resources>

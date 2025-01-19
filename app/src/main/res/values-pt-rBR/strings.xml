@@ -9,4 +9,9 @@
     <string name="logout">Logout</string>
     <string name="splash_slogan">Prepare-se para descobrir novas oportunidades</string>
     <string name="sign_in_your_account">Faça login na sua conta.</string>
+    <string name="password">Senha</string>
+    <string name="sign_in">ENTRAR</string>
+    <string name="or_sign_in_with">ou entre com</string>
+    <string name="don_t_have_an_account">Não tem uma conta?</string>
+    <string name="sign_up">CADASTRE-SE</string>
 </resources>

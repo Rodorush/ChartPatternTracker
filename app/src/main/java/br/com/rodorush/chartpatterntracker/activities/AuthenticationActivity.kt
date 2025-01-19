@@ -123,7 +123,7 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
 
         // Campo Password
         SignInInputField(
-            label = "Password",
+            label = stringResource(R.string.password),
             placeholder = "********",
             value = password,
             onValueChange = { password = it },
@@ -138,27 +138,27 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                 .fillMaxWidth()
                 .height(50.dp)
         ) {
-            Text(text = "SIGN IN")
+            Text(text = stringResource(R.string.sign_in))
         }
 
-        Spacer(modifier = Modifier.padding(16.dp))
+        Spacer(modifier = Modifier.padding(8.dp))
 
         Text(
-            text = "or sign in with",
+            text = stringResource(R.string.or_sign_in_with),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
 
-        Spacer(modifier = Modifier.padding(16.dp))
+        Spacer(modifier = Modifier.padding(8.dp))
 
         // Botões Sociais
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            SocialSignInButton(iconId = R.drawable.logo, contentDescription = "Google")
-            SocialSignInButton(iconId = R.drawable.logo, contentDescription = "Facebook")
-            SocialSignInButton(iconId = R.drawable.logo, contentDescription = "Twitter")
+            SocialSignInButton(iconId = R.drawable.google_g_logo, contentDescription = "Google")
+            SocialSignInButton(iconId = R.drawable.f_facebook, contentDescription = "Facebook")
+            SocialSignInButton(iconId = R.drawable.x_logo, contentDescription = "Twitter")
         }
 
         Spacer(modifier = Modifier.padding(16.dp))
@@ -166,13 +166,13 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
         // Texto "Don't have an account?"
         Row {
             Text(
-                text = "Don't have an account?",
+                text = stringResource(R.string.don_t_have_an_account),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "SIGN UP",
+                text = stringResource(R.string.sign_up),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { onNavigateToRegister() }
