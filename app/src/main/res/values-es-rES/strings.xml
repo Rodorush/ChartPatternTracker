@@ -14,4 +14,7 @@
     <string name="or_sign_in_with">o inicia sesión con</string>
     <string name="don_t_have_an_account">¿No tienes una cuenta?</string>
     <string name="sign_up">REGÍSTRATE</string>
+    <string name="por_favor_preencha_todos_os_campos">Por favor, complete todos los campos.</string>
+    <string name="login_error">Correo electrónico o contraseña inválidos, inténtalo de nuevo</string>
+    <string name="email_example">correo@dominio.com</string>
 </resources>

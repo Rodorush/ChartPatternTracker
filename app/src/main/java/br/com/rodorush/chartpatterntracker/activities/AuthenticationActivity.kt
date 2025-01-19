@@ -1,6 +1,8 @@
 package br.com.rodorush.chartpatterntracker.activities
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -31,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -47,6 +50,7 @@ import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodels.AuthenticationViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 class AuthenticationActivity : ComponentActivity() {
 
@@ -81,8 +85,10 @@ fun AuthenticationNavHost(
 @Composable
 fun LoginScreen(onNavigateToRegister: () -> Unit) {
 
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val auth = FirebaseAuth.getInstance()
 
     Column(
         modifier = Modifier
@@ -114,7 +120,7 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
         // Campo Email
         SignInInputField(
             label = "Email",
-            placeholder = "email@domain.com",
+            placeholder = stringResource(R.string.email_example),
             value = email,
             onValueChange = { email = it }
         )
@@ -133,7 +139,28 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
         Spacer(modifier = Modifier.padding(16.dp))
 
         Button(
-            onClick = { /* Lógica de login */ },
+            onClick = {
+                if (email.isNotBlank() && password.isNotBlank()) {
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                context.startActivity(Intent(context, MainActivity::class.java))
+                            } else {
+                                Toast.makeText(
+                                    context, "${context.getString(R.string.login_error)}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                            }
+                        }
+                } else {
+                    Toast.makeText(
+                        context, context.getString(R.string.por_favor_preencha_todos_os_campos),
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
@@ -156,8 +183,14 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            SocialSignInButton(iconId = R.drawable.google_g_logo, contentDescription = "Google")
-            SocialSignInButton(iconId = R.drawable.f_facebook, contentDescription = "Facebook")
+            SocialSignInButton(
+                iconId = R.drawable.google_g_logo,
+                contentDescription = "Google"
+            )
+            SocialSignInButton(
+                iconId = R.drawable.f_facebook,
+                contentDescription = "Facebook"
+            )
             SocialSignInButton(iconId = R.drawable.x_logo, contentDescription = "Twitter")
         }
 

@@ -14,4 +14,7 @@
     <string name="or_sign_in_with">or sign in with</string>
     <string name="don_t_have_an_account">Don\'t have an account?</string>
     <string name="sign_up">SIGN UP</string>
+    <string name="por_favor_preencha_todos_os_campos">Please fill in all the fields.</string>
+    <string name="login_error">Invalid email or password, please try again</string>
+    <string name="email_example">email@domain.com</string>
 </resources>

@@ -7,10 +7,13 @@
     <string name="technical_indicators">Indicadores Técnicos</string>
     <string name="logout">Logout</string>
     <string name="splash_slogan">Prepare-se para descobrir novas oportunidades</string>
-    <string name="sign_in_your_account">Sign in your account</string>
+    <string name="sign_in_your_account">Faça login na sua conta.</string>
     <string name="password">Senha</string>
     <string name="sign_in">ENTRAR</string>
     <string name="or_sign_in_with">ou entre com</string>
-    <string name="don_t_have_an_account">Don\'t have an account?</string>
-    <string name="sign_up">SIGN UP</string>
+    <string name="don_t_have_an_account">Não tem uma conta?</string>
+    <string name="sign_up">CADASTRE-SE</string>
+    <string name="por_favor_preencha_todos_os_campos">Por favor, preencha todos os campos</string>
+    <string name="login_error">Email ou senha inválidos, tente novamente</string>
+    <string name="email_example">email@dominio.com.br</string>
 </resources>
