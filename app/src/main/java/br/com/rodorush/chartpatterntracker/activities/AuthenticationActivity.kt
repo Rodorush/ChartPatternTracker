@@ -147,7 +147,7 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                                 context.startActivity(Intent(context, MainActivity::class.java))
                             } else {
                                 Toast.makeText(
-                                    context, "${context.getString(R.string.login_error)}",
+                                    context, context.getString(R.string.login_error),
                                     Toast.LENGTH_SHORT
                                 ).show()
 
