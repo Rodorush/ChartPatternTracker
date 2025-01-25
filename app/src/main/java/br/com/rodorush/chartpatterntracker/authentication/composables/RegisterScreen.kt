@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.composables.authentication
+package br.com.rodorush.chartpatterntracker.authentication.composables
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +35,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rodorush.chartpatterntracker.R
@@ -231,4 +232,10 @@ fun RegisterScreen(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RegisterScreenPrevies() {
+    RegisterScreen()
 }

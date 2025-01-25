@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.composables.authentication
+package br.com.rodorush.chartpatterntracker.authentication.composables
 
 import android.content.Intent
 import android.widget.Toast
@@ -27,18 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.activities.MainActivity
-import com.google.firebase.auth.FirebaseAuth
+import br.com.rodorush.chartpatterntracker.authentication.utils.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.authentication.utils.MockAuthProvider
 
 @Composable
 fun LoginScreen(onNavigateToRegister: () -> Unit) {
-
+    val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val auth = FirebaseAuth.getInstance()
 
     Column(
         modifier = Modifier
@@ -91,16 +92,14 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
         Button(
             onClick = {
                 if (email.isNotBlank() && password.isNotBlank()) {
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
+                    authProvider.signInWithEmailAndPassword(email, password) { success, error ->
+                        if (success) {
                                 context.startActivity(Intent(context, MainActivity::class.java))
                             } else {
                                 Toast.makeText(
-                                    context, context.getString(R.string.login_error),
+                                    context, error ?: context.getString(R.string.login_error),
                                     Toast.LENGTH_SHORT
                                 ).show()
-
                             }
                         }
                 } else {
@@ -162,4 +161,10 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AuthenticationNavHostPreview() {
+    AuthenticationNavHost(authProvider = MockAuthProvider())
 }

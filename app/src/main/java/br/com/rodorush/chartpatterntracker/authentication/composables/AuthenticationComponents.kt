@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.composables.authentication
+package br.com.rodorush.chartpatterntracker.authentication.composables
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

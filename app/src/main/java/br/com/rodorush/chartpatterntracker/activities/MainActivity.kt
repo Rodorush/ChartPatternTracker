@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.authentication.AuthenticationActivity
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import com.google.firebase.auth.FirebaseAuth
 
