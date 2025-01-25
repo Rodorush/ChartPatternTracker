@@ -9,4 +9,13 @@ class MockAuthProvider : AuthProvider {
             onResult(false, "Invalid credentials")
         }
     }
+
+    override fun createUserWithEmailAndPassword(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        // Simula criação de conta
+        if (email.contains("@")) {
+            onResult(true, null)
+        } else {
+            onResult(false, "Invalid email format")
+        }
+    }
 }

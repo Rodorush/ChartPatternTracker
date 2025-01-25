@@ -8,13 +8,25 @@
     <string name="technical_indicators">Indicadores Técnicos</string>
     <string name="logout">Cerrar sesión</string>
     <string name="splash_slogan">Prepárate para descubrir nuevas oportunidades</string>
-    <string name="sign_in_your_account">Inicia sesión en tu cuenta.</string>
+    <string name="sign_in_your_account">Inicia sesión en tu cuenta</string>
     <string name="password">Contraseña</string>
     <string name="sign_in">INICIAR SESIÓN</string>
     <string name="or_sign_in_with">o inicia sesión con</string>
     <string name="don_t_have_an_account">¿No tienes una cuenta?</string>
     <string name="sign_up">REGÍSTRATE</string>
     <string name="por_favor_preencha_todos_os_campos">Por favor, complete todos los campos.</string>
-    <string name="login_error">Correo electrónico o contraseña inválidos, inténtalo de nuevo</string>
+    <string name="invalid_email_password">Correo electrónico o contraseña inválidos, inténtalo de nuevo</string>
+    <string name="login_error">Error al intentar iniciar sesión, inténtalo de nuevo.</string>
+    <string name="email_already_exists">La dirección de correo electrónico ya está en uso por otra cuenta.</string>
+    <string name="registration_error">Error al intentar registrarse, inténtelo de nuevo.</string>
+    <string name="network_error">Error de conexión, verifica tu internet e inténtalo de nuevo.</string>
     <string name="email_example">correo@dominio.com</string>
+    <string name="create_your_account">Crea tu cuenta</string>
+    <string name="name">Nombre</string>
+    <string name="confirme_a_senha">Confirma la contraseña</string>
+    <string name="i_understood_the_terms_policy">Entendí los términos y la política.</string>
+    <string name="or_sign_up_with">o regístrate con</string>
+    <string name="have_an_account">¿Tienes una cuenta?</string>
+    <string name="back">Volver</string>
+    <string name="logo">Logo</string>
 </resources>

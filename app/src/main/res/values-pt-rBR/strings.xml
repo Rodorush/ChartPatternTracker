@@ -8,13 +8,25 @@
     <string name="technical_indicators">Indicadores Técnicos</string>
     <string name="logout">Sair</string>
     <string name="splash_slogan">Prepare-se para descobrir novas oportunidades</string>
-    <string name="sign_in_your_account">Faça login na sua conta.</string>
+    <string name="sign_in_your_account">Faça login na sua conta</string>
     <string name="password">Senha</string>
     <string name="sign_in">ENTRAR</string>
     <string name="or_sign_in_with">ou entre com</string>
     <string name="don_t_have_an_account">Não tem uma conta?</string>
     <string name="sign_up">CADASTRE-SE</string>
     <string name="por_favor_preencha_todos_os_campos">Por favor, preencha todos os campos</string>
-    <string name="login_error">Email ou senha inválidos, tente novamente</string>
+    <string name="invalid_email_password">Email ou senha inválidos, tente novamente</string>
+    <string name="login_error">Erro ao tentar efetuar o login, tente novamente</string>
+    <string name="email_already_exists">O endereço de e-mail já está sendo usado por outra conta.</string>
+    <string name="registration_error">Erro ao tentar efetuar o cadastro, tente novamente</string>
+    <string name="network_error">Erro de conexão, verifique sua internet e tente novamente.</string>
     <string name="email_example">email@dominio.com.br</string>
+    <string name="create_your_account">Crie sua conta</string>
+    <string name="name">Nome</string>
+    <string name="confirme_a_senha">Confirme a senha</string>
+    <string name="i_understood_the_terms_policy">Eu entendi os termos e a política.</string>
+    <string name="or_sign_up_with">or sign up with</string>
+    <string name="have_an_account">Já tem uma conta?</string>
+    <string name="back">Voltar</string>
+    <string name="logo">Logo</string>
 </resources>

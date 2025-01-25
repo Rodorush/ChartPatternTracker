@@ -1,5 +1,7 @@
 package br.com.rodorush.chartpatterntracker.authentication.composables
 
+import android.util.Patterns
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,15 +14,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,27 +31,47 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.authentication.utils.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.authentication.utils.MockAuthProvider
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun RegisterScreen(
-    onNavigateBack: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
+    val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
+
     // Estados para os campos
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var acceptTerms by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val isButtonEnabled = remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(name, email, password, confirmPassword, acceptTerms) {
+        isButtonEnabled.value = name.isNotBlank() &&
+                email.isNotBlank() &&
+                Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
+                password.isNotBlank() &&
+                confirmPassword.isNotBlank() &&
+                password == confirmPassword &&
+                acceptTerms
+    }
 
     // Layout principal
     Box(
@@ -66,16 +87,16 @@ fun RegisterScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onNavigateBack) {
+            IconButton(onClick = onNavigateToLogin) {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = R.drawable.baseline_arrow_back_24), // Substitua pelo seu ícone de voltar
-                    contentDescription = "Back"
+                    contentDescription = stringResource(R.string.back)
                 )
             }
             // Logo à direita
             Icon(
                 painter = painterResource(id = R.drawable.logo), // Substitua pelo seu recurso de logo
-                contentDescription = "Logo",
+                contentDescription = stringResource(R.string.logo),
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .size(48.dp)
@@ -91,52 +112,49 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Create your account",
-                style = MaterialTheme.typography.headlineMedium,
+                text = stringResource(R.string.create_your_account),
+                style = MaterialTheme.typography.displayMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Campo: Name
-            OutlinedTextField(
+            // Campo Nome
+            SignInInputField(
+                label = stringResource(R.string.name),
+                placeholder = stringResource(R.string.name),
                 value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                placeholder = { Text("ex: jon smith") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                onValueChange = { name = it }
             )
 
-            // Campo: Email
-            OutlinedTextField(
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            // Campo Email
+            SignInInputField(
+                label = "Email",
+                placeholder = stringResource(R.string.email_example),
                 value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                placeholder = { Text("ex: jon.smith@email.com") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default
+                onValueChange = { email = it }
             )
 
-            // Campo: Password
-            OutlinedTextField(
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            // Campo Password
+            SignInInputField(
+                label = stringResource(R.string.password),
+                placeholder = "********",
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
-                placeholder = { Text("********") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                isPassword = true
             )
 
-            // Campo: Confirm Password
-            OutlinedTextField(
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            // Campo Password
+            SignInInputField(
+                label = stringResource(R.string.confirme_a_senha),
+                placeholder = "********",
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("Confirm password") },
-                placeholder = { Text("********") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                isPassword = true
             )
 
             // Checkbox + Texto: Terms & policy
@@ -151,7 +169,7 @@ fun RegisterScreen(
                     onCheckedChange = { acceptTerms = it }
                 )
                 Text(
-                    text = "I understood the terms & policy.",
+                    text = stringResource(R.string.i_understood_the_terms_policy),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -159,19 +177,35 @@ fun RegisterScreen(
             // Botão SIGN UP
             Button(
                 onClick = {
-                    // Aqui você pode tratar a validação e registro
+                    authProvider.createUserWithEmailAndPassword(email, password) { success, error ->
+                        if (success) {
+                            Toast.makeText(context, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                            onNavigateToLogin()
+                        } else {
+                            val errorMessage = when (error) {
+                                "The email address is already in use by another account." ->
+                                    context.getString(R.string.email_already_exists)
+
+                                "A network error (such as timeout, interrupted connection or unreachable host) has occurred." ->
+                                    context.getString(R.string.network_error)
+                                else ->
+                                    context.getString(R.string.registration_error)
+                            }
+                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                enabled = acceptTerms // Exemplo: habilita o botão somente se aceitar os termos
+                enabled = isButtonEnabled.value
             ) {
-                Text(text = "SIGN UP")
+                Text(text = stringResource(R.string.sign_up))
             }
 
             // Texto "or sign up with"
             Text(
-                text = "or sign up with",
+                text = stringResource(R.string.or_sign_up_with),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .padding(vertical = 16.dp)
@@ -180,8 +214,8 @@ fun RegisterScreen(
 
             // Seção de ícones (Google, Facebook, Twitter)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 // Substituir pelos ícones adequados
                 Icon(
@@ -219,10 +253,10 @@ fun RegisterScreen(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Have an account?")
+            Text(text = stringResource(R.string.have_an_account))
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "SIGN IN",
+                text = stringResource(R.string.sign_in),
                 style = TextStyle(
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 14.sp,
@@ -236,6 +270,8 @@ fun RegisterScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun RegisterScreenPrevies() {
-    RegisterScreen()
+fun RegisterScreenPreview() {
+    AuthProviderWrapper(authProvider = MockAuthProvider()) {
+        RegisterScreen(onNavigateToLogin = {})
+    }
 }
