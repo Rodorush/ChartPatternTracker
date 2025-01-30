@@ -1,12 +1,15 @@
-package br.com.rodorush.chartpatterntracker.authentication.composables
+package br.com.rodorush.chartpatterntracker.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import br.com.rodorush.chartpatterntracker.authentication.utils.AuthProvider
-import br.com.rodorush.chartpatterntracker.authentication.utils.FirebaseAuthProvider
+import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.screens.authentication.LoginScreen
+import br.com.rodorush.chartpatterntracker.ui.screens.authentication.RegisterScreen
+import br.com.rodorush.chartpatterntracker.utils.AuthProvider
+import br.com.rodorush.chartpatterntracker.utils.FirebaseAuthProvider
 
 @Composable
 fun AuthenticationNavHost(

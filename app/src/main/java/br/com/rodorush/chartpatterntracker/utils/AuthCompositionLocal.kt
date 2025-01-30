@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.authentication.utils
+package br.com.rodorush.chartpatterntracker.utils
 
 import androidx.compose.runtime.staticCompositionLocalOf
 

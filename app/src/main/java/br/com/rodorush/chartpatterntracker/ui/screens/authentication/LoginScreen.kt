@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.authentication.composables
+package br.com.rodorush.chartpatterntracker.ui.screens.authentication
 
 import android.content.Intent
 import android.util.Patterns
@@ -33,9 +33,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.components.SignInInputField
+import br.com.rodorush.chartpatterntracker.ui.components.SocialSignInButton
 import br.com.rodorush.chartpatterntracker.activities.MainActivity
-import br.com.rodorush.chartpatterntracker.authentication.utils.LocalAuthProvider
-import br.com.rodorush.chartpatterntracker.authentication.utils.MockAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
 
 @Composable
 fun LoginScreen(onNavigateToRegister: () -> Unit) {

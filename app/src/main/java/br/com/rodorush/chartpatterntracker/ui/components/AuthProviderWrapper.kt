@@ -1,9 +1,9 @@
-package br.com.rodorush.chartpatterntracker.authentication.composables
+package br.com.rodorush.chartpatterntracker.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import br.com.rodorush.chartpatterntracker.authentication.utils.AuthProvider
-import br.com.rodorush.chartpatterntracker.authentication.utils.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.AuthProvider
+import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
 
 @Composable
 fun AuthProviderWrapper(

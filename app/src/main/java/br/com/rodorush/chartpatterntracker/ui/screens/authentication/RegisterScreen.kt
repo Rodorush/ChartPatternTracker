@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.authentication.composables
+package br.com.rodorush.chartpatterntracker.ui.screens.authentication
 
 import android.util.Patterns
 import android.widget.Toast
@@ -41,9 +41,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.authentication.utils.LocalAuthProvider
-import br.com.rodorush.chartpatterntracker.authentication.utils.MockAuthProvider
-import com.google.firebase.auth.FirebaseAuth
+import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.components.SignInInputField
+import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
 
 @Composable
 fun RegisterScreen(
