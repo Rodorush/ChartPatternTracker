@@ -35,4 +35,9 @@ class MockAuthProvider : AuthProvider {
             onResult(false, "Invalid Google token")
         }
     }
+
+    override fun logout(onResult: () -> Unit) {
+        // Simula o logout
+        onResult()
+    }
 }

@@ -52,4 +52,9 @@ class FirebaseAuthProvider : AuthProvider {
                 }
             }
     }
+
+    override fun logout(onResult: () -> Unit) {
+        auth.signOut()
+        onResult()
+    }
 }

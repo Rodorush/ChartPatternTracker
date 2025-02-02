@@ -8,7 +8,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.navigation.AppNavHost
+import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import br.com.rodorush.chartpatterntracker.utils.FirebaseAuthProvider
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
@@ -26,22 +30,35 @@ class MainActivity : ComponentActivity() {
             ChartPatternTrackerTheme {
                 val navController = rememberNavController()
 
-                AppNavHost(
-                    navController = navController,
-                    onLogout = { handleLogout() }
-                )
+                AuthProviderWrapper(authProvider = FirebaseAuthProvider()) {
+                    AppNavHost(
+                        navController = navController,
+                        onLogout = { handleLogout() }
+                    )
+                }
             }
         }
     }
 
     private fun handleLogout() {
-        FirebaseAuth.getInstance().signOut()
+        val auth = FirebaseAuth.getInstance()
+        val googleSignInClient = GoogleSignIn.getClient(
+            this,
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+        )
 
-        val intent = Intent(this, AuthenticationActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // 1. Deslogar do Firebase
+        auth.signOut()
+
+        // 2. Deslogar do Google Sign-In (para forçar a escolha de uma conta ao logar novamente)
+        googleSignInClient.signOut().addOnCompleteListener {
+
+            // 3. Redirecionar para a tela de login
+            val intent = Intent(this, AuthenticationActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
         }
-
-        startActivity(intent)
-        finish()
     }
 }
