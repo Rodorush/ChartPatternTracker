@@ -14,7 +14,6 @@
     <string name="or_sign_in_with">o inicia sesión con</string>
     <string name="don_t_have_an_account">¿No tienes una cuenta?</string>
     <string name="sign_up">REGÍSTRATE</string>
-    <string name="por_favor_preencha_todos_os_campos">Por favor, complete todos los campos.</string>
     <string name="invalid_email_password">Correo electrónico o contraseña inválidos, inténtalo de nuevo</string>
     <string name="login_error">Error al intentar iniciar sesión, inténtalo de nuevo.</string>
     <string name="email_already_exists">La dirección de correo electrónico ya está en uso por otra cuenta.</string>
@@ -23,10 +22,19 @@
     <string name="email_example">correo@dominio.com</string>
     <string name="create_your_account">Crea tu cuenta</string>
     <string name="name">Nombre</string>
-    <string name="confirme_a_senha">Confirma la contraseña</string>
+    <string name="confirm_the_password">Confirma la contraseña</string>
     <string name="i_understood_the_terms_policy">Entendí los términos y la política.</string>
     <string name="or_sign_up_with">o regístrate con</string>
     <string name="have_an_account">¿Tienes una cuenta?</string>
     <string name="back">Volver</string>
     <string name="logo">Logo</string>
+    <string name="select_the_chart_pattern">Seleccione los Patrones de Gráficos</string>
+    <string name="step_1_de_3">Paso 1 de 3</string>
+    <string name="all_none">TODOS/NINGUNO</string>
+    <string name="next">Avanzar</string>
+    <string name="home">Inicio</string>
+    <string name="search">Buscar</string>
+    <string name="search_patterns">Buscar Patrones</string>
+    <string name="profile">Perfil</string>
+    <string name="pattern_description">Descripción del Patrón</string>
 </resources>

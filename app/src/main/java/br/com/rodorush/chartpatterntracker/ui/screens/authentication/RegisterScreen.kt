@@ -151,7 +151,7 @@ fun RegisterScreen(
 
             // Campo Password
             SignInInputField(
-                label = stringResource(R.string.confirme_a_senha),
+                label = stringResource(R.string.confirm_the_password),
                 placeholder = "********",
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },

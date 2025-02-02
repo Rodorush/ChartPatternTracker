@@ -13,7 +13,6 @@
     <string name="or_sign_in_with">ou entre com</string>
     <string name="don_t_have_an_account">Não tem uma conta?</string>
     <string name="sign_up">CADASTRE-SE</string>
-    <string name="por_favor_preencha_todos_os_campos">Por favor, preencha todos os campos</string>
     <string name="invalid_email_password">Email ou senha inválidos, tente novamente</string>
     <string name="login_error">Erro ao tentar efetuar o login, tente novamente</string>
     <string name="email_already_exists">O endereço de e-mail já está sendo usado por outra conta.</string>
@@ -22,10 +21,19 @@
     <string name="email_example">email@dominio.com.br</string>
     <string name="create_your_account">Crie sua conta</string>
     <string name="name">Nome</string>
-    <string name="confirme_a_senha">Confirme a senha</string>
+    <string name="confirm_the_password">Confirme a senha</string>
     <string name="i_understood_the_terms_policy">Eu entendi os termos e a política.</string>
     <string name="or_sign_up_with">ou cadastre-se com</string>
     <string name="have_an_account">Já tem uma conta?</string>
     <string name="back">Voltar</string>
     <string name="logo">Logo</string>
+    <string name="select_the_chart_pattern">Selecione os Padrões Gráficos</string>
+    <string name="step_1_de_3">Passo 1 de 3</string>
+    <string name="all_none">TODOS/NENHUM</string>
+    <string name="next">Avançar</string>
+    <string name="home">Início</string>
+    <string name="search">Buscar</string>
+    <string name="search_patterns">Pesquisar Padrões</string>
+    <string name="profile">Perfil</string>
+    <string name="pattern_description">Descrição do Padrão</string>
 </resources>

@@ -14,7 +14,6 @@
     <string name="or_sign_in_with">or sign in with</string>
     <string name="don_t_have_an_account">Don\'t have an account?</string>
     <string name="sign_up">SIGN UP</string>
-    <string name="por_favor_preencha_todos_os_campos">Please fill in all the fields.</string>
     <string name="invalid_email_password">Invalid email or password, please try again</string>
     <string name="login_error">Error trying to log in, please try again.</string>
     <string name="email_already_exists">The email address is already in use by another account.</string>
@@ -23,10 +22,19 @@
     <string name="email_example">email@domain.com</string>
     <string name="create_your_account">Create your account</string>
     <string name="name">Name</string>
-    <string name="confirme_a_senha">Confirm the password</string>
+    <string name="confirm_the_password">Confirm the password</string>
     <string name="i_understood_the_terms_policy"><![CDATA[I understood the terms & policy.]]></string>
     <string name="or_sign_up_with">or sign up with</string>
     <string name="have_an_account">Have an account?</string>
     <string name="back">Back</string>
     <string name="logo">Logo</string>
+    <string name="select_the_chart_pattern">Select the Chart Patterns</string>
+    <string name="step_1_de_3">Step 1 of 3</string>
+    <string name="all_none">ALL/NONE</string>
+    <string name="next">Next</string>
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="search_patterns">Search Patterns</string>
+    <string name="profile">Profile</string>
+    <string name="pattern_description">Pattern Description</string>
 </resources>
