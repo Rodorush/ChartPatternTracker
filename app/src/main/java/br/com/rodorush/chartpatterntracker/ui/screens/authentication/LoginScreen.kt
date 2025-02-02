@@ -1,7 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screens.authentication
 
 import android.content.Intent
-import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,14 +34,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.activities.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.components.SignInInputField
 import br.com.rodorush.chartpatterntracker.ui.components.SocialSignInButton
-import br.com.rodorush.chartpatterntracker.activities.MainActivity
 import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
-import br.com.rodorush.chartpatterntracker.BuildConfig
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException

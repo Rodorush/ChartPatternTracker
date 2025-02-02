@@ -31,7 +31,7 @@ android {
 
         val webClientId: String? = properties.getProperty("WEB_CLIENT_ID")
         if (webClientId.isNullOrEmpty()) {
-            throw GradleException("⚠\uFE0F ERRO: WEB_CLIENT_ID não encontrado no local.properties!")
+            throw GradleException("ERRO: WEB_CLIENT_ID não encontrado no local.properties!")
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
     }

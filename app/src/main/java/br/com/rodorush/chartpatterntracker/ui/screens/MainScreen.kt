@@ -14,12 +14,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,8 +28,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
 
 @Composable
 fun MainScreen(
@@ -42,7 +44,7 @@ fun MainScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -52,7 +54,7 @@ fun MainScreen(
             text = stringResource(R.string.app_name),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(20.dp))
@@ -60,7 +62,7 @@ fun MainScreen(
             text = stringResource(R.string.main_menu),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(20.dp))
         ButtonMenuItem(
@@ -122,8 +124,12 @@ fun ButtonMenuItem(
 @Composable
 fun MainScreenPreview() {
     ChartPatternTrackerTheme {
-        MainScreen(
-            onNavigateToSelectChartPattern = {},
-            onLogout = {})
+        AuthProviderWrapper(authProvider = MockAuthProvider()) {
+            ChartPatternTrackerTheme {
+                MainScreen(
+                    onNavigateToSelectChartPattern = {},
+                    onLogout = {})
+            }
+        }
     }
 }
