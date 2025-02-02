@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -20,6 +22,22 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+
+        val webClientId: String? = properties.getProperty("WEB_CLIENT_ID")
+        if (webClientId.isNullOrEmpty()) {
+            throw GradleException("⚠\uFE0F ERRO: WEB_CLIENT_ID não encontrado no local.properties!")
+        }
+        buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -74,4 +92,5 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.appcompat)
+    implementation(libs.play.services.auth)
 }

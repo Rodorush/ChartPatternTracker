@@ -1,8 +1,11 @@
 package br.com.rodorush.chartpatterntracker.ui.screens.authentication
 
 import android.content.Intent
+import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,23 +42,67 @@ import br.com.rodorush.chartpatterntracker.ui.components.SocialSignInButton
 import br.com.rodorush.chartpatterntracker.activities.MainActivity
 import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
+import br.com.rodorush.chartpatterntracker.BuildConfig
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 @Composable
 fun LoginScreen(onNavigateToRegister: () -> Unit) {
-    val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
     val context = LocalContext.current
+    val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
+
+    // Campos para e-mail e senha
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val isButtonEnabled = remember {
-        mutableStateOf(false)
-    }
-
+    val isButtonEnabled = remember { mutableStateOf(false) }
     LaunchedEffect(email, password) {
         isButtonEnabled.value = email.isNotBlank() &&
                 Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
                 password.isNotBlank()
     }
+
+    // 1. Configurar opções de Sign In com Google (usando ID token do seu projeto Firebase)
+    val googleSignInOptions = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(BuildConfig.WEB_CLIENT_ID)
+            .requestEmail()
+            .build()
+    }
+
+    // 2. Criar GoogleSignInClient a partir das opções
+    val googleSignInClient = remember {
+        GoogleSignIn.getClient(context, googleSignInOptions)
+    }
+
+    // 3. Lançador para iniciar a Activity do Google Sign-In e capturar o resultado
+    val googleSignInLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account?.idToken
+
+                // 4. Chamar o método de login com Google do AuthProvider (FirebaseAuthProvider)
+                authProvider.signInWithGoogle(idToken) { success, error ->
+                    if (success) {
+                        Toast.makeText(context, "Login com Google bem-sucedido!", Toast.LENGTH_SHORT).show()
+                        context.startActivity(Intent(context, MainActivity::class.java))
+                    } else {
+                        Toast.makeText(
+                            context,
+                            error ?: "Erro ao logar com Google",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } catch (e: ApiException) {
+                Toast.makeText(context, "Erro ao obter conta Google: ${e.message}", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Erro desconhecido: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
 
     Column(
         modifier = Modifier
@@ -150,13 +197,35 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
         ) {
             SocialSignInButton(
                 iconId = R.drawable.google_g_logo,
-                contentDescription = "Google"
+                contentDescription = "Google",
+                onClick = {
+                    val signInIntent = googleSignInClient.signInIntent
+                    googleSignInLauncher.launch(signInIntent)
+                }
             )
+
             SocialSignInButton(
                 iconId = R.drawable.f_facebook,
-                contentDescription = "Facebook"
+                contentDescription = "Facebook",
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "Login com Facebook ainda não implementado",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             )
-            SocialSignInButton(iconId = R.drawable.x_logo, contentDescription = "Twitter")
+
+            SocialSignInButton(
+                iconId = R.drawable.x_logo,
+                contentDescription = "Twitter",
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "Login com Facebook ainda não implementado",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                })
         }
 
         Spacer(modifier = Modifier.padding(16.dp))

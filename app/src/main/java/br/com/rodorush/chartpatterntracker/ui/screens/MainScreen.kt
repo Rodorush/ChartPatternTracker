@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
 
 @Composable
 fun MainScreen(
@@ -36,6 +37,7 @@ fun MainScreen(
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    val authProvider = LocalAuthProvider.current
 
     Column(
         modifier = Modifier
@@ -88,7 +90,12 @@ fun MainScreen(
             ).show()
         })
         Spacer(modifier = Modifier.height(20.dp))
-        TextButton(onClick = onLogout) {
+        TextButton(onClick = {
+            authProvider.logout {
+                Toast.makeText(context, "Logout realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                onLogout()
+            }
+        }) {
             Text(text = stringResource(R.string.logout))
             Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
         }

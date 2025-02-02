@@ -48,12 +48,16 @@ fun SignInInputField(
 }
 
 @Composable
-fun SocialSignInButton(iconId: Int, contentDescription: String) {
+fun SocialSignInButton(
+    iconId: Int,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
     Card(
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier
             .size(60.dp)
-            .clickable { /* Ação do botão social */ }
+            .clickable { onClick() }
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Icon(
