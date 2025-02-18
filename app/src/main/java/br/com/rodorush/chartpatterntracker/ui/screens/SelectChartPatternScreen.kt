@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,10 +46,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import com.google.firebase.firestore.FirebaseFirestore
 
 data class PatternItem(
+    val id: String,
     val name: String,
-    val isChecked: Boolean
+    val isChecked: Boolean = false
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,27 +60,31 @@ fun SelectChartPatternScreen(
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {}
 ) {
-    // Exemplo de lista de padrões e seus estados iniciais
-    val patterns = remember {
-        listOf(
-            PatternItem("Doji Estrela da Manhã", true),
-            PatternItem("Doji Estrela da Noite", true),
-            PatternItem("Enforcado", false),
-            PatternItem("Engolfo de Alta", true),
-            PatternItem("Engolfo de Baixa", false)
-        )
-    }
-
-    // Estados de seleção dos checkboxes
-    val checkStates = remember {
-        mutableStateListOf(*patterns.map { it.isChecked }.toTypedArray())
-    }
-
-    // Estado do campo de busca
+    val db = FirebaseFirestore.getInstance()
+    var patterns by remember { mutableStateOf<List<PatternItem>>(emptyList()) }
+    val checkStates = remember { mutableStateListOf<Boolean>() }
     var searchText by remember { mutableStateOf("") }
+    var allChecked by remember { mutableStateOf(false) }
 
-    // Verifica se todos estão marcados
-    val allChecked = checkStates.all { it }
+    // Carregar dados do Firestore
+    LaunchedEffect(Unit) {
+        db.collection("candlestick_patterns")
+            .get()
+            .addOnSuccessListener { documents ->
+                val loadedPatterns = documents.map { doc ->
+                    PatternItem(
+                        id = doc.id,
+                        name = doc.getString("nome") ?: "Desconhecido"
+                    )
+                }
+                patterns = loadedPatterns
+                checkStates.clear()
+                checkStates.addAll(List(loadedPatterns.size) { false })
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Erro ao buscar padrões", exception)
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -197,7 +205,7 @@ fun SelectChartPatternScreen(
                 Switch(
                     checked = allChecked,
                     onCheckedChange = { toggled ->
-                        // Marca/Desmarca todos
+                        allChecked = toggled
                         for (i in checkStates.indices) {
                             checkStates[i] = toggled
                         }

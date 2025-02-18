@@ -93,4 +93,5 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.auth)
+    implementation(libs.firebase.firestore.ktx)
 }

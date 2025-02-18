@@ -198,8 +198,12 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                 iconId = R.drawable.google_g_logo,
                 contentDescription = "Google",
                 onClick = {
-                    val signInIntent = googleSignInClient.signInIntent
-                    googleSignInLauncher.launch(signInIntent)
+//                    val signInIntent = googleSignInClient.signInIntent
+//                    googleSignInLauncher.launch(signInIntent)
+                    Intent(context, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(this)
+                    }
                 }
             )
 
