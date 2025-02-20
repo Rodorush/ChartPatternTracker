@@ -46,13 +46,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObject
+import java.util.Locale
 
 data class PatternItem(
-    val id: String,
-    val name: String,
+    @DocumentId
+    val id: String = "",
+    val name: Map<String, String> = emptyMap(),
     val isChecked: Boolean = false
 )
+
+fun getLocalizedName(nameMap: Map<String, String>): String {
+    val locale = Locale.getDefault().language // "pt", "en", etc.
+    return nameMap[locale] ?: nameMap["pt"] ?: "Padrão desconhecido"
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,11 +80,8 @@ fun SelectChartPatternScreen(
         db.collection("candlestick_patterns")
             .get()
             .addOnSuccessListener { documents ->
-                val loadedPatterns = documents.map { doc ->
-                    PatternItem(
-                        id = doc.id,
-                        name = doc.getString("nome") ?: "Desconhecido"
-                    )
+                val loadedPatterns = documents.mapNotNull { doc ->
+                    doc.toObject<PatternItem>()
                 }
                 patterns = loadedPatterns
                 checkStates.clear()
@@ -177,7 +183,7 @@ fun SelectChartPatternScreen(
                             }
                         )
                         Text(
-                            text = pattern.name,
+                            text = getLocalizedName(pattern.name),
                             modifier = Modifier.weight(1f) // Garante que o texto ocupa o espaço necessário
                         )
 
