@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.utils
+package br.com.rodorush.chartpatterntracker.utils.providers
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider

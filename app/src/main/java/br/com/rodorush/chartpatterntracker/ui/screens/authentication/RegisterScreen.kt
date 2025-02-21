@@ -44,7 +44,7 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.components.SignInInputField
 import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
-import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.MockAuthProvider
 
 @Composable
 fun RegisterScreen(

@@ -6,11 +6,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.navigation.AppNavHost
 import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
-import br.com.rodorush.chartpatterntracker.utils.FirebaseAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.LocalPatternProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.FirebaseAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.FirebasePatternProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -31,10 +34,12 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 AuthProviderWrapper(authProvider = FirebaseAuthProvider()) {
-                    AppNavHost(
-                        navController = navController,
-                        onLogout = { handleLogout() }
-                    )
+                    CompositionLocalProvider(LocalPatternProvider provides FirebasePatternProvider()) {
+                        AppNavHost(
+                            navController = navController,
+                            onLogout = { handleLogout() }
+                        )
+                    }
                 }
             }
         }

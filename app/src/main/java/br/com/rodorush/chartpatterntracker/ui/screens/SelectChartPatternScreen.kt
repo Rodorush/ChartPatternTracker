@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -46,9 +46,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import br.com.rodorush.chartpatterntracker.utils.LocalPatternProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.MockPatternProvider
 import com.google.firebase.firestore.DocumentId
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.toObject
 import java.util.Locale
 
 data class PatternItem(
@@ -69,7 +69,7 @@ fun SelectChartPatternScreen(
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {}
 ) {
-    val db = FirebaseFirestore.getInstance()
+    val patternProvider = LocalPatternProvider.current
     var patterns by remember { mutableStateOf<List<PatternItem>>(emptyList()) }
     val checkStates = remember { mutableStateListOf<Boolean>() }
     var searchText by remember { mutableStateOf("") }
@@ -77,19 +77,11 @@ fun SelectChartPatternScreen(
 
     // Carregar dados do Firestore
     LaunchedEffect(Unit) {
-        db.collection("candlestick_patterns")
-            .get()
-            .addOnSuccessListener { documents ->
-                val loadedPatterns = documents.mapNotNull { doc ->
-                    doc.toObject<PatternItem>()
-                }
-                patterns = loadedPatterns
-                checkStates.clear()
-                checkStates.addAll(List(loadedPatterns.size) { false })
-            }
-            .addOnFailureListener { exception ->
-                Log.e("Firestore", "Erro ao buscar padrões", exception)
-            }
+        patternProvider.fetchPatterns { loadedPatterns ->
+            patterns = loadedPatterns
+            checkStates.clear()
+            checkStates.addAll(List(loadedPatterns.size) { false })
+        }
     }
 
     Scaffold(
@@ -142,7 +134,10 @@ fun SelectChartPatternScreen(
                     Button(onClick = onNextClick) {
                         Text(stringResource(R.string.next))
                         Spacer(Modifier.width(4.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.next))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = stringResource(R.string.next)
+                        )
                     }
                 }
             }
@@ -227,6 +222,8 @@ fun SelectChartPatternScreen(
 @Composable
 fun SelectChartPatternPreview() {
     ChartPatternTrackerTheme {
-        SelectChartPatternScreen()
+        CompositionLocalProvider(LocalPatternProvider provides MockPatternProvider()) {
+            SelectChartPatternScreen()
+        }
     }
 }

@@ -41,7 +41,7 @@ import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.components.SignInInputField
 import br.com.rodorush.chartpatterntracker.ui.components.SocialSignInButton
 import br.com.rodorush.chartpatterntracker.utils.LocalAuthProvider
-import br.com.rodorush.chartpatterntracker.utils.MockAuthProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.MockAuthProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
