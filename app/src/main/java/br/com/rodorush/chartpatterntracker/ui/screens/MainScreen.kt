@@ -94,7 +94,8 @@ fun MainScreen(
         Spacer(modifier = Modifier.height(20.dp))
         TextButton(onClick = {
             authProvider.logout {
-                Toast.makeText(context, "Logout realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context,
+                    context.getString(R.string.logout_success), Toast.LENGTH_SHORT).show()
                 onLogout()
             }
         }) {

@@ -37,4 +37,6 @@
     <string name="search_patterns">Buscar Patrones</string>
     <string name="profile">Perfil</string>
     <string name="pattern_description">Descripción del Patrón</string>
+    <string name="chart_pattern_description">Descripción del Patrón de Gráfico</string>
+    <string name="logout_success">Sesión cerrada con éxito</string>
 </resources>

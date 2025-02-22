@@ -1,6 +1,7 @@
 package br.com.rodorush.chartpatterntracker.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.navigation.Screen
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.utils.LocalPatternProvider
 import br.com.rodorush.chartpatterntracker.utils.providers.MockPatternProvider
@@ -67,7 +69,8 @@ fun getLocalizedName(nameMap: Map<String, String>): String {
 @Composable
 fun SelectChartPatternScreen(
     onNavigateBack: () -> Unit = {},
-    onNextClick: () -> Unit = {}
+    onNextClick: () -> Unit = {},
+    onNavigateToDetails: (String) -> Unit = {}
 ) {
     val patternProvider = LocalPatternProvider.current
     var patterns by remember { mutableStateOf<List<PatternItem>>(emptyList()) }
@@ -189,7 +192,11 @@ fun SelectChartPatternScreen(
                         Image(
                             painter = painterResource(id = R.drawable.castical_64px),
                             contentDescription = stringResource(R.string.pattern_description),
-                            modifier = Modifier.width(40.dp) // Define um tamanho fixo para a coluna do ícone
+                            modifier = Modifier
+                                .width(40.dp) // Define um tamanho fixo para a coluna do ícone
+                                .clickable {
+                                    onNavigateToDetails(pattern.id)
+                                }
                         )
                     }
                 }

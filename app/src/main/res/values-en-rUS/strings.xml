@@ -37,4 +37,6 @@
     <string name="search_patterns">Search Patterns</string>
     <string name="profile">Profile</string>
     <string name="pattern_description">Pattern Description</string>
+    <string name="chart_pattern_description">Chart Pattern Description</string>
+    <string name="logout_success">Session successfully ended</string>
 </resources>
