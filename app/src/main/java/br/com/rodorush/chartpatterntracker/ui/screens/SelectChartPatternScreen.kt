@@ -46,24 +46,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.navigation.Screen
+import br.com.rodorush.chartpatterntracker.models.PatternItem
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.utils.LocalPatternProvider
-import br.com.rodorush.chartpatterntracker.utils.providers.MockPatternProvider
-import com.google.firebase.firestore.DocumentId
-import java.util.Locale
-
-data class PatternItem(
-    @DocumentId
-    val id: String = "",
-    val name: Map<String, String> = emptyMap(),
-    val isChecked: Boolean = false
-)
-
-fun getLocalizedName(nameMap: Map<String, String>): String {
-    val locale = Locale.getDefault().language // "pt", "en", etc.
-    return nameMap[locale] ?: nameMap["pt"] ?: "Padrão desconhecido"
-}
+import br.com.rodorush.chartpatterntracker.utils.providers.MockPatternListProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,7 +167,7 @@ fun SelectChartPatternScreen(
                             }
                         )
                         Text(
-                            text = getLocalizedName(pattern.name),
+                            text = pattern.getLocalized("name"),
                             modifier = Modifier.weight(1f) // Garante que o texto ocupa o espaço necessário
                         )
 
@@ -229,7 +215,7 @@ fun SelectChartPatternScreen(
 @Composable
 fun SelectChartPatternPreview() {
     ChartPatternTrackerTheme {
-        CompositionLocalProvider(LocalPatternProvider provides MockPatternProvider()) {
+        CompositionLocalProvider(LocalPatternProvider provides MockPatternListProvider()) {
             SelectChartPatternScreen()
         }
     }

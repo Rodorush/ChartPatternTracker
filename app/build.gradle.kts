@@ -94,4 +94,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.auth)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.coil.compose)
+    implementation(libs.firebase.storage)
 }
