@@ -39,4 +39,5 @@
     <string name="pattern_description">Descrição do Padrão</string>
     <string name="chart_pattern_description">Descrição do Padrão Gráfico</string>
     <string name="logout_success">Sessão encerrada com sucesso</string>
+    <string name="reliability">Confiabilidade: %1$s</string>
 </resources>
