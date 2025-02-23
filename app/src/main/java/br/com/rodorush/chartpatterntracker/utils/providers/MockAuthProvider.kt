@@ -1,5 +1,7 @@
 package br.com.rodorush.chartpatterntracker.utils.providers
 
+import br.com.rodorush.chartpatterntracker.utils.providers.interfaces.AuthProvider
+
 class MockAuthProvider : AuthProvider {
     override fun signInWithEmailAndPassword(
         email: String,

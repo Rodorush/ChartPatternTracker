@@ -8,7 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.screens.authentication.LoginScreen
 import br.com.rodorush.chartpatterntracker.ui.screens.authentication.RegisterScreen
-import br.com.rodorush.chartpatterntracker.utils.providers.AuthProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.interfaces.AuthProvider
 import br.com.rodorush.chartpatterntracker.utils.providers.FirebaseAuthProvider
 
 @Composable

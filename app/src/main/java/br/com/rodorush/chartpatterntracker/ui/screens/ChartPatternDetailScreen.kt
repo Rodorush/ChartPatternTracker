@@ -45,12 +45,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.models.PatternItem
+import br.com.rodorush.chartpatterntracker.ui.components.PatternProviderWrapper
+import br.com.rodorush.chartpatterntracker.utils.LocalPatternProvider
 import br.com.rodorush.chartpatterntracker.utils.loadImageUrlFromStorage
-import br.com.rodorush.chartpatterntracker.utils.providers.MockPatternListProvider
+import br.com.rodorush.chartpatterntracker.utils.providers.MockPatternProvider
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +59,8 @@ fun ChartPatternDetailScreen(
     onNavigateBack: () -> Unit = {},
     patternId: String = ""
 ) {
+    val patternProvider = LocalPatternProvider.current
+
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var chartPattern by remember { mutableStateOf<PatternItem?>(null) }
@@ -68,23 +70,17 @@ fun ChartPatternDetailScreen(
 
     LaunchedEffect(patternId) {
         if (patternId.isNotEmpty()) {
-            val db = Firebase.firestore
-            db.collection("candlestick_patterns")
-                .document(patternId)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null && document.exists()) {
-                        chartPattern = document.toObject(PatternItem::class.java)
-                        scope.launch {
-                            imageUrl = loadImageUrlFromStorage(patternId)
-                        }
+            patternProvider.fetchPatternById(patternId) { pattern ->
+                if (pattern != null) {
+                    chartPattern = pattern
+                    scope.launch {
+                        imageUrl = loadImageUrlFromStorage(patternId)
                     }
-                    isLoading = false
+                } else {
+                    errorMessage = "Padrão não encontrado."
                 }
-                .addOnFailureListener { e ->
-                    errorMessage = e.message
-                    isLoading = false
-                }
+                isLoading = false
+            }
         } else {
             errorMessage = "ID inválido ou não informado."
             isLoading = false
@@ -235,19 +231,10 @@ fun ChartPatternDetailScreen(
 @Preview(showBackground = true)
 @Composable
 fun ChartPatternDetailScreenPreview() {
-    val mockProvider = MockPatternListProvider()
-    var pattern by remember { mutableStateOf<PatternItem?>(null) }
-
-    LaunchedEffect(Unit) {
-        mockProvider.fetchPatternById("1") {
-            pattern = it
-        }
-    }
-
-    pattern?.let {
+    PatternProviderWrapper(patternProvider = MockPatternProvider()) {
         ChartPatternDetailScreen(
             onNavigateBack = {},
-            patternId = it.id
+            patternId = "1" // ID do mock
         )
-    } ?: Text(text = "Carregando Mock...")
+    }
 }

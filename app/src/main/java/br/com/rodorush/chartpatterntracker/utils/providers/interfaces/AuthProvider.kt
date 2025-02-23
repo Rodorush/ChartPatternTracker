@@ -1,4 +1,4 @@
-package br.com.rodorush.chartpatterntracker.utils.providers
+package br.com.rodorush.chartpatterntracker.utils.providers.interfaces
 
 // Interface para o provedor de autenticação
 interface AuthProvider {

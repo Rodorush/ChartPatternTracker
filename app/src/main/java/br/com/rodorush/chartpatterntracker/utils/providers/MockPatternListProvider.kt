@@ -1,41 +1,7 @@
 package br.com.rodorush.chartpatterntracker.utils.providers
 
 import br.com.rodorush.chartpatterntracker.models.PatternItem
-import com.google.firebase.firestore.FirebaseFirestore
-
-interface PatternProvider {
-    fun fetchPatterns(onResult: (List<PatternItem>) -> Unit)
-    fun fetchPatternById(patternId: String, onResult: (PatternItem?) -> Unit)
-}
-
-class FirebasePatternProvider : PatternProvider {
-    override fun fetchPatterns(onResult: (List<PatternItem>) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("candlestick_patterns")
-            .get()
-            .addOnSuccessListener { documents ->
-                val patterns = documents.mapNotNull { it.toObject(PatternItem::class.java) }
-                onResult(patterns)
-            }
-            .addOnFailureListener { onResult(emptyList()) }
-    }
-
-    override fun fetchPatternById(patternId: String, onResult: (PatternItem?) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("candlestick_patterns")
-            .document(patternId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val pattern = document.toObject(PatternItem::class.java)
-                    onResult(pattern)
-                } else {
-                    onResult(null)
-                }
-            }
-            .addOnFailureListener { onResult(null) }
-    }
-}
+import br.com.rodorush.chartpatterntracker.utils.providers.interfaces.PatternProvider
 
 class MockPatternListProvider : PatternProvider {
     private val mockPatterns = listOf(
@@ -93,19 +59,11 @@ class MockPatternListProvider : PatternProvider {
     )
 
     override fun fetchPatterns(onResult: (List<PatternItem>) -> Unit) {
-        // Simula um pequeno atraso para imitar o comportamento assíncrono do Firestore
-        Thread {
-            Thread.sleep(500) // 500ms de atraso (ajustável)
-            onResult(mockPatterns)
-        }.start()
+        onResult(mockPatterns)
     }
 
     override fun fetchPatternById(patternId: String, onResult: (PatternItem?) -> Unit) {
-        // Simula um pequeno atraso para imitar o comportamento assíncrono do Firestore
-        Thread {
-            Thread.sleep(300) // 300ms de atraso (ajustável)
-            val pattern = mockPatterns.find { it.id == patternId }
-            onResult(pattern)
-        }.start()
+        val pattern = mockPatterns.find { it.id == patternId }
+        onResult(pattern)
     }
 }
