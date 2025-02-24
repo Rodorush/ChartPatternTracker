@@ -34,6 +34,11 @@ android {
             throw GradleException("ERRO: WEB_CLIENT_ID não encontrado no local.properties!")
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
+        val brapiToken: String? = properties.getProperty("BRAPI_TOKEN")
+        if (brapiToken.isNullOrEmpty()) {
+            throw GradleException("ERRO: BRAPI_TOKEN não encontrado no local.properties!")
+        }
+        buildConfigField("String", "BRAPI_TOKEN", "\"$brapiToken\"")
     }
 
     buildFeatures {
@@ -96,4 +101,6 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.coil.compose)
     implementation(libs.firebase.storage)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }

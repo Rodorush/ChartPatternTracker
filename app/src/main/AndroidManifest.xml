@@ -13,7 +13,7 @@
         android:theme="@style/Theme.ChartPatternTracker"
         tools:targetApi="34">
         <activity
-            android:name=".activities.AuthenticationActivity"
+            android:name=".activity.AuthenticationActivity"
             android:exported="true"
             android:theme="@style/Theme.App.Starting">
             <intent-filter>
@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".activity.MainActivity"
             android:exported="false"
             android:theme="@style/Theme.ChartPatternTracker" />
     </application>

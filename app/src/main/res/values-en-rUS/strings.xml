@@ -29,7 +29,7 @@
     <string name="back">Back</string>
     <string name="logo">Logo</string>
     <string name="select_the_chart_pattern">Select the Chart Patterns</string>
-    <string name="step_1_de_3">Step 1 of 3</string>
+    <string name="step_1_of_3">Step 1 of 3</string>
     <string name="all_none">ALL/NONE</string>
     <string name="next">Next</string>
     <string name="home">Home</string>
@@ -40,4 +40,7 @@
     <string name="chart_pattern_description">Chart Pattern Description</string>
     <string name="logout_success">Session successfully ended</string>
     <string name="reliability">Reliability: %1$s</string>
+    <string name="select_the_assets">Select the assets</string>
+    <string name="search_assets">Search assets</string>
+    <string name="step_2_of_3">Step 2 of 3</string>
 </resources>

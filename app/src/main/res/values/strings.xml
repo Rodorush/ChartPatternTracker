@@ -28,7 +28,7 @@
     <string name="back">Voltar</string>
     <string name="logo">Logo</string>
     <string name="select_the_chart_pattern">Selecione os Padrões Gráficos</string>
-    <string name="step_1_de_3">Passo 1 de 3</string>
+    <string name="step_1_of_3">Passo 1 de 3</string>
     <string name="all_none">TODOS/NENHUM</string>
     <string name="next">Avançar</string>
     <string name="home">Início</string>
@@ -39,4 +39,7 @@
     <string name="chart_pattern_description">Descrição do Padrão Gráfico</string>
     <string name="logout_success">Logout realizado com sucesso!</string>
     <string name="reliability">Confiabilidade: %1$s</string>
+    <string name="select_the_assets">Selecione os Ativos</string>
+    <string name="search_assets">Buscar ativos</string>
+    <string name="step_2_of_3">Passo 2 de 3</string>
 </resources>

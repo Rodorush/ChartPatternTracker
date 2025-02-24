@@ -5,11 +5,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import br.com.rodorush.chartpatterntracker.ui.components.AuthProviderWrapper
-import br.com.rodorush.chartpatterntracker.ui.screens.authentication.LoginScreen
-import br.com.rodorush.chartpatterntracker.ui.screens.authentication.RegisterScreen
-import br.com.rodorush.chartpatterntracker.utils.providers.interfaces.AuthProvider
-import br.com.rodorush.chartpatterntracker.utils.providers.FirebaseAuthProvider
+import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.screen.authentication.LoginScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.authentication.RegisterScreen
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
+import br.com.rodorush.chartpatterntracker.util.provider.FirebaseAuthProvider
 
 @Composable
 fun AuthenticationNavHost(
