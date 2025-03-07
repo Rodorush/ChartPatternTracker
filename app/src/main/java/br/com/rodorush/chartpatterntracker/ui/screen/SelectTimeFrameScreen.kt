@@ -1,7 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,8 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
@@ -31,8 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -41,43 +37,31 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.model.PatternItem
+import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
-import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
-import br.com.rodorush.chartpatterntracker.util.provider.mock.MockPatternListProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectChartPatternScreen(
+fun SelectTimeframesScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
-    onNextClick: () -> Unit = {},
-    onNavigateToDetails: (String) -> Unit = {}
+    onNextClick: () -> Unit = {}
 ) {
-    val patternProvider = LocalPatternProvider.current
-    var patterns by remember { mutableStateOf<List<PatternItem>>(emptyList()) }
-    val selectedPatterns by viewModel.selectedPatterns.collectAsState()
+    val timeframes = TimeframeItem.availableTimeframes
+    val selectedTimeframes by viewModel.selectedTimeframes.collectAsState()
 
-    // Carregar padrões assincronamente
-    LaunchedEffect(Unit) {
-        patternProvider.fetchPatterns { loadedPatterns ->
-            patterns = loadedPatterns
-        }
-    }
-
-    // Inicializa checkStates com base nos patterns e selectedPatterns
-    val checkStates = remember(patterns, selectedPatterns) {
+    // Inicializa checkStates com base nos timeframes e selectedTimeframes
+    val checkStates = remember(timeframes, selectedTimeframes) {
         mutableStateListOf<Boolean>().apply {
-            addAll(patterns.map { pattern ->
-                selectedPatterns.any { it.id == pattern.id }
+            addAll(timeframes.map { timeframe ->
+                selectedTimeframes.any { it.value == timeframe.value }
             })
         }
     }
@@ -88,12 +72,11 @@ fun SelectChartPatternScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // Row com ícone de perfil e campo de busca
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil, se houver */ }) {
+                        IconButton(onClick = { /* Ação do perfil */ }) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
@@ -104,7 +87,7 @@ fun SelectChartPatternScreen(
                             value = searchText,
                             onValueChange = { searchText = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text(stringResource(R.string.search_patterns)) },
+                            placeholder = { Text(stringResource(R.string.search_timeframes)) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Search,
@@ -117,7 +100,6 @@ fun SelectChartPatternScreen(
             )
         },
         bottomBar = {
-            // Barra inferior com botões Home e Avançar
             BottomAppBar {
                 Row(
                     modifier = Modifier
@@ -126,17 +108,17 @@ fun SelectChartPatternScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val selected = patterns.filterIndexed { index, _ -> checkStates[index] }
+                    val selected = timeframes.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
-                        viewModel.updateSelectedPatterns(selected)
+                        viewModel.updateSelectedTimeframes(selected)
                         onNavigateBack()
                     }) {
-                        Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.home))
+                        Text(stringResource(R.string.back))
                     }
                     Button(onClick = {
-                        viewModel.updateSelectedPatterns(selected)
+                        viewModel.updateSelectedTimeframes(selected)
                         onNextClick()
                     }) {
                         Text(stringResource(R.string.next))
@@ -150,7 +132,6 @@ fun SelectChartPatternScreen(
             }
         }
     ) { innerPadding ->
-        // Conteúdo principal
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -158,26 +139,23 @@ fun SelectChartPatternScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Título principal
             Text(
-                text = stringResource(R.string.select_the_chart_pattern),
+                text = stringResource(R.string.select_the_timeframes),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de checkboxes
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f) // ocupa espaço disponível
+                modifier = Modifier.weight(1f)
             ) {
-                itemsIndexed(patterns) { index, pattern ->
+                itemsIndexed(timeframes) { index, timeframe ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp), // Adiciona um pequeno padding lateral
+                            .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Checkbox e nome do padrão
                         Checkbox(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
@@ -185,30 +163,15 @@ fun SelectChartPatternScreen(
                             }
                         )
                         Text(
-                            text = pattern.getLocalized("name"),
-                            modifier = Modifier.weight(1f) // Garante que o texto ocupa o espaço necessário
-                        )
-
-                        // Espaço flexível para empurrar o ícone para a direita
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        // Ícone alinhado à direita
-                        Image(
-                            painter = painterResource(id = R.drawable.castical_64px),
-                            contentDescription = stringResource(R.string.pattern_description),
-                            modifier = Modifier
-                                .width(40.dp) // Define um tamanho fixo para a coluna do ícone
-                                .clickable {
-                                    onNavigateToDetails(pattern.id)
-                                }
+                            text = timeframe.name,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
 
-            // Área inferior com passo e switch
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = stringResource(R.string.step_1_of_3))
+            Text(text = stringResource(R.string.step_3_of_3))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -231,10 +194,8 @@ fun SelectChartPatternScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun SelectChartPatternPreview() {
+fun SelectTimeframesScreenPreview() {
     ChartPatternTrackerTheme {
-        CompositionLocalProvider(LocalPatternProvider provides MockPatternListProvider()) {
-            SelectChartPatternScreen()
-        }
+        SelectTimeframesScreen()
     }
 }

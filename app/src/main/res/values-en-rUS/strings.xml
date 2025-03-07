@@ -43,4 +43,7 @@
     <string name="select_the_assets">Select the assets</string>
     <string name="search_assets">Search assets</string>
     <string name="step_2_of_3">Step 2 of 3</string>
+    <string name="select_the_timeframes">Select the Timeframes</string>
+    <string name="search_timeframes">Search Timeframes</string>
+    <string name="step_3_of_3">Step 3 of 3</string>
 </resources>

@@ -43,4 +43,7 @@
     <string name="select_the_assets">Selecione os Ativos</string>
     <string name="search_assets">Buscar ativos</string>
     <string name="step_2_of_3">Passo 2 de 3</string>
+    <string name="select_the_timeframes">Selecione os Tempos Gráficos</string>
+    <string name="search_timeframes">Buscar Tempos Gráficos</string>
+    <string name="step_3_of_3">Passo 3 de 3</string>
 </resources>

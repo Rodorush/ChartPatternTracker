@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
@@ -31,6 +31,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,32 +43,42 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAssetsProvider
+import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectAssetsScreen(
+    viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {}
 ) {
     val assetsProvider = LocalAssetsProvider.current
     var assets by remember { mutableStateOf<List<AssetItem>>(emptyList()) }
-    val checkStates = remember { mutableStateListOf<Boolean>() }
-    var searchText by remember { mutableStateOf("") }
-    var allChecked by remember { mutableStateOf(false) }
+    val selectedAssets by viewModel.selectedAssets.collectAsState()
 
-    // Carregar dados da API da brapi
+    // Carregar ativos assincronamente
     LaunchedEffect(Unit) {
         assetsProvider.fetchAssets { loadedAssets ->
             assets = loadedAssets
-            checkStates.clear()
-            checkStates.addAll(List(loadedAssets.size) { false })
         }
     }
+
+    // Inicializa checkStates com base nos assets e selectedAssets
+    val checkStates = remember(assets, selectedAssets) {
+        mutableStateListOf<Boolean>().apply {
+            addAll(assets.map { asset ->
+                selectedAssets.any { it.name == asset.name }
+            })
+        }
+    }
+    var searchText by remember { mutableStateOf("") }
+    var allChecked by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -109,12 +120,19 @@ fun SelectAssetsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
+                    val selected = assets.filterIndexed { index, _ -> checkStates[index] }
+                    Button(onClick = {
+                        viewModel.updateSelectedAssets(selected)
+                        onNavigateBack()
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.back))
                     }
-                    Button(onClick = onNextClick) {
+                    Button(onClick = {
+                        viewModel.updateSelectedAssets(selected)
+                        onNextClick()
+                    }) {
                         Text(stringResource(R.string.next))
                         Spacer(Modifier.width(4.dp))
                         Icon(
