@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.ScreeningResultsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectAssetsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectChartPatternScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectTimeframesScreen
@@ -65,7 +66,14 @@ fun AppNavHost(
             SelectTimeframesScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onNextClick = { /* Navegar para a tela de resultados (Passo 4) */ }
+                onNextClick = { navController.navigate(Screen.ScreeningResults.route) }
+            )
+        }
+
+        composable(Screen.ScreeningResults.route) {
+            ScreeningResultsScreen(
+                viewModel = screeningViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -79,5 +87,7 @@ fun AppNavHost(
                 patternId = patternId
             )
         }
+
+
     }
 }

@@ -73,7 +73,7 @@ fun SelectAssetsScreen(
     val checkStates = remember(assets, selectedAssets) {
         mutableStateListOf<Boolean>().apply {
             addAll(assets.map { asset ->
-                selectedAssets.any { it.name == asset.name }
+                selectedAssets.any { it.ticker == asset.ticker }
             })
         }
     }
@@ -175,7 +175,7 @@ fun SelectAssetsScreen(
                             }
                         )
                         Text(
-                            text = asset.name,
+                            text = asset.ticker,
                             modifier = Modifier.weight(1f)
                         )
                     }

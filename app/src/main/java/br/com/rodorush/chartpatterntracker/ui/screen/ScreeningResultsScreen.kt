@@ -1,0 +1,183 @@
+package br.com.rodorush.chartpatterntracker.ui.screen
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.model.ScreeningResult
+import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
+import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScreeningResultsScreen(
+    viewModel: ScreeningViewModel = viewModel(),
+    onNavigateBack: () -> Unit = {}
+) {
+    // Coleta os estados do ViewModel
+    val selectedPatterns by viewModel.selectedPatterns.collectAsState()
+    val selectedAssets by viewModel.selectedAssets.collectAsState()
+    val selectedTimeframes by viewModel.selectedTimeframes.collectAsState()
+
+    // Calcula os resultados com tipo explícito
+    val results: List<ScreeningResult> = remember(selectedPatterns, selectedAssets, selectedTimeframes) {
+        val pattern = selectedPatterns.firstOrNull() ?: return@remember emptyList()
+        selectedAssets.flatMap { asset ->
+            selectedTimeframes.map { timeframe ->
+                ScreeningResult(pattern, asset, timeframe)
+            }
+        }
+    }
+
+    // Estado para o campo de busca
+    var searchText by remember { mutableStateOf("") }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { /* Ação do perfil */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = stringResource(R.string.profile)
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextField(
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text(stringResource(R.string.search_patterns_found)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = stringResource(R.string.search)
+                                )
+                            }
+                        )
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(16.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.patterns_found_completed),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(results) { result ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Miniatura do padrão (placeholder)
+                            Image(
+                                painter = painterResource(id = R.drawable.castical_64px),
+                                contentDescription = stringResource(R.string.pattern_description),
+                                modifier = Modifier.width(40.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = result.timeframe.name,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "${result.asset.ticker} (${result.asset.ticker})",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = result.pattern.getLocalized("name"),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "Confiabilidade: ${result.reliability}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+
+                            // Indicação com ícone
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    painter = painterResource(id = result.indicationIcon),
+                                    contentDescription = result.indication,
+                                    modifier = Modifier.width(24.dp)
+                                )
+                                Text(
+                                    text = result.indication,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScreeningResultsScreenPreview() {
+    ChartPatternTrackerTheme {
+        ScreeningResultsScreen()
+    }
+}

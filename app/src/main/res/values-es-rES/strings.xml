@@ -46,4 +46,6 @@
     <string name="select_the_timeframes">Seleccione los Tiempos Gráficos</string>
     <string name="search_timeframes">Buscar Tiempos Gráficos</string>
     <string name="step_3_of_3">Paso 3 de 3</string>
+    <string name="search_patterns_found" >Buscar patrones encontrados</string>
+    <string name="patterns_found_completed">Patrones completos encontrados</string>
 </resources>

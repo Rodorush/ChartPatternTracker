@@ -46,4 +46,6 @@
     <string name="select_the_timeframes">Select the Timeframes</string>
     <string name="search_timeframes">Search Timeframes</string>
     <string name="step_3_of_3">Step 3 of 3</string>
+    <string name="search_patterns_found" >Search for found patterns</string>
+    <string name="patterns_found_completed">Complete patterns found</string>
 </resources>
