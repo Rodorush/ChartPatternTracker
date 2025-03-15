@@ -9,4 +9,7 @@ sealed class Screen(val route: String) {
     object SelectAssets : Screen("select_assets")
     object SelectTimeframes : Screen("select_timeframes")
     object ScreeningResults : Screen("screening_results")
+    object ChartDetail : Screen("chart_detail") {
+        fun createRoute(ticker: String, timeframe: String) = "chart_detail/$ticker/$timeframe"
+    }
 }

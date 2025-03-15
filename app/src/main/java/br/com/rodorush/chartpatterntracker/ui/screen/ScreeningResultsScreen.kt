@@ -1,6 +1,7 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,7 +48,8 @@ import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 @Composable
 fun ScreeningResultsScreen(
     viewModel: ScreeningViewModel = viewModel(),
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onCardClick: (String, String) -> Unit = { _, _ -> }
 ) {
     // Coleta os estados do ViewModel
     val selectedPatterns by viewModel.selectedPatterns.collectAsState()
@@ -118,7 +120,9 @@ fun ScreeningResultsScreen(
             ) {
                 items(results) { result ->
                     Card(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCardClick(result.asset.ticker, result.timeframe.value) }
                     ) {
                         Row(
                             modifier = Modifier

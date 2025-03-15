@@ -9,6 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import br.com.rodorush.chartpatterntracker.ui.screen.ChartDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ScreeningResultsScreen
@@ -73,12 +74,32 @@ fun AppNavHost(
         composable(Screen.ScreeningResults.route) {
             ScreeningResultsScreen(
                 viewModel = screeningViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onCardClick = { ticker, timeframe ->
+                    navController.navigate("chart_detail/$ticker/$timeframe")
+                }
             )
         }
 
         composable(
-            route = "chart_pattern_detail/{patternId}",
+            Screen.ChartDetail.route + "/{ticker}/{timeframe}",
+            arguments = listOf(
+                navArgument("ticker") { type = NavType.StringType },
+                navArgument("timeframe") { type = NavType.StringType }
+            )
+            ) { backStackEntry ->
+            val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
+            val timeframe = backStackEntry.arguments?.getString("timeframe") ?: "1d"
+            ChartDetailScreen(
+                ticker = ticker,
+                timeframe = timeframe,
+                onNavigateBack = { navController.popBackStack() }
+            )
+
+        }
+
+        composable(
+            route = Screen.ChartPatternDetail.route + "/{patternId}",
             arguments = listOf(navArgument("patternId") { type = NavType.StringType })
         ) { backStackEntry ->
             val patternId = backStackEntry.arguments?.getString("patternId") ?: ""
