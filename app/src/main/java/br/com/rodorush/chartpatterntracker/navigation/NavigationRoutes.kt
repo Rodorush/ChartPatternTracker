@@ -12,4 +12,5 @@ sealed class Screen(val route: String) {
     object ChartDetail : Screen("chart_detail") {
         fun createRoute(ticker: String, timeframe: String) = "chart_detail/$ticker/$timeframe"
     }
+    object Settings : Screen("settings") // Nova rota para Settings
 }
