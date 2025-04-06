@@ -1,13 +1,13 @@
 package br.com.rodorush.chartpatterntracker.data
 
-import com.tradingview.lightweightcharts.api.series.models.CandlestickData
+import br.com.rodorush.chartpatterntracker.model.Candlestick
 
 interface AssetDataSource {
     suspend fun getHistoricalData(
         ticker: String,
         range: String,
         interval: String
-    ): Result<List<CandlestickData>>
+    ): Result<List<Candlestick>>
 
     fun requiresApiKey(): Boolean
     fun setApiKey(apiKey: String)
