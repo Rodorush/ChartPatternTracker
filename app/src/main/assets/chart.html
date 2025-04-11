@@ -31,7 +31,7 @@
                 height: window.innerHeight,
                 layout: { background: { color: '#ffffff' }, textColor: '#000000' },
                 grid: { vertLines: { color: '#e0e0e0' }, horzLines: { color: '#e0e0e0' } },
-                timeScale: { timeVisible: true, secondsVisible: false } // Adicionado para consistência
+                timeScale: { timeVisible: true, secondsVisible: false }
             });
             console.log("Chart created:", chart !== null && typeof chart === 'object');
             console.log("Chart has addCandlestickSeries:", typeof chart.addCandlestickSeries === 'function');
@@ -61,9 +61,22 @@
         }
         try {
             const data = JSON.parse(jsonData);
-            candlestickSeries.setData(data);
+            console.log("Raw data received:", data);
+
+            // Verificar a última vela e ignorá-la se tiver OHLC com zero
+            let finalData = data;
+            if (data.length > 0) {
+                const lastCandle = data[data.length - 1];
+                console.log("Last candle:", lastCandle);
+                if (lastCandle.open === 0 || lastCandle.high === 0 || lastCandle.low === 0 || lastCandle.close === 0) {
+                    console.log("Ignoring last candle due to zero OHLC value");
+                    finalData = data.slice(0, -1); // Remove a última vela
+                }
+            }
+
+            candlestickSeries.setData(finalData);
             chart.timeScale().fitContent();
-            console.log("Chart updated with data:", data);
+            console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
             console.error("Error updating chart:", e);
         }
