@@ -1,5 +1,7 @@
 package br.com.rodorush.chartpatterntracker.ui.viewmodel
 
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.rodorush.chartpatterntracker.BuildConfig
@@ -14,8 +16,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.core.content.edit
 
-class ChartViewModel : ViewModel() {
+class ChartViewModel(
+    private val preferences: SharedPreferences // Injetar via construtor
+) : ViewModel() {
     private val _candlestickData = MutableStateFlow<List<Candlestick>>(emptyList())
     val candlestickData: StateFlow<List<Candlestick>> = _candlestickData
 
@@ -35,11 +40,17 @@ class ChartViewModel : ViewModel() {
     )
 
     init {
+        // Carregar fonte salva
+        val savedSource = preferences.getString("data_source", "Brapi") ?: "Brapi"
+        setDataSource(savedSource)
         _currentSource.value.setApiKey(BuildConfig.BRAPI_TOKEN)
     }
 
     fun setDataSource(sourceName: String) {
-        _currentSource.value = sources[sourceName] ?: return
+        val newSource = sources[sourceName] ?: return
+        _currentSource.value = newSource
+        // Salvar fonte selecionada
+        preferences.edit { putString("data_source", sourceName) }
     }
 
     fun setApiKey(apiKey: String) {
@@ -49,24 +60,32 @@ class ChartViewModel : ViewModel() {
     fun fetchData(ticker: String, range: String, interval: ChartInterval) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = _currentSource.value.getHistoricalData(ticker, range, interval.value)
-            result.onSuccess { data ->
-                _candlestickData.value = data
-                _error.value = null
-            }.onFailure { e ->
-                _candlestickData.value = emptyList()
-                _error.value = e.message ?: "Failed to fetch data"
+            try {
+                Log.d("ChartViewModel", "Fetching data from source: ${_currentSource.value.javaClass.simpleName}")
+                val result = _currentSource.value.getHistoricalData(ticker, range, interval.value)
+                result.onSuccess { data ->
+                    _candlestickData.value = data
+                    _error.value = null
+                    Log.d("ChartViewModel", "Data fetched successfully: ${data.size} candles")
+                }.onFailure { e ->
+                    _candlestickData.value = emptyList()
+                    _error.value = e.message ?: "Failed to fetch data"
+                    Log.e("ChartViewModel", "Error fetching data: $e")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unexpected error"
+                Log.e("ChartViewModel", "Unexpected error: $e")
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
-    // Novo método para serializar os dados em JSON
     fun getCandlestickDataAsJson(): String {
         val jsonArray = JSONArray()
         _candlestickData.value.forEach { candlestick ->
             val jsonObject = JSONObject().apply {
-                put("time", candlestick.time) // Mantém como número (milissegundos)
+                put("time", candlestick.time)
                 put("open", candlestick.open)
                 put("high", candlestick.high)
                 put("low", candlestick.low)

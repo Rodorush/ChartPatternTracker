@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.content.Context
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -17,12 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.ChartInterval
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModelFactory
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -30,9 +33,11 @@ import org.json.JSONObject
 fun ChartDetailScreen(
     ticker: String,
     timeframe: ChartInterval,
-    onNavigateBack: () -> Unit,
-    viewModel: ChartViewModel = viewModel()
+    onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val preferences = remember { context.getSharedPreferences("chart_prefs", Context.MODE_PRIVATE) }
+    val viewModel: ChartViewModel = viewModel(factory = ChartViewModelFactory(preferences))
     val candlestickData by viewModel.candlestickData.collectAsState()
     val error by viewModel.error.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
