@@ -6,15 +6,11 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebResourceRequest
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +22,9 @@ import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.ChartInterval
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModelFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -37,34 +36,46 @@ fun ChartDetailScreen(
 ) {
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("chart_prefs", Context.MODE_PRIVATE) }
-    val viewModel: ChartViewModel = viewModel(factory = ChartViewModelFactory(preferences))
+    val viewModel: ChartViewModel = viewModel(
+        factory = ChartViewModelFactory(preferences)
+    )
+
     val candlestickData by viewModel.candlestickData.collectAsState()
     val error by viewModel.error.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
-    // Fetch data when ticker or timeframe changes
+    // Gerenciar o botão Back do Android
+    BackHandler(enabled = true) {
+        Log.d("ChartDetailScreen", "Android Back button pressed, calling onNavigateBack")
+        onNavigateBack()
+    }
+
     LaunchedEffect(ticker, timeframe) {
         viewModel.fetchData(ticker, "3mo", timeframe)
     }
 
-    // Update chart when candlestick data changes and chart is initialized
     LaunchedEffect(candlestickData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
                 val jsonData = candlestickData.toJsonArray()
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
-                webView.evaluateJavascript("updateChart('$jsonData')", null)
+                coroutineScope.launch {
+                    webView.evaluateJavascript("updateChart('$jsonData')", null)
+                }
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Back button
         IconButton(
-            onClick = onNavigateBack,
+            onClick = {
+                Log.d("ChartDetailScreen", "UI Back button clicked")
+                onNavigateBack()
+            },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(16.dp)
@@ -75,12 +86,10 @@ fun ChartDetailScreen(
             )
         }
 
-        // Display loading indicator
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
 
-        // Display error if present
         if (error != null) {
             Text(
                 text = "Error: $error",
@@ -99,63 +108,99 @@ fun ChartDetailScreen(
                     webViewClient = object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                             val url = request.url.toString()
+                            Log.d("ChartDetailScreen", "WebView loading URL: $url")
                             if (url.startsWith("file:///android_asset/")) {
-                                return false // Allow loading
+                                return false
                             }
-                            return true // Block all other URLs
+                            return true
+                        }
+
+                        override fun onPageFinished(view: WebView, url: String) {
+                            Log.d("ChartDetailScreen", "WebView page finished: $url")
                         }
                     }
                     loadUrl("file:///android_asset/chart.html")
+                    Log.d("ChartDetailScreen", "WebView created and loading chart.html")
                 }
-            }
+            },
+            update = { /* Evitar recarga */ }
         )
     }
 
-    // Cleanup
     DisposableEffect(Unit) {
         onDispose {
             webViewRef?.let { webView ->
-                webView.stopLoading()
-                webView.clearCache(true)
-                webView.clearHistory()
-                webView.loadUrl("about:blank")
-                webView.destroy()
-                webViewRef = null
-                Log.d("ChartDetailScreen", "WebView destroyed successfully")
+                coroutineScope.launch(Dispatchers.Main) {
+                    try {
+                        Log.d("ChartDetailScreen", "Starting WebView cleanup")
+                        webView.stopLoading()
+                        webView.pauseTimers()
+                        webView.onPause()
+                        webView.removeJavascriptInterface("AndroidInterface")
+                        webView.clearCache(true)
+                        webView.clearHistory()
+                        webView.removeAllViews()
+                        Log.d("ChartDetailScreen", "WebView cleanup completed, delaying destroy")
+                        // Pequeno atraso para permitir que o Chromium processe eventos pendentes
+                        delay(100)
+                        webView.destroy()
+                        Log.d("ChartDetailScreen", "WebView destroyed successfully")
+                    } catch (e: Exception) {
+                        Log.e("ChartDetailScreen", "Error during WebView cleanup: $e")
+                    } finally {
+                        webViewRef = null
+                    }
+                }
             }
         }
     }
 }
 
-// JavaScript Interface
 class WebAppInterface(
     private val webView: WebView,
     private val onChartInitialized: () -> Unit
 ) {
+    private var isDestroyed by mutableStateOf(false)
+
     @JavascriptInterface
     fun chartInitialized() {
-        onChartInitialized()
+        if (!isDestroyed) {
+            Log.d("ChartDetailScreen", "JavaScript: chartInitialized called")
+            onChartInitialized()
+        } else {
+            Log.w("ChartDetailScreen", "JavaScript: chartInitialized ignored, WebView destroyed")
+        }
     }
 
     @JavascriptInterface
     fun updateChart(jsonData: String) {
-        webView.post {
-            webView.evaluateJavascript("""
-                (function() {
-                    if (!chart || !candlestickSeries) {
-                        console.error("Chart not initialized. Initializing now...");
-                        initializeChart();
-                    }
-                    const data = JSON.parse('$jsonData');
-                    candlestickSeries.setData(data);
-                    chart.timeScale().fitContent();
-                })();
-            """.trimIndent(), null)
+        if (!isDestroyed) {
+            Log.d("ChartDetailScreen", "JavaScript: updateChart called")
+            webView.post {
+                if (!isDestroyed) {
+                    webView.evaluateJavascript(
+                        """
+                        (function() {
+                            if (!chart || !candlestickSeries) {
+                                console.error("Chart not initialized. Initializing now...");
+                                initializeChart();
+                            }
+                            const data = JSON.parse('$jsonData');
+                            candlestickSeries.setData(data);
+                            chart.timeScale().fitContent();
+                        })();
+                        """.trimIndent(), null
+                    )
+                } else {
+                    Log.w("ChartDetailScreen", "JavaScript: updateChart ignored, WebView destroyed")
+                }
+            }
+        } else {
+            Log.w("ChartDetailScreen", "JavaScript: updateChart ignored, WebView destroyed")
         }
     }
 }
 
-// Extension function to convert candlestick data to JSON
 fun List<Candlestick>.toJsonArray(): String {
     val jsonArray = JSONArray()
     for (item in this) {
@@ -165,7 +210,7 @@ fun List<Candlestick>.toJsonArray(): String {
             put("high", item.high)
             put("low", item.low)
             put("close", item.close)
-            put("volume", item.volume ?: 0) // Mantido por compatibilidade, mas ignorado no gráfico
+            put("volume", item.volume ?: 0)
         }
         jsonArray.put(jsonObject)
     }
