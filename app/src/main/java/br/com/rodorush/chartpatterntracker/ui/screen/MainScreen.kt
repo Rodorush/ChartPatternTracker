@@ -36,6 +36,7 @@ import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 @Composable
 fun MainScreen(
     onNavigateToSelectChartPattern: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -91,6 +92,7 @@ fun MainScreen(
                 Toast.LENGTH_SHORT
             ).show()
         })
+        ButtonMenuItem(R.string.settings, onClick = onNavigateToSettings)
         Spacer(modifier = Modifier.height(20.dp))
         TextButton(onClick = {
             authProvider.logout {

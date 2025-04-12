@@ -48,4 +48,8 @@
     <string name="step_3_of_3">Paso 3 de 3</string>
     <string name="search_patterns_found" >Buscar patrones encontrados</string>
     <string name="patterns_found_completed">Patrones completos encontrados</string>
+    <string name="settings">Configuraciones</string>
+    <string name="data_source">Fuente de datos</string>
+    <string name="api_key">Clave de API</string>
+    <string name="apply">Aplicar</string>
 </resources>

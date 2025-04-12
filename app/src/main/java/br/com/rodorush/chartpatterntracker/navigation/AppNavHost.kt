@@ -9,13 +9,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import br.com.rodorush.chartpatterntracker.ui.screen.ChartDetailScreen
-import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
-import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
-import br.com.rodorush.chartpatterntracker.ui.screen.ScreeningResultsScreen
-import br.com.rodorush.chartpatterntracker.ui.screen.SelectAssetsScreen
-import br.com.rodorush.chartpatterntracker.ui.screen.SelectChartPatternScreen
-import br.com.rodorush.chartpatterntracker.ui.screen.SelectTimeframesScreen
+import br.com.rodorush.chartpatterntracker.model.ChartInterval
+import br.com.rodorush.chartpatterntracker.ui.screen.*
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
@@ -26,7 +21,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     onLogout: () -> Unit
 ) {
-    val screeningViewModel: ScreeningViewModel = viewModel() // ViewModel compartilhado
+    val screeningViewModel: ScreeningViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -37,6 +32,9 @@ fun AppNavHost(
             MainScreen(
                 onNavigateToSelectChartPattern = {
                     navController.navigate(Screen.SelectChartPattern.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route) // Navegação para Settings
                 },
                 onLogout = onLogout
             )
@@ -87,15 +85,15 @@ fun AppNavHost(
                 navArgument("ticker") { type = NavType.StringType },
                 navArgument("timeframe") { type = NavType.StringType }
             )
-            ) { backStackEntry ->
+        ) { backStackEntry ->
             val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
-            val timeframe = backStackEntry.arguments?.getString("timeframe") ?: "1d"
+            val timeframeStr = backStackEntry.arguments?.getString("timeframe") ?: "1d"
+            val timeframe = ChartInterval.fromString(timeframeStr)
             ChartDetailScreen(
                 ticker = ticker,
                 timeframe = timeframe,
                 onNavigateBack = { navController.popBackStack() }
             )
-
         }
 
         composable(
@@ -109,6 +107,10 @@ fun AppNavHost(
             )
         }
 
-
+        composable(Screen.Settings.route) { // Nova rota para Settings
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
