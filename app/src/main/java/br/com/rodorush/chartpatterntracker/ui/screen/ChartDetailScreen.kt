@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.webkit.JavascriptInterface
@@ -28,6 +29,8 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
+@SuppressLint("SetJavaScriptEnabled")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChartDetailScreen(
     ticker: String,
@@ -70,62 +73,68 @@ fun ChartDetailScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        IconButton(
-            onClick = {
-                Log.d("ChartDetailScreen", "UI Back button clicked")
-                onNavigateBack()
-            },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back"
-            )
-        }
-
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        }
-
-        if (error != null) {
-            Text(
-                text = "Error: $error",
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                WebView(ctx).apply {
-                    webViewRef = this
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    addJavascriptInterface(WebAppInterface(this) { isChartInitialized = true }, "AndroidInterface")
-                    webViewClient = object : WebViewClient() {
-                        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                            val url = request.url.toString()
-                            Log.d("ChartDetailScreen", "WebView loading URL: $url")
-                            if (url.startsWith("file:///android_asset/")) {
-                                return false
-                            }
-                            return true
-                        }
-
-                        override fun onPageFinished(view: WebView, url: String) {
-                            Log.d("ChartDetailScreen", "WebView page finished: $url")
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { /* Vazio, apenas o ícone de voltar */ },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        Log.d("ChartDetailScreen", "UI Back button clicked")
+                        onNavigateBack()
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
-                    loadUrl("file:///android_asset/chart.html")
-                    Log.d("ChartDetailScreen", "WebView created and loading chart.html")
                 }
-            },
-            update = { /* Evitar recarga */ }
-        )
-    }
+            )
+        },
+        content = { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues) // Respeita o espaço da TopAppBar
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                if (error != null) {
+                    Text(
+                        text = "Error: $error",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            webViewRef = this
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            addJavascriptInterface(WebAppInterface(this) { isChartInitialized = true }, "AndroidInterface")
+                            webViewClient = object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                                    val url = request.url.toString()
+                                    Log.d("ChartDetailScreen", "WebView loading URL: $url")
+                                    return !url.startsWith("file:///android_asset/")
+                                }
+
+                                override fun onPageFinished(view: WebView, url: String) {
+                                    Log.d("ChartDetailScreen", "WebView page finished: $url")
+                                }
+                            }
+                            loadUrl("file:///android_asset/chart.html")
+                            Log.d("ChartDetailScreen", "WebView created and loading chart.html")
+                        }
+                    },
+                    update = { /* Evitar recarga */ }
+                )
+            }
+        }
+    )
 
     DisposableEffect(Unit) {
         onDispose {
@@ -141,7 +150,6 @@ fun ChartDetailScreen(
                         webView.clearHistory()
                         webView.removeAllViews()
                         Log.d("ChartDetailScreen", "WebView cleanup completed, delaying destroy")
-                        // Pequeno atraso para permitir que o Chromium processe eventos pendentes
                         delay(100)
                         webView.destroy()
                         Log.d("ChartDetailScreen", "WebView destroyed successfully")
