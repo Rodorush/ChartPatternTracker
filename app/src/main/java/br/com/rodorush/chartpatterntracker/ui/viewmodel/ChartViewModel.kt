@@ -62,6 +62,7 @@ class ChartViewModel(
             _isLoading.value = true
             try {
                 Log.d("ChartViewModel", "Fetching data from source: ${_currentSource.value.javaClass.simpleName}")
+                Log.d("ChartViewModel", "Ticker: $ticker, Range: $range, Interval: $interval")
                 val result = _currentSource.value.getHistoricalData(ticker, range, interval.value)
                 result.onSuccess { data ->
                     _candlestickData.value = data
