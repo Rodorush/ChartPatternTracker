@@ -11,6 +11,7 @@ import br.com.rodorush.chartpatterntracker.data.MockDataSource
 import br.com.rodorush.chartpatterntracker.data.AssetDataSource
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.ChartInterval
+import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,7 +20,8 @@ import org.json.JSONObject
 import androidx.core.content.edit
 
 class ChartViewModel(
-    private val preferences: SharedPreferences // Injetar via construtor
+    private val preferences: SharedPreferences,
+    private val repository: CandlestickRepository
 ) : ViewModel() {
     private val _candlestickData = MutableStateFlow<List<Candlestick>>(emptyList())
     val candlestickData: StateFlow<List<Candlestick>> = _candlestickData
@@ -40,7 +42,6 @@ class ChartViewModel(
     )
 
     init {
-        // Carregar fonte salva
         val savedSource = preferences.getString("data_source", "Brapi") ?: "Brapi"
         setDataSource(savedSource)
         _currentSource.value.setApiKey(BuildConfig.BRAPI_TOKEN)
@@ -49,7 +50,6 @@ class ChartViewModel(
     fun setDataSource(sourceName: String) {
         val newSource = sources[sourceName] ?: return
         _currentSource.value = newSource
-        // Salvar fonte selecionada
         preferences.edit { putString("data_source", sourceName) }
     }
 
@@ -63,11 +63,13 @@ class ChartViewModel(
             try {
                 Log.d("ChartViewModel", "Fetching data from source: ${_currentSource.value.javaClass.simpleName}")
                 Log.d("ChartViewModel", "Ticker: $ticker, Range: $range, Interval: $interval")
-                val result = _currentSource.value.getHistoricalData(ticker, range, interval.value)
-                result.onSuccess { data ->
-                    _candlestickData.value = data
+                val initialCandlesticks = _currentSource.value.getHistoricalData(ticker, range, interval.value)
+                initialCandlesticks.onSuccess { data ->
+                    val fullCandlesticks = repository.fetchCandlesticks(ticker, interval.value, range)
+                    val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
+                    _candlestickData.value = haramiCandlesticks
                     _error.value = null
-                    Log.d("ChartViewModel", "Data fetched successfully: ${data.size} candles")
+                    Log.d("ChartViewModel", "Data fetched successfully: ${haramiCandlesticks.size} candles with Harami Alta")
                 }.onFailure { e ->
                     _candlestickData.value = emptyList()
                     _error.value = e.message ?: "Failed to fetch data"
