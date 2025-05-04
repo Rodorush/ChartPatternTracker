@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,24 +25,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
-import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
-    val context = LocalContext.current
-    val preferences = remember { context.getSharedPreferences("chart_prefs", Context.MODE_PRIVATE) }
-
-    val viewModel: ChartViewModel = viewModel(factory = ChartViewModelFactory(preferences))
+    val viewModel: ChartViewModel = viewModel() // Deixa o Koin fornecer o ViewModel
     val currentSource by viewModel.currentSource.collectAsState()
     var apiKeyInput by remember { mutableStateOf("") }
     var selectedSource by remember { mutableStateOf(currentSource.javaClass.simpleName.removeSuffix("DataSource")) }

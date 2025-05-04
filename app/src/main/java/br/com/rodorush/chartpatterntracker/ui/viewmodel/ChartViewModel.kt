@@ -10,7 +10,6 @@ import br.com.rodorush.chartpatterntracker.data.BrapiDataSource
 import br.com.rodorush.chartpatterntracker.data.MockDataSource
 import br.com.rodorush.chartpatterntracker.data.AssetDataSource
 import br.com.rodorush.chartpatterntracker.model.Candlestick
-import br.com.rodorush.chartpatterntracker.model.ChartInterval
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,15 +56,15 @@ class ChartViewModel(
         _currentSource.value.setApiKey(apiKey)
     }
 
-    fun fetchData(ticker: String, range: String, interval: ChartInterval) {
+    fun fetchData(ticker: String, range: String, interval: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 Log.d("ChartViewModel", "Fetching data from source: ${_currentSource.value.javaClass.simpleName}")
                 Log.d("ChartViewModel", "Ticker: $ticker, Range: $range, Interval: $interval")
-                val initialCandlesticks = _currentSource.value.getHistoricalData(ticker, range, interval.value)
-                initialCandlesticks.onSuccess { data ->
-                    val fullCandlesticks = repository.fetchCandlesticks(ticker, interval.value, range)
+                val initialCandlesticks = _currentSource.value.getHistoricalData(ticker, range, interval)
+                initialCandlesticks.onSuccess {
+                    val fullCandlesticks = repository.fetchCandlesticks(ticker, interval, range)
                     val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
                     _candlestickData.value = haramiCandlesticks
                     _error.value = null

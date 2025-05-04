@@ -109,4 +109,5 @@ dependencies {
     kapt(libs.room.compiler)
     implementation(libs.androidx.room.ktx)
     implementation(libs.firebase.functions.ktx)
+    implementation(libs.koin.android)
 }

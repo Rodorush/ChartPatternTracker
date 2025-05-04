@@ -9,7 +9,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import br.com.rodorush.chartpatterntracker.model.ChartInterval
 import br.com.rodorush.chartpatterntracker.ui.screen.*
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
@@ -87,8 +86,7 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
-            val timeframeStr = backStackEntry.arguments?.getString("timeframe") ?: "1d"
-            val timeframe = ChartInterval.fromString(timeframeStr)
+            val timeframe = backStackEntry.arguments?.getString("timeframe") ?: "1d"
             ChartDetailScreen(
                 ticker = ticker,
                 timeframe = timeframe,

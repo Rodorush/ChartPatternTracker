@@ -7,6 +7,7 @@ firebaseBom = "33.13.0"
 firebaseFirestoreKtx = "25.1.4"
 firebaseFunctionsKtx = "21.2.1"
 firebaseStorage = "21.0.1"
+koinAndroid = "3.5.3"
 kotlin = "2.1.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -21,7 +22,7 @@ coreSplashscreen = "1.0.1"
 firebaseAuthKtx = "23.2.0"
 playServicesAuth = "21.3.0"
 retrofit = "2.11.0"
-roomCompiler = "2.6.1"
+roomCompiler = "2.7.1"
 roomRuntime = "2.7.1"
 
 [libraries]
@@ -53,9 +54,10 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
-room-compiler = { module = "androix.room:room-compiler", version.ref = "roomCompiler" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
