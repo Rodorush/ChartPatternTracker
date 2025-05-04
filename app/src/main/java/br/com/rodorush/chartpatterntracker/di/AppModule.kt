@@ -8,6 +8,7 @@ import br.com.rodorush.chartpatterntracker.model.CandlestickDao
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
 import br.com.rodorush.chartpatterntracker.model.FirestoreService
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -35,6 +36,12 @@ val appModule = module {
         ChartViewModel(
             preferences = get<SharedPreferences>(),
             repository = get<CandlestickRepository>()
+        )
+    }
+
+    viewModel {
+        ScreeningViewModel(
+            chartViewModel = get<ChartViewModel>()
         )
     }
 }

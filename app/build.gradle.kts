@@ -110,4 +110,5 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.firebase.functions.ktx)
     implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }

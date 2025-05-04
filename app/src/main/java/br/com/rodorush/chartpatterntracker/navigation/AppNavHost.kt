@@ -3,16 +3,23 @@ package br.com.rodorush.chartpatterntracker.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import br.com.rodorush.chartpatterntracker.ui.screen.*
+import br.com.rodorush.chartpatterntracker.ui.screen.ChartDetailScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.ScreeningResultsScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.SelectAssetsScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.SelectChartPatternScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.SelectTimeframesScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AppNavHost(
@@ -20,8 +27,6 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     onLogout: () -> Unit
 ) {
-    val screeningViewModel: ScreeningViewModel = viewModel()
-
     NavHost(
         navController = navController,
         startDestination = Screen.Main.route,
@@ -33,13 +38,14 @@ fun AppNavHost(
                     navController.navigate(Screen.SelectChartPattern.route)
                 },
                 onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route) // Navegação para Settings
+                    navController.navigate(Screen.Settings.route)
                 },
                 onLogout = onLogout
             )
         }
 
         composable(Screen.SelectChartPattern.route) {
+            val screeningViewModel: ScreeningViewModel = koinViewModel()
             SelectChartPatternScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
@@ -51,6 +57,7 @@ fun AppNavHost(
         }
 
         composable(Screen.SelectAssets.route) {
+            val screeningViewModel: ScreeningViewModel = koinViewModel()
             CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
                 SelectAssetsScreen(
                     viewModel = screeningViewModel,
@@ -61,6 +68,7 @@ fun AppNavHost(
         }
 
         composable(Screen.SelectTimeframes.route) {
+            val screeningViewModel: ScreeningViewModel = koinViewModel()
             SelectTimeframesScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
@@ -69,6 +77,7 @@ fun AppNavHost(
         }
 
         composable(Screen.ScreeningResults.route) {
+            val screeningViewModel: ScreeningViewModel = koinViewModel()
             ScreeningResultsScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
@@ -105,7 +114,7 @@ fun AppNavHost(
             )
         }
 
-        composable(Screen.Settings.route) { // Nova rota para Settings
+        composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )

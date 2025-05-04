@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +42,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 
@@ -51,19 +52,13 @@ fun ScreeningResultsScreen(
     onNavigateBack: () -> Unit = {},
     onCardClick: (String, String) -> Unit = { _, _ -> }
 ) {
-    // Coleta os estados do ViewModel
-    val selectedPatterns by viewModel.selectedPatterns.collectAsState()
-    val selectedAssets by viewModel.selectedAssets.collectAsState()
-    val selectedTimeframes by viewModel.selectedTimeframes.collectAsState()
+    // Coleta os resultados do ViewModel
+    val screeningResults by viewModel.screeningResults.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    // Calcula os resultados com tipo explícito
-    val results: List<ScreeningResult> = remember(selectedPatterns, selectedAssets, selectedTimeframes) {
-        val pattern = selectedPatterns.firstOrNull() ?: return@remember emptyList()
-        selectedAssets.flatMap { asset ->
-            selectedTimeframes.map { timeframe ->
-                ScreeningResult(pattern, asset, timeframe)
-            }
-        }
+    // Inicia a busca automaticamente
+    LaunchedEffect(Unit) {
+        viewModel.startScreening()
     }
 
     // Estado para o campo de busca
@@ -114,61 +109,71 @@ fun ScreeningResultsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(results) { result ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onCardClick(result.asset.ticker, result.timeframe.value) }
-                    ) {
-                        Row(
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else if (screeningResults.isEmpty()) {
+                Text(
+                    text = "Nenhum padrão Harami de Alta encontrado.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(screeningResults) { result ->
+                        Card(
                             modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                                .fillMaxWidth()
+                                .clickable { onCardClick(result.asset.ticker, result.timeframe.value) }
                         ) {
-                            // Miniatura do padrão (placeholder)
-                            Image(
-                                painter = painterResource(id = R.drawable.castical_64px),
-                                contentDescription = stringResource(R.string.pattern_description),
-                                modifier = Modifier.width(40.dp)
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = result.timeframe.name,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = "${result.asset.ticker} (${result.asset.ticker})",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = result.pattern.getLocalized("name"),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = "Confiabilidade: ${result.reliability}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-
-                            // Indicação com ícone
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Miniatura do padrão (placeholder)
                                 Image(
-                                    painter = painterResource(id = result.indicationIcon),
-                                    contentDescription = result.indication,
-                                    modifier = Modifier.width(24.dp)
+                                    painter = painterResource(id = R.drawable.castical_64px),
+                                    contentDescription = stringResource(R.string.pattern_description),
+                                    modifier = Modifier.width(40.dp)
                                 )
-                                Text(
-                                    text = result.indication,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = result.timeframe.name,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "${result.asset.ticker} (${result.asset.ticker})",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = result.pattern.getLocalized("name"),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "Confiabilidade: ${result.reliability}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+
+                                // Indicação com ícone
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Image(
+                                        painter = painterResource(id = result.indicationIcon),
+                                        contentDescription = result.indication,
+                                        modifier = Modifier.width(24.dp)
+                                    )
+                                    Text(
+                                        text = result.indication,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
                         }
                     }

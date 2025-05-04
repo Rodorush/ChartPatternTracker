@@ -121,11 +121,11 @@ fun SelectTimeframesScreen(
                         viewModel.updateSelectedTimeframes(selected)
                         onNextClick()
                     }) {
-                        Text(stringResource(R.string.next))
+                        Text(stringResource(R.string.search))
                         Spacer(Modifier.width(4.dp))
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = stringResource(R.string.next)
+                            contentDescription = stringResource(R.string.search)
                         )
                     }
                 }
