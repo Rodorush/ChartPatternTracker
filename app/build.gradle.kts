@@ -40,6 +40,9 @@ android {
             throw GradleException("ERRO: BRAPI_TOKEN não encontrado no local.properties!")
         }
         buildConfigField("String", "BRAPI_TOKEN", "\"$brapiToken\"")
+
+        val firebaseAppCheckDebugToken: String? = properties.getProperty("FIREBASE_APP_CHECK_DEBUG_TOKEN")
+        resValue("string", "firebase_app_check_debug_token", "$firebaseAppCheckDebugToken")
     }
 
     buildFeatures {
@@ -111,4 +114,7 @@ dependencies {
     implementation(libs.firebase.functions.ktx)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+    implementation(libs.firebase.analytics.ktx)
+    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.appcheck.debug)
 }

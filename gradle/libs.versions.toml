@@ -3,6 +3,9 @@ agp = "8.9.2"
 appcompat = "1.7.0"
 coilCompose = "2.5.0"
 converterGson = "2.11.0"
+firebaseAnalyticsKtx = "22.4.0"
+firebaseAppcheckPlayintegrity = "18.0.0"
+firebaseAppcheckDebug = "18.0.0"
 firebaseBom = "33.13.0"
 firebaseFirestoreKtx = "25.1.4"
 firebaseFunctionsKtx = "21.2.1"
@@ -36,6 +39,9 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx", version.ref = "firebaseAnalyticsKtx" }
+firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug", version.ref = "firebaseAppcheckDebug" }
+firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity", version.ref = "firebaseAppcheckPlayintegrity" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 firebase-functions-ktx = { module = "com.google.firebase:firebase-functions-ktx", version.ref = "firebaseFunctionsKtx" }
