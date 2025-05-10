@@ -40,8 +40,6 @@ val appModule = module {
     }
 
     viewModel {
-        ScreeningViewModel(
-            chartViewModel = get<ChartViewModel>()
-        )
+        ScreeningViewModel(chartViewModel = get<ChartViewModel>())
     }
 }

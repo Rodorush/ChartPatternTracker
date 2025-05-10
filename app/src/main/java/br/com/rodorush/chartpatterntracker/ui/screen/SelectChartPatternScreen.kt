@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -66,14 +67,13 @@ fun SelectChartPatternScreen(
     var patterns by remember { mutableStateOf<List<PatternItem>>(emptyList()) }
     val selectedPatterns by viewModel.selectedPatterns.collectAsState()
 
-    // Carregar padrões assincronamente
     LaunchedEffect(Unit) {
         patternProvider.fetchPatterns { loadedPatterns ->
             patterns = loadedPatterns
+            Log.d("SelectChartPatternScreen", "Padrões carregados: ${loadedPatterns.map { it.id to it.getLocalized("name") }}")
         }
     }
 
-    // Inicializa checkStates com base nos patterns e selectedPatterns
     val checkStates = remember(patterns, selectedPatterns) {
         mutableStateListOf<Boolean>().apply {
             addAll(patterns.map { pattern ->
@@ -88,12 +88,11 @@ fun SelectChartPatternScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // Row com ícone de perfil e campo de busca
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil, se houver */ }) {
+                        IconButton(onClick = { /* Ação do perfil */ }) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
@@ -117,7 +116,6 @@ fun SelectChartPatternScreen(
             )
         },
         bottomBar = {
-            // Barra inferior com botões Home e Avançar
             BottomAppBar {
                 Row(
                     modifier = Modifier
@@ -129,6 +127,7 @@ fun SelectChartPatternScreen(
                     val selected = patterns.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
                         viewModel.updateSelectedPatterns(selected)
+                        Log.d("SelectChartPatternScreen", "Botão Home clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}")
                         onNavigateBack()
                     }) {
                         Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
@@ -137,6 +136,7 @@ fun SelectChartPatternScreen(
                     }
                     Button(onClick = {
                         viewModel.updateSelectedPatterns(selected)
+                        Log.d("SelectChartPatternScreen", "Botão Avançar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}")
                         onNextClick()
                     }) {
                         Text(stringResource(R.string.next))
@@ -150,7 +150,6 @@ fun SelectChartPatternScreen(
             }
         }
     ) { innerPadding ->
-        // Conteúdo principal
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -158,46 +157,40 @@ fun SelectChartPatternScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Título principal
             Text(
                 text = stringResource(R.string.select_the_chart_pattern),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de checkboxes
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f) // ocupa espaço disponível
+                modifier = Modifier.weight(1f)
             ) {
                 itemsIndexed(patterns) { index, pattern ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp), // Adiciona um pequeno padding lateral
+                            .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Checkbox e nome do padrão
                         Checkbox(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
+                                Log.d("SelectChartPatternScreen", "Checkbox alterado: ${pattern.id} - ${pattern.getLocalized("name")} = $isChecked")
                             }
                         )
                         Text(
                             text = pattern.getLocalized("name"),
-                            modifier = Modifier.weight(1f) // Garante que o texto ocupa o espaço necessário
+                            modifier = Modifier.weight(1f)
                         )
-
-                        // Espaço flexível para empurrar o ícone para a direita
                         Spacer(modifier = Modifier.width(16.dp))
-
-                        // Ícone alinhado à direita
                         Image(
                             painter = painterResource(id = R.drawable.castical_64px),
                             contentDescription = stringResource(R.string.pattern_description),
                             modifier = Modifier
-                                .width(40.dp) // Define um tamanho fixo para a coluna do ícone
+                                .width(40.dp)
                                 .clickable {
                                     onNavigateToDetails(pattern.id)
                                 }
@@ -206,7 +199,6 @@ fun SelectChartPatternScreen(
                 }
             }
 
-            // Área inferior com passo e switch
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = stringResource(R.string.step_1_of_3))
 
@@ -221,6 +213,7 @@ fun SelectChartPatternScreen(
                         for (i in checkStates.indices) {
                             checkStates[i] = toggled
                         }
+                        Log.d("SelectChartPatternScreen", "Switch allChecked alterado: $toggled")
                     }
                 )
                 Text(stringResource(R.string.all_none))

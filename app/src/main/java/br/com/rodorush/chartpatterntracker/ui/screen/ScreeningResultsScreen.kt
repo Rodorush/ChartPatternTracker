@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,12 +53,14 @@ fun ScreeningResultsScreen(
     onNavigateBack: () -> Unit = {},
     onCardClick: (String, String) -> Unit = { _, _ -> }
 ) {
+    Log.d("ScreeningResultsScreen", "Tela ScreeningResultsScreen carregada")
     // Coleta os resultados do ViewModel
     val screeningResults by viewModel.screeningResults.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     // Inicia a busca automaticamente
     LaunchedEffect(Unit) {
+        Log.d("ScreeningResultsScreen", "Iniciando busca com startScreening")
         viewModel.startScreening()
     }
 

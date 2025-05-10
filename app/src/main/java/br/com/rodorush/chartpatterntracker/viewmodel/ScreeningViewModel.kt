@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.rodorush.chartpatterntracker.model.AssetItem
@@ -49,34 +50,45 @@ class ScreeningViewModel(
 
     // Função para iniciar a busca
     fun startScreening() {
+        Log.d("ScreeningViewModel", "Iniciando startScreening")
+        Log.d("ScreeningViewModel", "Padrões selecionados: ${_selectedPatterns.value.map { it.id to it.name }}")
+        Log.d("ScreeningViewModel", "Ativos selecionados: ${_selectedAssets.value.map { it.ticker }}")
+        Log.d("ScreeningViewModel", "Timeframes selecionados: ${_selectedTimeframes.value.map { it.value }}")
         viewModelScope.launch {
             val results = mutableListOf<ScreeningResult>()
-            // Filtra o padrão Harami de Alta pelo ID do Firebase
             val pattern = _selectedPatterns.value.firstOrNull { it.id == "48" }
-                ?: return@launch // Apenas Harami de Alta por enquanto
+            if (pattern == null) {
+                Log.w("ScreeningViewModel", "Nenhum padrão Harami de Alta (ID 48) selecionado")
+                return@launch
+            }
+            Log.d("ScreeningViewModel", "Padrão Harami de Alta selecionado: ${pattern.id} - ${pattern.name}")
 
             _selectedAssets.value.forEach { asset ->
                 _selectedTimeframes.value.forEach { timeframe ->
-                    // Chama o ChartViewModel para buscar dados e detectar o padrão
+                    Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
                     chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value)
                     chartViewModel.candlestickData.collectLatest { candlesticks ->
+                        Log.d("ScreeningViewModel", "Recebidos ${candlesticks.size} candlesticks para ${asset.ticker}-${timeframe.value}")
                         if (candlesticks.isNotEmpty()) {
-                            // Adiciona o resultado apenas se o padrão Harami de Alta foi detectado
                             results.add(
                                 ScreeningResult(
                                     pattern = pattern,
                                     asset = asset,
                                     timeframe = timeframe,
-                                    reliability = "★★★", // Hardcoded, será obtido do Firebase no futuro
-                                    indication = "Reversão Alta", // Hardcoded, será obtido do Firebase no futuro
-                                    indicationIcon = br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow // Hardcoded, será obtido do Firebase no futuro
+                                    reliability = "★★★",
+                                    indication = "Reversão Alta",
+                                    indicationIcon = br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
                                 )
                             )
                             _screeningResults.value = results.toList()
+                            Log.d("ScreeningViewModel", "Resultado adicionado para ${asset.ticker}-${timeframe.value}")
+                        } else {
+                            Log.w("ScreeningViewModel", "Nenhum candlestick retornado para ${asset.ticker}-${timeframe.value}")
                         }
                     }
                 }
             }
+            Log.d("ScreeningViewModel", "startScreening concluído com ${results.size} resultados")
         }
     }
 }

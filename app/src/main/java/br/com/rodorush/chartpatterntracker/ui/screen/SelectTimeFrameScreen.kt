@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -119,6 +120,7 @@ fun SelectTimeframesScreen(
                     }
                     Button(onClick = {
                         viewModel.updateSelectedTimeframes(selected)
+                        Log.d("SelectTimeframesScreen", "Botão Buscar clicado, timeframes selecionados: ${selected.map { it.value}}")
                         onNextClick()
                     }) {
                         Text(stringResource(R.string.search))

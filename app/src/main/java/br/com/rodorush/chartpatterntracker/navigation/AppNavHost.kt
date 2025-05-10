@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
@@ -27,6 +28,10 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     onLogout: () -> Unit
 ) {
+    // Obter o ViewModelStoreOwner da atividade
+    val viewModelStoreOwner = LocalViewModelStoreOwner.current
+        ?: throw IllegalStateException("No ViewModelStoreOwner available")
+
     NavHost(
         navController = navController,
         startDestination = Screen.Main.route,
@@ -45,7 +50,10 @@ fun AppNavHost(
         }
 
         composable(Screen.SelectChartPattern.route) {
-            val screeningViewModel: ScreeningViewModel = koinViewModel()
+            // Usar a mesma instância do ScreeningViewModel
+            val screeningViewModel: ScreeningViewModel = koinViewModel(
+                viewModelStoreOwner = viewModelStoreOwner
+            )
             SelectChartPatternScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
@@ -57,7 +65,9 @@ fun AppNavHost(
         }
 
         composable(Screen.SelectAssets.route) {
-            val screeningViewModel: ScreeningViewModel = koinViewModel()
+            val screeningViewModel: ScreeningViewModel = koinViewModel(
+                viewModelStoreOwner = viewModelStoreOwner
+            )
             CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
                 SelectAssetsScreen(
                     viewModel = screeningViewModel,
@@ -68,7 +78,9 @@ fun AppNavHost(
         }
 
         composable(Screen.SelectTimeframes.route) {
-            val screeningViewModel: ScreeningViewModel = koinViewModel()
+            val screeningViewModel: ScreeningViewModel = koinViewModel(
+                viewModelStoreOwner = viewModelStoreOwner
+            )
             SelectTimeframesScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
@@ -77,7 +89,9 @@ fun AppNavHost(
         }
 
         composable(Screen.ScreeningResults.route) {
-            val screeningViewModel: ScreeningViewModel = koinViewModel()
+            val screeningViewModel: ScreeningViewModel = koinViewModel(
+                viewModelStoreOwner = viewModelStoreOwner
+            )
             ScreeningResultsScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },

@@ -59,26 +59,29 @@ class ChartViewModel(
     fun fetchData(ticker: String, range: String, interval: String) {
         viewModelScope.launch {
             _isLoading.value = true
+            Log.d("ChartViewModel", "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
-                Log.d("ChartViewModel", "Fetching data from source: ${_currentSource.value.javaClass.simpleName}")
-                Log.d("ChartViewModel", "Ticker: $ticker, Range: $range, Interval: $interval")
+                Log.d("ChartViewModel", "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}")
                 val initialCandlesticks = _currentSource.value.getHistoricalData(ticker, range, interval)
-                initialCandlesticks.onSuccess {
+                initialCandlesticks.onSuccess { initialData ->
+                    Log.d("ChartViewModel", "Dados iniciais obtidos: ${initialData.size} candlesticks")
                     val fullCandlesticks = repository.fetchCandlesticks(ticker, interval, range)
+                    Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
                     val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
+                    Log.d("ChartViewModel", "Padrões Harami de Alta detectados: ${haramiCandlesticks.size}")
                     _candlestickData.value = haramiCandlesticks
                     _error.value = null
-                    Log.d("ChartViewModel", "Data fetched successfully: ${haramiCandlesticks.size} candles with Harami Alta")
                 }.onFailure { e ->
+                    Log.e("ChartViewModel", "Erro ao obter dados iniciais: ${e.message}", e)
                     _candlestickData.value = emptyList()
-                    _error.value = e.message ?: "Failed to fetch data"
-                    Log.e("ChartViewModel", "Error fetching data: $e")
+                    _error.value = e.message ?: "Falha ao buscar dados"
                 }
             } catch (e: Exception) {
-                _error.value = e.message ?: "Unexpected error"
-                Log.e("ChartViewModel", "Unexpected error: $e")
+                Log.e("ChartViewModel", "Erro inesperado em fetchData: ${e.message}", e)
+                _error.value = e.message ?: "Erro inesperado"
             } finally {
                 _isLoading.value = false
+                Log.d("ChartViewModel", "fetchData concluído")
             }
         }
     }

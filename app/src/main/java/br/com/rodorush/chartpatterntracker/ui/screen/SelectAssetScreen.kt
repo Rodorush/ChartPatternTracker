@@ -29,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,20 +40,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.AssetItem
-import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
-import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectAssetsScreen(
-    viewModel: ScreeningViewModel = viewModel(),
+    viewModel: ScreeningViewModel,
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {}
 ) {
@@ -62,14 +58,13 @@ fun SelectAssetsScreen(
     var assets by remember { mutableStateOf<List<AssetItem>>(emptyList()) }
     val selectedAssets by viewModel.selectedAssets.collectAsState()
 
-    // Carregar ativos assincronamente
     LaunchedEffect(Unit) {
         assetsProvider.fetchAssets { loadedAssets ->
             assets = loadedAssets
+            Log.d("SelectAssetsScreen", "Ativos carregados: ${loadedAssets.map { it.ticker }}")
         }
     }
 
-    // Inicializa checkStates com base nos assets e selectedAssets
     val checkStates = remember(assets, selectedAssets) {
         mutableStateListOf<Boolean>().apply {
             addAll(assets.map { asset ->
@@ -88,7 +83,7 @@ fun SelectAssetsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil, se houver */ }) {
+                        IconButton(onClick = { /* Ação do perfil */ }) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
@@ -123,6 +118,7 @@ fun SelectAssetsScreen(
                     val selected = assets.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
                         viewModel.updateSelectedAssets(selected)
+                        Log.d("SelectAssetsScreen", "Botão Voltar clicado, ativos selecionados: ${selected.map { it.ticker }}")
                         onNavigateBack()
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -131,6 +127,7 @@ fun SelectAssetsScreen(
                     }
                     Button(onClick = {
                         viewModel.updateSelectedAssets(selected)
+                        Log.d("SelectAssetsScreen", "Botão Avançar clicado, ativos selecionados: ${selected.map { it.ticker }}")
                         onNextClick()
                     }) {
                         Text(stringResource(R.string.next))
@@ -172,6 +169,7 @@ fun SelectAssetsScreen(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
+                                Log.d("SelectAssetsScreen", "Checkbox alterado: ${asset.ticker} = $isChecked")
                             }
                         )
                         Text(
@@ -196,20 +194,11 @@ fun SelectAssetsScreen(
                         for (i in checkStates.indices) {
                             checkStates[i] = toggled
                         }
+                        Log.d("SelectAssetsScreen", "Switch allChecked alterado: $toggled")
                     }
                 )
                 Text(stringResource(R.string.all_none))
             }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SelectAssetsScreenPreview() {
-    ChartPatternTrackerTheme {
-        CompositionLocalProvider(LocalAssetsProvider provides MockAssetsProvider()) {
-            SelectAssetsScreen()
         }
     }
 }
