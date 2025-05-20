@@ -8,6 +8,9 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import br.com.rodorush.chartpatterntracker.navigation.AuthenticationNavHost
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
+import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 
 class AuthenticationActivity : ComponentActivity() {
 
@@ -20,6 +23,11 @@ class AuthenticationActivity : ComponentActivity() {
         }
 
         super.onCreate(savedInstanceState)
+
+        FirebaseApp.initializeApp(this)
+        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+            DebugAppCheckProviderFactory.getInstance()
+        )
 
         setContent {
             ChartPatternTrackerTheme {

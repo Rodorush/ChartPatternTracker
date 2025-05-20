@@ -5,18 +5,30 @@ const axios = require('axios');
 admin.initializeApp();
 
 exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
-    const { ticker, timeframe, startDate, endDate } = data;
-    if (!ticker || !timeframe || !startDate || !endDate) {
+    // Logar apenas os parâmetros relevantes, evitando estruturas circulares
+    console.log('updateCandlesticks chamado com:', {
+        data: data.data || data,
+        auth: context.auth?.uid,
+        app: context.app?.appId
+    });
+
+    // Acessar parâmetros aninhados em data.data
+    const params = data.data || data;
+    const { ticker, timeframe } = params;
+
+    console.log('Parâmetros extraídos:', { ticker, timeframe });
+    if (!ticker || !timeframe) {
+        console.error('Parâmetros faltantes:', { ticker, timeframe });
         throw new functions.https.HttpsError('invalid-argument', 'Missing required parameters');
     }
 
     try {
-        const response = await axios.get(`https://brapi.dev/api/quote/${ticker}/history`, {
+        console.log(`Consultando Brapi API para ticker=${ticker}, interval=${timeframe}, range=3mo`);
+        const response = await axios.get(`https://brapi.dev/api/quote/${ticker}`, {
             params: {
                 range: '3mo',
                 interval: timeframe,
-                start: startDate,
-                end: endDate
+                token: process.env.BRAPI_TOKEN
             }
         });
 
@@ -29,6 +41,7 @@ exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
             volume: candle.volume
         }));
 
+        console.log(`Dados recebidos da Brapi: ${candlesticks.length} candlesticks`);
         const batch = admin.firestore().batch();
         candlesticks.forEach(candle => {
             const docRef = admin.firestore()
@@ -40,9 +53,10 @@ exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
         });
         await batch.commit();
 
+        console.log(`Dados salvos no Firestore para ${ticker}-${timeframe}`);
         return candlesticks;
     } catch (error) {
-        console.error('Error updating candlesticks:', error);
-        throw new functions.https.HttpsError('internal', 'Failed to update candlesticks');
+        console.error('Erro ao atualizar candlesticks:', error.message, error.response?.data);
+        throw new functions.https.HttpsError('internal', 'Failed to update candlesticks: ' + error.message);
     }
 });
