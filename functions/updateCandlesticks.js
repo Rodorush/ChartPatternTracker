@@ -5,14 +5,17 @@ const axios = require('axios');
 admin.initializeApp();
 
 exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
-    // Logar apenas os parâmetros relevantes, evitando estruturas circulares
     console.log('updateCandlesticks chamado com:', {
         data: data.data || data,
         auth: context.auth?.uid,
         app: context.app?.appId
     });
 
-    // Acessar parâmetros aninhados em data.data
+    console.log('Variáveis de ambiente:', {
+        BRAPI_TOKEN: process.env.BRAPI_TOKEN ? 'Configurado' : 'Não configurado',
+        FIREBASE_CONFIG: process.env.FIREBASE_CONFIG
+    });
+
     const params = data.data || data;
     const { ticker, timeframe } = params;
 
@@ -24,11 +27,18 @@ exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
 
     try {
         console.log(`Consultando Brapi API para ticker=${ticker}, interval=${timeframe}, range=3mo`);
+        const token = process.env.BRAPI_TOKEN;
+        if (!token) {
+            console.error('Token da Brapi não configurado');
+            throw new functions.https.HttpsError('internal', 'Brapi token not configured');
+        }
+        console.log(`Usando token Brapi: ${token.substring(0, 5)}...${token.substring(token.length - 5)}`);
+
         const response = await axios.get(`https://brapi.dev/api/quote/${ticker}`, {
             params: {
                 range: '3mo',
                 interval: timeframe,
-                token: process.env.BRAPI_TOKEN
+                token: token
             }
         });
 
@@ -56,7 +66,7 @@ exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
         console.log(`Dados salvos no Firestore para ${ticker}-${timeframe}`);
         return candlesticks;
     } catch (error) {
-        console.error('Erro ao atualizar candlesticks:', error.message, error.response?.data);
-        throw new functions.https.HttpsError('internal', 'Failed to update candlesticks: ' + error.message);
+        console.error('Erro ao atualizar candlesticks:', error.message, error.response?.data || error);
+        throw new functions.https.HttpsError('internal', `Failed to update candlesticks: ${error.message}`);
     }
 });
