@@ -6,6 +6,7 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import br.com.rodorush.chartpatterntracker.BuildConfig
 
 class CandlestickRepository(
     private val dao: CandlestickDao,
@@ -51,7 +52,8 @@ class CandlestickRepository(
         val callable = Firebase.functions.getHttpsCallable("updateCandlesticks")
         val params = mapOf(
             "ticker" to ticker,
-            "timeframe" to timeframe
+            "timeframe" to timeframe,
+            "brapiToken" to BuildConfig.BRAPI_TOKEN // Adiciona o token da Brapi
         )
         Log.d("CandlestickRepository", "Parâmetros enviados para updateCandlesticks: ${params.entries.joinToString()}")
         try {

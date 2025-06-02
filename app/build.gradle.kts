@@ -42,7 +42,10 @@ android {
         buildConfigField("String", "BRAPI_TOKEN", "\"$brapiToken\"")
 
         val firebaseAppCheckDebugToken: String? = properties.getProperty("FIREBASE_APP_CHECK_DEBUG_TOKEN")
-        resValue("string", "firebase_app_check_debug_token", "$firebaseAppCheckDebugToken")
+        if (firebaseAppCheckDebugToken.isNullOrEmpty()) {
+            throw GradleException("ERRO: FIREBASE_APP_CHECK_DEBUG_TOKEN não encontrado no local.properties!")
+        }
+        resValue("string", "firebase_app_check_debug_token", "\"$firebaseAppCheckDebugToken\"")
     }
 
     buildFeatures {
