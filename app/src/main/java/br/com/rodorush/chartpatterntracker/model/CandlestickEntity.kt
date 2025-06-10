@@ -6,7 +6,10 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "candlesticks",
-    indices = [Index(value = ["ticker", "timeframe"])]
+    indices = [
+        Index(value = ["ticker", "timeframe"]),
+        Index(value = ["ticker", "timeframe", "time"], unique = true)
+    ]
 )
 data class CandlestickEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -18,5 +21,5 @@ data class CandlestickEntity(
     val low: Float,
     val close: Float,
     val volume: Long?,
-    val lastUpdated: Long // Timestamp da última atualização
+    val lastUpdated: Long
 )

@@ -10,32 +10,26 @@ import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ScreeningViewModel(
     private val chartViewModel: ChartViewModel
 ) : ViewModel() {
-    // Estado para padrões gráficos selecionados
     private val _selectedPatterns = MutableStateFlow<List<PatternItem>>(emptyList())
     val selectedPatterns: StateFlow<List<PatternItem>> = _selectedPatterns
 
-    // Estado para ativos selecionados
     private val _selectedAssets = MutableStateFlow<List<AssetItem>>(emptyList())
     val selectedAssets: StateFlow<List<AssetItem>> = _selectedAssets
 
-    // Estado para timeframes selecionados
     private val _selectedTimeframes = MutableStateFlow<List<TimeframeItem>>(emptyList())
     val selectedTimeframes: StateFlow<List<TimeframeItem>> = _selectedTimeframes
 
-    // Estado para resultados da busca
     private val _screeningResults = MutableStateFlow<List<ScreeningResult>>(emptyList())
     val screeningResults: StateFlow<List<ScreeningResult>> = _screeningResults
 
-    // Estado para isLoading, exposto do ChartViewModel
     val isLoading: StateFlow<Boolean> = chartViewModel.isLoading
 
-    // Funções para atualizar as seleções
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
         _selectedPatterns.value = patterns
     }
@@ -48,7 +42,6 @@ class ScreeningViewModel(
         _selectedTimeframes.value = timeframes
     }
 
-    // Função para iniciar a busca
     fun startScreening() {
         Log.d("ScreeningViewModel", "Iniciando startScreening")
         Log.d("ScreeningViewModel", "Padrões selecionados: ${_selectedPatterns.value.map { it.id to it.name }}")
@@ -63,13 +56,14 @@ class ScreeningViewModel(
             }
             Log.d("ScreeningViewModel", "Padrão Harami de Alta selecionado: ${pattern.id} - ${pattern.name}")
 
-            _selectedAssets.value.forEach { asset ->
-                _selectedTimeframes.value.forEach { timeframe ->
-                    Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
-                    chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value)
-                    chartViewModel.candlestickData.collectLatest { candlesticks ->
-                        Log.d("ScreeningViewModel", "Recebidos ${candlesticks.size} candlesticks para ${asset.ticker}-${timeframe.value}")
-                        if (candlesticks.isNotEmpty()) {
+            for (asset in _selectedAssets.value) {
+                for (timeframe in _selectedTimeframes.value) {
+                    try {
+                        Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
+                        chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value)
+                        val patternsDetected = chartViewModel.candlestickData.first { it.isNotEmpty() }
+                        Log.d("ScreeningViewModel", "Detectados ${patternsDetected.size} padrões Harami de Alta para ${asset.ticker}-${timeframe.value}")
+                        if (patternsDetected.isNotEmpty()) {
                             results.add(
                                 ScreeningResult(
                                     pattern = pattern,
@@ -83,8 +77,10 @@ class ScreeningViewModel(
                             _screeningResults.value = results.toList()
                             Log.d("ScreeningViewModel", "Resultado adicionado para ${asset.ticker}-${timeframe.value}")
                         } else {
-                            Log.w("ScreeningViewModel", "Nenhum candlestick retornado para ${asset.ticker}-${timeframe.value}")
+                            Log.d("ScreeningViewModel", "Nenhum padrão Harami de Alta detectado para ${asset.ticker}-${timeframe.value}")
                         }
+                    } catch (e: Exception) {
+                        Log.e("ScreeningViewModel", "Erro ao processar ${asset.ticker}-${timeframe.value}: ${e.message}", e)
                     }
                 }
             }
