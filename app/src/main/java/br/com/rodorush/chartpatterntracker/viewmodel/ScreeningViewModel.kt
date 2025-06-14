@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class ScreeningViewModel(
     private val chartViewModel: ChartViewModel
@@ -60,8 +61,22 @@ class ScreeningViewModel(
                 for (timeframe in _selectedTimeframes.value) {
                     try {
                         Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
-                        chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value)
-                        val patternsDetected = chartViewModel.candlestickData.first { it.isNotEmpty() }
+                        val patternsDetected = withTimeoutOrNull(15000L) {
+                            // Iniciar fetchData
+                            chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value)
+                            // Aguardar isLoading voltar a false
+                            chartViewModel.isLoading.first { !it }
+                            // Obter candlestickData
+                            chartViewModel.candlestickData.first()
+                        }
+                        if (patternsDetected == null) {
+                            Log.e("ScreeningViewModel", "Timeout ao processar ${asset.ticker}-${timeframe.value}")
+                            continue
+                        }
+                        if (chartViewModel.error.value != null) {
+                            Log.e("ScreeningViewModel", "Erro retornado pelo ChartViewModel para ${asset.ticker}-${timeframe.value}: ${chartViewModel.error.value}")
+                            continue
+                        }
                         Log.d("ScreeningViewModel", "Detectados ${patternsDetected.size} padrões Harami de Alta para ${asset.ticker}-${timeframe.value}")
                         if (patternsDetected.isNotEmpty()) {
                             results.add(
@@ -77,7 +92,7 @@ class ScreeningViewModel(
                             _screeningResults.value = results.toList()
                             Log.d("ScreeningViewModel", "Resultado adicionado para ${asset.ticker}-${timeframe.value}")
                         } else {
-                            Log.d("ScreeningViewModel", "Nenhum padrão Harami de Alta detectado para ${asset.ticker}-${timeframe.value}")
+                            Log.d("ScreeningViewModel", "Nenhum padrão Harami de Alta encontrado para ${asset.ticker}-${timeframe.value}")
                         }
                     } catch (e: Exception) {
                         Log.e("ScreeningViewModel", "Erro ao processar ${asset.ticker}-${timeframe.value}: ${e.message}", e)

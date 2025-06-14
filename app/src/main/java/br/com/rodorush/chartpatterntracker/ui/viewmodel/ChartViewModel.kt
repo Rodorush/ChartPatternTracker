@@ -43,20 +43,39 @@ class ChartViewModel(
     init {
         val savedSource = preferences.getString("data_source", "Brapi") ?: "Brapi"
         setDataSource(savedSource)
-        _currentSource.value.setApiKey(BuildConfig.BRAPI_TOKEN)
+        if (BuildConfig.BRAPI_TOKEN.isBlank()) {
+            Log.w("ChartViewModel", "BRAPI_TOKEN está vazio. Verifique BuildConfig.")
+            _error.value = "Chave da API inválida"
+        } else {
+            _currentSource.value.setApiKey(BuildConfig.BRAPI_TOKEN)
+        }
     }
 
     fun setDataSource(sourceName: String) {
         val newSource = sources[sourceName] ?: return
         _currentSource.value = newSource
         preferences.edit { putString("data_source", sourceName) }
+        Log.d("ChartViewModel", "Fonte de dados alterada para: $sourceName")
     }
 
     fun setApiKey(apiKey: String) {
+        if (apiKey.isBlank()) {
+            Log.w("ChartViewModel", "Tentativa de definir API key vazia")
+            _error.value = "Chave da API não pode ser vazia"
+            return
+        }
         _currentSource.value.setApiKey(apiKey)
+        Log.d("ChartViewModel", "API key definida com sucesso")
     }
 
     fun fetchData(ticker: String, range: String, interval: String) {
+        if (ticker.isBlank() || interval.isBlank()) {
+            Log.e("ChartViewModel", "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
+            _error.value = "Parâmetros inválidos"
+            _isLoading.value = false
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             Log.d("ChartViewModel", "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
@@ -65,19 +84,31 @@ class ChartViewModel(
                 val initialCandlesticks = _currentSource.value.getHistoricalData(ticker, range, interval)
                 initialCandlesticks.onSuccess { initialData ->
                     Log.d("ChartViewModel", "Dados iniciais obtidos: ${initialData.size} candlesticks")
-                    val fullCandlesticks = repository.fetchCandlesticks(ticker, interval, range)
-                    Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
-                    val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
-                    Log.d("ChartViewModel", "Padrões Harami de Alta detectados: ${haramiCandlesticks.size}")
-                    _candlestickData.value = haramiCandlesticks
-                    _error.value = null
+                    if (initialData.isEmpty()) {
+                        Log.w("ChartViewModel", "Nenhum dado inicial retornado para $ticker")
+                        _error.value = "Nenhum dado disponível"
+                        _candlestickData.value = emptyList()
+                    } else {
+                        val fullCandlesticks = repository.fetchCandlesticks(ticker, interval, range)
+                        Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
+                        if (fullCandlesticks.isNotEmpty()) {
+                            val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
+                            Log.d("ChartViewModel", "Padrões Harami de Alta detectados: ${haramiCandlesticks.size}")
+                            _candlestickData.value = haramiCandlesticks
+                        } else {
+                            Log.w("ChartViewModel", "Nenhum candlestick completo retornado para $ticker")
+                            _candlestickData.value = emptyList()
+                            _error.value = "Falha ao obter dados completos"
+                        }
+                    }
                 }.onFailure { e ->
                     Log.e("ChartViewModel", "Erro ao obter dados iniciais: ${e.message}", e)
                     _candlestickData.value = emptyList()
-                    _error.value = e.message ?: "Falha ao buscar dados"
+                    _error.value = e.message ?: "Falha ao buscar dados iniciais"
                 }
             } catch (e: Exception) {
                 Log.e("ChartViewModel", "Erro inesperado em fetchData: ${e.message}", e)
+                _candlestickData.value = emptyList()
                 _error.value = e.message ?: "Erro inesperado"
             } finally {
                 _isLoading.value = false

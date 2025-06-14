@@ -16,15 +16,19 @@ class CandlestickRepository(
         return withContext(Dispatchers.IO) {
             Log.d("CandlestickRepository", "Iniciando fetchCandlesticks para ticker=$ticker, timeframe=$timeframe, range=$range")
             val today = System.currentTimeMillis()
-            val threeMonthsAgo = today - 90L * 24 * 60 * 60 * 1000
+            val threeMonthsAgo = today - (90L * 24 * 60 * 60 * 1000) // 90 dias em ms
             val latest = dao.getLatestTimestamp(ticker, timeframe) ?: 0
-            Log.d("CandlestickRepository", "Latest timestamp para $ticker-$timeframe: $latest")
+            Log.d("CandlestickRepository", "Latest timestamp para $ticker-$timeframe: $latest, threeMonthsAgo=$threeMonthsAgo, today=$today")
 
             try {
-                if (latest >= today - 24 * 60 * 60 * 1000 && latest >= threeMonthsAgo) {
-                    val localCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
-                    Log.d("CandlestickRepository", "Dados locais recentes encontrados para $ticker-$timeframe: ${localCandlesticks.size} candlesticks")
-                    localCandlesticks
+                // Obter candlesticks existentes no Room
+                val existingCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
+                val existingTimes = existingCandlesticks.map { it.time }.toSet()
+                Log.d("CandlestickRepository", "Candlesticks existentes no Room para $ticker-$timeframe: ${existingCandlesticks.size}")
+
+                if (latest >= today - 24 * 60 * 60 * 1000 && latest >= threeMonthsAgo && existingCandlesticks.isNotEmpty()) {
+                    Log.d("CandlestickRepository", "Dados locais recentes encontrados para $ticker-$timeframe: ${existingCandlesticks.size} candlesticks")
+                    existingCandlesticks
                 } else {
                     Log.d("CandlestickRepository", "Consultando Firestore para $ticker-$timeframe")
                     val remoteCandlesticks = firestoreService.fetchCandlesticks(ticker, timeframe, latest, today)
@@ -33,19 +37,25 @@ class CandlestickRepository(
                         Log.d("CandlestickRepository", "Chamando updateCandlesticks para $ticker-$timeframe")
                         val updatedCandlesticks = callUpdateCandlesticks(ticker, timeframe)
                         Log.d("CandlestickRepository", "Candlesticks atualizados recebidos: ${updatedCandlesticks.size}")
-                        (remoteCandlesticks + updatedCandlesticks).distinctBy { it.time }
+                        // Filtrar candlesticks não existentes no Room
+                        (remoteCandlesticks + updatedCandlesticks).distinctBy { it.time }.filter { it.time !in existingTimes }
                     } else {
-                        remoteCandlesticks
+                        remoteCandlesticks.filter { it.time !in existingTimes }
                     }
 
                     if (candlesticksToSave.isNotEmpty()) {
-                        Log.d("CandlestickRepository", "Salvando ${candlesticksToSave.size} candlesticks no Room para $ticker-$timeframe")
+                        Log.d("CandlestickRepository", "Salvando ${candlesticksToSave.size} novos candlesticks no Room para $ticker-$timeframe")
                         dao.insertAll(candlesticksToSave.toEntities(ticker, timeframe))
+                        // Forçar sincronização do Room
+                        dao.getCandlesticks(ticker, timeframe, 0) // Consulta dummy
                     } else {
                         Log.d("CandlestickRepository", "Nenhum novo candlestick para salvar no Room para $ticker-$timeframe")
                     }
 
-                    dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
+                    // Retornar todos os candlesticks do Room
+                    val finalCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
+                    Log.d("CandlestickRepository", "Retornando ${finalCandlesticks.size} candlesticks para $ticker-$timeframe")
+                    finalCandlesticks
                 }
             } catch (e: Exception) {
                 Log.e("CandlestickRepository", "Erro em fetchCandlesticks para $ticker-$timeframe: ${e.message}", e)
