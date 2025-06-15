@@ -76,8 +76,8 @@ class ChartViewModel(
             return
         }
 
+        _isLoading.value = true
         viewModelScope.launch {
-            _isLoading.value = true
             Log.d("ChartViewModel", "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
                 Log.d("ChartViewModel", "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}")
