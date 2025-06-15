@@ -43,7 +43,8 @@ exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
         });
 
         const candlesticks = response.data.results[0].historicalDataPrice.map(candle => ({
-            time: new Date(candle.date).getTime(),
+            // Brapi retorna a data em segundos. É necessário converter para milissegundos.
+            time: new Date(candle.date * 1000).getTime(),
             open: candle.open,
             high: candle.high,
             low: candle.low,
