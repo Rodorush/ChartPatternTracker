@@ -67,7 +67,7 @@ class ScreeningViewModel(
                             // Aguardar isLoading voltar a false
                             chartViewModel.isLoading.first { !it }
                             // Obter candlestickData
-                            chartViewModel.candlestickData.first()
+                            chartViewModel.patternsData.first()
                         }
                         if (patternsDetected == null) {
                             Log.e("ScreeningViewModel", "Timeout ao processar ${asset.ticker}-${timeframe.value}")

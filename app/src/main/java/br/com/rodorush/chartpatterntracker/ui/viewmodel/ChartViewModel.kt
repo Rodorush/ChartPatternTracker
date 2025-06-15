@@ -25,6 +25,9 @@ class ChartViewModel(
     private val _candlestickData = MutableStateFlow<List<Candlestick>>(emptyList())
     val candlestickData: StateFlow<List<Candlestick>> = _candlestickData
 
+    private val _patternsData = MutableStateFlow<List<Candlestick>>(emptyList())
+    val patternsData: StateFlow<List<Candlestick>> = _patternsData
+
     private val _currentSource = MutableStateFlow<AssetDataSource>(BrapiDataSource())
     val currentSource: StateFlow<AssetDataSource> = _currentSource
 
@@ -92,18 +95,21 @@ class ChartViewModel(
                         val fullCandlesticks = repository.fetchCandlesticks(ticker, interval, range)
                         Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
                         if (fullCandlesticks.isNotEmpty()) {
+                            _candlestickData.value = fullCandlesticks
                             val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
                             Log.d("ChartViewModel", "Padrões Harami de Alta detectados: ${haramiCandlesticks.size}")
-                            _candlestickData.value = haramiCandlesticks
+                            _patternsData.value = haramiCandlesticks
                         } else {
                             Log.w("ChartViewModel", "Nenhum candlestick completo retornado para $ticker")
                             _candlestickData.value = emptyList()
+                            _patternsData.value = emptyList()
                             _error.value = "Falha ao obter dados completos"
                         }
                     }
                 }.onFailure { e ->
                     Log.e("ChartViewModel", "Erro ao obter dados iniciais: ${e.message}", e)
                     _candlestickData.value = emptyList()
+                    _patternsData.value = emptyList()
                     _error.value = e.message ?: "Falha ao buscar dados iniciais"
                 }
             } catch (e: Exception) {
