@@ -28,16 +28,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
-    val viewModel: ChartViewModel = viewModel() // Deixa o Koin fornecer o ViewModel
+    val viewModel: ChartViewModel = koinViewModel() // Deixa o Koin fornecer o ViewModel
     val currentSource by viewModel.currentSource.collectAsState()
     var apiKeyInput by remember { mutableStateOf("") }
     var selectedSource by remember { mutableStateOf(currentSource.javaClass.simpleName.removeSuffix("DataSource")) }
