@@ -82,6 +82,20 @@
         }
     };
 
+    window.updateMarkers = function(jsonData) {
+        if (!chart || !candlestickSeries) {
+            console.error("Chart not initialized. Call initializeChart first.");
+            return;
+        }
+        try {
+            const markers = JSON.parse(jsonData);
+            candlestickSeries.setMarkers(markers);
+            console.log("Markers updated, count:", markers.length);
+        } catch (e) {
+            console.error("Error updating markers:", e);
+        }
+    };
+
     window.onload = function() {
         console.log("Window loaded, initializing chart...");
         initializeChart();
