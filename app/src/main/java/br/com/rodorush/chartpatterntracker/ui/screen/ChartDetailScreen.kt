@@ -51,6 +51,7 @@ fun ChartDetailScreen(
     val viewModel: ChartViewModel = koinViewModel() // Deixa o Koin fornecer o ViewModel
 
     val candlestickData by viewModel.candlestickData.collectAsState()
+    val patternsData by viewModel.patternsData.collectAsState()
     val error by viewModel.error.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
@@ -67,10 +68,11 @@ fun ChartDetailScreen(
         viewModel.fetchData(ticker, "3mo", timeframe)
     }
 
-    LaunchedEffect(candlestickData, isChartInitialized) {
+    LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val jsonData = candlestickData.toJsonArray()
+                val highlightTimes = patternsData.map { it.time }.toSet()
+                val jsonData = candlestickData.toJsonArray(highlightTimes)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
@@ -216,7 +218,7 @@ class WebAppInterface(
     }
 }
 
-fun List<Candlestick>.toJsonArray(): String {
+fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): String {
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
@@ -226,6 +228,11 @@ fun List<Candlestick>.toJsonArray(): String {
             put("low", item.low)
             put("close", item.close)
             put("volume", item.volume ?: 0)
+            if (item.time in highlightTimes) {
+                put("color", "#0000FF")
+                put("wickColor", "#0000FF")
+                put("borderColor", "#0000FF")
+            }
         }
         jsonArray.put(jsonObject)
     }
