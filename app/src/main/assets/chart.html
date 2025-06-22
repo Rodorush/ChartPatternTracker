@@ -45,8 +45,7 @@
                     wickDownColor: '#EF5350'
                 });
             } else if (typeof chart.addSeries === 'function') {
-                candlestickSeries = chart.addSeries({
-                    type: 'Candlestick',
+                candlestickSeries = chart.addSeries('Candlestick', {
                     upColor: '#26A69A',
                     downColor: '#EF5350',
                     borderUpColor: '#26A69A',
