@@ -34,18 +34,30 @@
                 timeScale: { timeVisible: true, secondsVisible: false }
             });
             console.log("Chart created:", chart !== null && typeof chart === 'object');
-            console.log("Chart has addCandlestickSeries:", typeof chart.addCandlestickSeries === 'function');
-            console.log("Chart has addSeries:", typeof chart.addSeries === 'function');
-            console.log("LightweightCharts.CandlestickSeries available:", typeof LightweightCharts.CandlestickSeries !== 'undefined');
-
-            console.log("Adding candlestick series using addSeries...");
-            candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-                upColor: '#26A69A',
-                downColor: '#EF5350',
-                borderVisible: false,
-                wickUpColor: '#26A69A',
-                wickDownColor: '#EF5350'
-            });
+            console.log("Initializing candlestick series...");
+            if (typeof chart.addCandlestickSeries === 'function') {
+                candlestickSeries = chart.addCandlestickSeries({
+                    upColor: '#26A69A',
+                    downColor: '#EF5350',
+                    borderUpColor: '#26A69A',
+                    borderDownColor: '#EF5350',
+                    wickUpColor: '#26A69A',
+                    wickDownColor: '#EF5350'
+                });
+            } else if (typeof chart.addSeries === 'function') {
+                candlestickSeries = chart.addSeries({
+                    type: 'Candlestick',
+                    upColor: '#26A69A',
+                    downColor: '#EF5350',
+                    borderUpColor: '#26A69A',
+                    borderDownColor: '#EF5350',
+                    wickUpColor: '#26A69A',
+                    wickDownColor: '#EF5350'
+                });
+            } else {
+                console.error('No candlestick series API available');
+                return;
+            }
 
             console.log("Chart initialized successfully");
             AndroidInterface.chartInitialized();
@@ -79,6 +91,24 @@
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
             console.error("Error updating chart:", e);
+        }
+    };
+
+    window.updateMarkers = function(jsonData) {
+        if (!chart || !candlestickSeries) {
+            console.error("Chart not initialized. Call initializeChart first.");
+            return;
+        }
+        try {
+            const markers = JSON.parse(jsonData);
+            if (typeof candlestickSeries.setMarkers === 'function') {
+                candlestickSeries.setMarkers(markers);
+                console.log("Markers updated, count:", markers.length);
+            } else {
+                console.warn('setMarkers not supported by candlestickSeries');
+            }
+        } catch (e) {
+            console.error("Error updating markers:", e);
         }
     };
 
