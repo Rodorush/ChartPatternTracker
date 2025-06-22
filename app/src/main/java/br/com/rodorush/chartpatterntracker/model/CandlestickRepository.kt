@@ -123,7 +123,7 @@ class CandlestickRepository(
                 val isContained = current.open > previous.close && current.close < previous.open
 
                 if (isBullish && isBearish && isContained) {
-                    haramiCandles.add(current)
+                    // Marca apenas a primeira vela do padrão
                     haramiCandles.add(previous)
                 }
             }

@@ -51,6 +51,7 @@ fun ChartDetailScreen(
     val viewModel: ChartViewModel = koinViewModel() // Deixa o Koin fornecer o ViewModel
 
     val candlestickData by viewModel.candlestickData.collectAsState()
+    val patternsData by viewModel.patternsData.collectAsState()
     val error by viewModel.error.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
@@ -75,6 +76,18 @@ fun ChartDetailScreen(
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(patternsData, isChartInitialized) {
+        if (isChartInitialized) {
+            webViewRef?.let { webView ->
+                val markersJson = patternsData.toMarkersJsonArray()
+                Log.d("ChartDetailScreen", "Updating markers with ${patternsData.size} items")
+                coroutineScope.launch {
+                    webView.evaluateJavascript("updateMarkers('$markersJson')", null)
                 }
             }
         }
@@ -226,6 +239,21 @@ fun List<Candlestick>.toJsonArray(): String {
             put("low", item.low)
             put("close", item.close)
             put("volume", item.volume ?: 0)
+        }
+        jsonArray.put(jsonObject)
+    }
+    return jsonArray.toString().replace("\"", "\\\"")
+}
+
+fun List<Candlestick>.toMarkersJsonArray(): String {
+    val jsonArray = JSONArray()
+    for (item in this) {
+        val jsonObject = JSONObject().apply {
+            put("time", item.time)
+            put("position", "belowBar")
+            put("color", "blue")
+            put("shape", "arrowUp")
+            put("text", "Harami de alta")
         }
         jsonArray.put(jsonObject)
     }
