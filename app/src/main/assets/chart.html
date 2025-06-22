@@ -39,15 +39,18 @@
                 candlestickSeries = chart.addCandlestickSeries({
                     upColor: '#26A69A',
                     downColor: '#EF5350',
-                    borderVisible: false,
+                    borderUpColor: '#26A69A',
+                    borderDownColor: '#EF5350',
                     wickUpColor: '#26A69A',
                     wickDownColor: '#EF5350'
                 });
             } else if (typeof chart.addSeries === 'function') {
-                candlestickSeries = chart.addSeries('Candlestick', {
+                candlestickSeries = chart.addSeries({
+                    type: 'Candlestick',
                     upColor: '#26A69A',
                     downColor: '#EF5350',
-                    borderVisible: false,
+                    borderUpColor: '#26A69A',
+                    borderDownColor: '#EF5350',
                     wickUpColor: '#26A69A',
                     wickDownColor: '#EF5350'
                 });
