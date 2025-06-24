@@ -229,9 +229,17 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
             put("close", item.close)
             put("volume", item.volume ?: 0)
             if (item.time in highlightTimes) {
-                put("color", "#0000FF")
-                put("wickColor", "#0000FF")
-                put("borderColor", "#0000FF")
+                if (item.close > item.open) {
+                    // Bullish candle of the Harami pattern - white body with blue borders
+                    put("color", "#FFFFFF")
+                    put("wickColor", "#0000FF")
+                    put("borderColor", "#0000FF")
+                } else {
+                    // Bearish candle remains solid blue
+                    put("color", "#0000FF")
+                    put("wickColor", "#0000FF")
+                    put("borderColor", "#0000FF")
+                }
             }
         }
         jsonArray.put(jsonObject)
