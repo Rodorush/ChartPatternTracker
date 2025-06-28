@@ -57,11 +57,16 @@ fun ScreeningResultsScreen(
     // Coleta os resultados do ViewModel
     val screeningResults by viewModel.screeningResults.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
     // Inicia a busca automaticamente
-    LaunchedEffect(Unit) {
-        Log.d("ScreeningResultsScreen", "Iniciando busca com startScreening")
-        viewModel.startScreening()
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh || screeningResults.isEmpty()) {
+            Log.d("ScreeningResultsScreen", "Iniciando busca com startScreening")
+            viewModel.startScreening()
+        } else {
+            Log.d("ScreeningResultsScreen", "Resultados em cache, evitando nova busca")
+        }
     }
 
     // Estado para o campo de busca
