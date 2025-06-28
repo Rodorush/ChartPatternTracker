@@ -11,6 +11,7 @@ import br.com.rodorush.chartpatterntracker.data.MockDataSource
 import br.com.rodorush.chartpatterntracker.data.AssetDataSource
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,8 +26,8 @@ class ChartViewModel(
     private val _candlestickData = MutableStateFlow<List<Candlestick>>(emptyList())
     val candlestickData: StateFlow<List<Candlestick>> = _candlestickData
 
-    private val _patternsData = MutableStateFlow<List<Candlestick>>(emptyList())
-    val patternsData: StateFlow<List<Candlestick>> = _patternsData
+    private val _patternsData = MutableStateFlow<List<PatternOccurrence>>(emptyList())
+    val patternsData: StateFlow<List<PatternOccurrence>> = _patternsData
 
     private val _currentSource = MutableStateFlow<AssetDataSource>(BrapiDataSource())
     val currentSource: StateFlow<AssetDataSource> = _currentSource
@@ -96,9 +97,12 @@ class ChartViewModel(
                         Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
                         if (fullCandlesticks.isNotEmpty()) {
                             _candlestickData.value = fullCandlesticks
-                            val haramiCandlesticks = repository.detectHaramiAlta(fullCandlesticks)
-                            Log.d("ChartViewModel", "Padrões Harami de Alta detectados: ${haramiCandlesticks.size}")
-                            _patternsData.value = haramiCandlesticks
+                            val haramiPatterns = repository.detectHaramiAlta(fullCandlesticks)
+                            Log.d(
+                                "ChartViewModel",
+                                "Padrões Harami de Alta detectados: ${haramiPatterns.size}"
+                            )
+                            _patternsData.value = haramiPatterns
                         } else {
                             Log.w("ChartViewModel", "Nenhum candlestick completo retornado para $ticker")
                             _candlestickData.value = emptyList()

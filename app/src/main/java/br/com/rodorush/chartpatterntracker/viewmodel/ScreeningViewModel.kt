@@ -62,11 +62,8 @@ class ScreeningViewModel(
                     try {
                         Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
                         val patternsDetected = withTimeoutOrNull(15000L) {
-                            // Iniciar fetchData
                             chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value)
-                            // Aguardar isLoading voltar a false
                             chartViewModel.isLoading.first { !it }
-                            // Obter candlestickData
                             chartViewModel.patternsData.first()
                         }
                         if (patternsDetected == null) {
