@@ -6,7 +6,7 @@ data class ScreeningResult(
     val pattern: PatternItem,
     val asset: AssetItem,
     val timeframe: TimeframeItem,
-    val reliability: String = "★★★",
-    val indication: String = "Reversão Alta",
+    val reliability: String,
+    val indication: String,
     val indicationIcon: Int = R.drawable.ic_up_arrow
 )
