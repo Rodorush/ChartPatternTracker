@@ -29,18 +29,25 @@ class ScreeningViewModel(
     private val _screeningResults = MutableStateFlow<List<ScreeningResult>>(emptyList())
     val screeningResults: StateFlow<List<ScreeningResult>> = _screeningResults
 
+    // Flag to indicate if a new screening run is required
+    private val _shouldRefresh = MutableStateFlow(true)
+    val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
+
     val isLoading: StateFlow<Boolean> = chartViewModel.isLoading
 
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
         _selectedPatterns.value = patterns
+        _shouldRefresh.value = true
     }
 
     fun updateSelectedAssets(assets: List<AssetItem>) {
         _selectedAssets.value = assets
+        _shouldRefresh.value = true
     }
 
     fun updateSelectedTimeframes(timeframes: List<TimeframeItem>) {
         _selectedTimeframes.value = timeframes
+        _shouldRefresh.value = true
     }
 
     fun startScreening() {
@@ -49,6 +56,7 @@ class ScreeningViewModel(
         Log.d("ScreeningViewModel", "Ativos selecionados: ${_selectedAssets.value.map { it.ticker }}")
         Log.d("ScreeningViewModel", "Timeframes selecionados: ${_selectedTimeframes.value.map { it.value }}")
         viewModelScope.launch {
+            _screeningResults.value = emptyList()
             val results = mutableListOf<ScreeningResult>()
             val pattern = _selectedPatterns.value.firstOrNull { it.id == "48" }
             if (pattern == null) {
@@ -97,6 +105,7 @@ class ScreeningViewModel(
                 }
             }
             Log.d("ScreeningViewModel", "startScreening concluído com ${results.size} resultados")
+            _shouldRefresh.value = false
         }
     }
 }
