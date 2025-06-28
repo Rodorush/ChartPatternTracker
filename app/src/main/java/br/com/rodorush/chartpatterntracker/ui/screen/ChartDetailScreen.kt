@@ -71,7 +71,7 @@ fun ChartDetailScreen(
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = patternsData.map { it.time }.toSet()
+                val highlightTimes = patternsData.flatMap { it.candles }.map { it.time }.toSet()
                 val jsonData = candlestickData.toJsonArray(highlightTimes)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")

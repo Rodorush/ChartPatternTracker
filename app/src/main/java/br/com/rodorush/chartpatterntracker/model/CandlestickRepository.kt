@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import br.com.rodorush.chartpatterntracker.BuildConfig
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 
 class CandlestickRepository(
     private val dao: CandlestickDao,
@@ -107,11 +108,11 @@ class CandlestickRepository(
         dao.deleteOld(ticker, timeframe, threshold)
     }
 
-    suspend fun detectHaramiAlta(candlesticks: List<Candlestick>): List<Candlestick> {
+    suspend fun detectHaramiAlta(candlesticks: List<Candlestick>): List<PatternOccurrence> {
         return withContext(Dispatchers.Default) {
             Log.d("CandlestickRepository", "Detectando Harami de Alta em ${candlesticks.size} candlesticks")
-            val haramiCandles = mutableListOf<Candlestick>()
-            if (candlesticks.size < 2) return@withContext haramiCandles
+            val occurrences = mutableListOf<PatternOccurrence>()
+            if (candlesticks.size < 2) return@withContext occurrences
 
             for (i in 1 until candlesticks.size) {
                 val current = candlesticks[i]
@@ -123,12 +124,11 @@ class CandlestickRepository(
                 val isContained = current.open > previous.close && current.close < previous.open
 
                 if (isBullish && isBearish && isContained) {
-                    haramiCandles.add(current)
-                    haramiCandles.add(previous)
+                    occurrences.add(PatternOccurrence(listOf(previous, current)))
                 }
             }
-            Log.d("CandlestickRepository", "Padrões Harami de Alta detectados: ${haramiCandles.size}")
-            haramiCandles.distinct()
+            Log.d("CandlestickRepository", "Padrões Harami de Alta detectados: ${occurrences.size}")
+            occurrences
         }
     }
 }
