@@ -156,7 +156,7 @@ fun ScreeningResultsScreen(
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Text(
-                                        text = "${result.asset.ticker} (${result.asset.ticker})",
+                                        text = result.asset.ticker,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
