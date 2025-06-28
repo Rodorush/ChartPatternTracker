@@ -84,13 +84,15 @@ class ScreeningViewModel(
                         }
                         Log.d("ScreeningViewModel", "Detectados ${patternsDetected.size} padrões Harami de Alta para ${asset.ticker}-${timeframe.value}")
                         if (patternsDetected.isNotEmpty()) {
+                            val reliabilityText = pattern.getLocalized("reliability")
+                            val reliabilityStars = convertReliabilityToStars(reliabilityText)
                             results.add(
                                 ScreeningResult(
                                     pattern = pattern,
                                     asset = asset,
                                     timeframe = timeframe,
-                                    reliability = "★★★",
-                                    indication = "Reversão Alta",
+                                    reliability = reliabilityStars,
+                                    indication = pattern.getLocalized("indication"),
                                     indicationIcon = br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
                                 )
                             )
@@ -106,6 +108,15 @@ class ScreeningViewModel(
             }
             Log.d("ScreeningViewModel", "startScreening concluído com ${results.size} resultados")
             _shouldRefresh.value = false
+        }
+    }
+
+    private fun convertReliabilityToStars(reliability: String): String {
+        return when (reliability.lowercase()) {
+            "baixa", "low", "baja" -> "★"
+            "média", "media", "medium" -> "★★"
+            "alta", "high" -> "★★★"
+            else -> reliability
         }
     }
 }
