@@ -152,7 +152,7 @@ fun ScreeningResultsScreen(
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = result.timeframe.name,
+                                        text = stringResource(result.timeframe.nameRes),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Text(

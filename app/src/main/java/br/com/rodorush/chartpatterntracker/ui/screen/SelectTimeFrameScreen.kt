@@ -165,7 +165,7 @@ fun SelectTimeframesScreen(
                             }
                         )
                         Text(
-                            text = timeframe.name,
+                            text = stringResource(timeframe.nameRes),
                             modifier = Modifier.weight(1f)
                         )
                     }
