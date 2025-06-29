@@ -51,4 +51,25 @@
     <string name="data_source">Fonte de Dados</string>
     <string name="api_key">Chave da API</string>
     <string name="apply">Aplicar</string>
+    <string name="timeframe_1m">1 Minuto</string>
+    <string name="timeframe_2m">2 Minutos</string>
+    <string name="timeframe_3m">3 Minutos</string>
+    <string name="timeframe_4m">4 Minutos</string>
+    <string name="timeframe_5m">5 Minutos</string>
+    <string name="timeframe_6m">6 Minutos</string>
+    <string name="timeframe_10m">10 Minutos</string>
+    <string name="timeframe_12m">12 Minutos</string>
+    <string name="timeframe_15m">15 Minutos</string>
+    <string name="timeframe_20m">20 Minutos</string>
+    <string name="timeframe_30m">30 Minutos</string>
+    <string name="timeframe_1h">1 Hora</string>
+    <string name="timeframe_2h">2 Horas</string>
+    <string name="timeframe_3h">3 Horas</string>
+    <string name="timeframe_4h">4 Horas</string>
+    <string name="timeframe_6h">6 Horas</string>
+    <string name="timeframe_8h">8 Horas</string>
+    <string name="timeframe_12h">12 Horas</string>
+    <string name="timeframe_1d">Diário</string>
+    <string name="timeframe_1w">Semanal</string>
+    <string name="timeframe_1mo">Mensal</string>
 </resources>
