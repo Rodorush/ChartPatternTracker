@@ -72,4 +72,8 @@
     <string name="timeframe_1d">Diário</string>
     <string name="timeframe_1w">Semanal</string>
     <string name="timeframe_1mo">Mensal</string>
+    <string name="ticker">Ticker</string>
+    <string name="last_price">Último Preço</string>
+    <string name="change_percent">% Variação</string>
+    <string name="view_chart">Ver gráfico</string>
 </resources>

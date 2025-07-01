@@ -1,12 +1,13 @@
 package br.com.rodorush.chartpatterntracker.api
 
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface BrapiApiService {
-    @GET("api/available")
-    suspend fun getAvailableAssets(@Query("token") token: String): AvailableAssetsResponse
+    @GET("api/quote/list")
+    suspend fun getQuoteList(@Header("Authorization") authorization: String): QuoteListResponse
 
     @GET("api/quote/{ticker}")
     suspend fun getHistoricalData(
@@ -16,7 +17,14 @@ interface BrapiApiService {
         @Query("token") token: String
     ): BrapiResponse
 
-    data class AvailableAssetsResponse(
-        val stocks: List<String>
+    data class QuoteListResponse(
+        val stocks: List<StockQuote>
+    )
+
+    data class StockQuote(
+        val stock: String,
+        val name: String,
+        val close: Double?,
+        val change: Double?
     )
 }
