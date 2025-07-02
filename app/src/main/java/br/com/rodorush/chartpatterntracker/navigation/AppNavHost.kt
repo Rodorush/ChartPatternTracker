@@ -72,7 +72,8 @@ fun AppNavHost(
                 SelectAssetsScreen(
                     viewModel = screeningViewModel,
                     onNavigateBack = { navController.popBackStack() },
-                    onNextClick = { navController.navigate(Screen.SelectTimeframes.route) }
+                    onNextClick = { navController.navigate(Screen.SelectTimeframes.route) },
+                    onChartClick = { ticker -> navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d")) }
                 )
             }
         }

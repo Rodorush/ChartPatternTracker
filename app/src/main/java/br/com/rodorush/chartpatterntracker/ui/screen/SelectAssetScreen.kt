@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -52,7 +53,8 @@ import android.util.Log
 fun SelectAssetsScreen(
     viewModel: ScreeningViewModel,
     onNavigateBack: () -> Unit = {},
-    onNextClick: () -> Unit = {}
+    onNextClick: () -> Unit = {},
+    onChartClick: (String) -> Unit = {}
 ) {
     val assetsProvider = LocalAssetsProvider.current
     var assets by remember { mutableStateOf<List<AssetItem>>(emptyList()) }
@@ -154,6 +156,19 @@ fun SelectAssetsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.width(40.dp))
+                Text(text = stringResource(R.string.ticker), modifier = Modifier.weight(1f))
+                Text(text = stringResource(R.string.last_price), modifier = Modifier.width(80.dp))
+                Text(text = stringResource(R.string.change_percent), modifier = Modifier.width(80.dp))
+                Spacer(modifier = Modifier.width(40.dp))
+            }
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
@@ -176,6 +191,22 @@ fun SelectAssetsScreen(
                             text = asset.ticker,
                             modifier = Modifier.weight(1f)
                         )
+                        Text(
+                            text = "R$ %.2f".format(asset.lastPrice),
+                            modifier = Modifier.width(80.dp)
+                        )
+                        val changeColor = if (asset.changePercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        Text(
+                            text = (if (asset.changePercent >= 0) "+" else "") + "%.2f%%".format(asset.changePercent),
+                            color = changeColor,
+                            modifier = Modifier.width(80.dp)
+                        )
+                        IconButton(onClick = { onChartClick(asset.ticker) }) {
+                            Icon(
+                                imageVector = Icons.Default.ShowChart,
+                                contentDescription = stringResource(R.string.view_chart)
+                            )
+                        }
                     }
                 }
             }

@@ -110,6 +110,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.room.runtime)
     ksp(libs.room.compiler)

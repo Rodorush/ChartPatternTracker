@@ -18,8 +18,14 @@ class BrapiAssetsProvider : AssetsProvider {
 
     override suspend fun fetchAssets(onResult: (List<AssetItem>) -> Unit) {
         try {
-            val response = service.getAvailableAssets(token)
-            val assets = response.stocks.map { AssetItem(it) }
+            val response = service.getQuoteList("Bearer $token")
+            val assets = response.stocks.map {
+                AssetItem(
+                    ticker = it.stock,
+                    lastPrice = it.close ?: 0.0,
+                    changePercent = it.change ?: 0.0
+                )
+            }
             onResult(assets)
         } catch (e: Exception) {
             onResult(emptyList())
