@@ -23,7 +23,8 @@ class BrapiAssetsProvider : AssetsProvider {
                 AssetItem(
                     ticker = it.stock,
                     lastPrice = it.close ?: 0.0,
-                    changePercent = it.change ?: 0.0
+                    changePercent = it.change ?: 0.0,
+                    logo = it.logo ?: ""
                 )
             }
             onResult(assets)

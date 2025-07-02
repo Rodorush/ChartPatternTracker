@@ -17,6 +17,7 @@ import br.com.rodorush.chartpatterntracker.ui.screen.SelectAssetsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectChartPatternScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectTimeframesScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.RealTimeQuotesScreen
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
@@ -41,6 +42,9 @@ fun AppNavHost(
             MainScreen(
                 onNavigateToSelectChartPattern = {
                     navController.navigate(Screen.SelectChartPattern.route)
+                },
+                onNavigateToRealTimeQuotes = {
+                    navController.navigate(Screen.RealTimeQuotes.route)
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
@@ -74,6 +78,15 @@ fun AppNavHost(
                     onNavigateBack = { navController.popBackStack() },
                     onNextClick = { navController.navigate(Screen.SelectTimeframes.route) },
                     onChartClick = { ticker -> navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d")) }
+                )
+            }
+        }
+
+        composable(Screen.RealTimeQuotes.route) {
+            CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
+                RealTimeQuotesScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onRowClick = { ticker -> navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d")) }
                 )
             }
         }
