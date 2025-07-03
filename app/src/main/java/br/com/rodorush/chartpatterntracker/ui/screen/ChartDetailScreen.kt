@@ -46,6 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ChartDetailScreen(
     ticker: String,
     timeframe: String,
+    detectPatterns: Boolean = true,
     onNavigateBack: () -> Unit
 ) {
     val viewModel: ChartViewModel = koinViewModel() // Deixa o Koin fornecer o ViewModel
@@ -64,8 +65,8 @@ fun ChartDetailScreen(
         onNavigateBack()
     }
 
-    LaunchedEffect(ticker, timeframe) {
-        viewModel.fetchData(ticker, "3mo", timeframe)
+    LaunchedEffect(ticker, timeframe, detectPatterns) {
+        viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns)
     }
 
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {

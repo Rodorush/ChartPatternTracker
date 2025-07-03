@@ -10,7 +10,8 @@ sealed class Screen(val route: String) {
     object SelectTimeframes : Screen("select_timeframes")
     object ScreeningResults : Screen("screening_results")
     object ChartDetail : Screen("chart_detail") {
-        fun createRoute(ticker: String, timeframe: String) = "chart_detail/$ticker/$timeframe"
+        fun createRoute(ticker: String, timeframe: String, detectPatterns: Boolean = true) =
+            "chart_detail/$ticker/$timeframe?detectPatterns=$detectPatterns"
     }
     object RealTimeQuotes : Screen("real_time_quotes")
     object Settings : Screen("settings") // Nova rota para Settings

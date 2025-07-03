@@ -72,7 +72,7 @@ class ChartViewModel(
         Log.d("ChartViewModel", "API key definida com sucesso")
     }
 
-    fun fetchData(ticker: String, range: String, interval: String) {
+    fun fetchData(ticker: String, range: String, interval: String, detectPatterns: Boolean = true) {
         if (ticker.isBlank() || interval.isBlank()) {
             Log.e("ChartViewModel", "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
             _error.value = "Parâmetros inválidos"
@@ -97,12 +97,16 @@ class ChartViewModel(
                         Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
                         if (fullCandlesticks.isNotEmpty()) {
                             _candlestickData.value = fullCandlesticks
-                            val haramiPatterns = repository.detectHaramiAlta(fullCandlesticks)
-                            Log.d(
-                                "ChartViewModel",
-                                "Padrões Harami de Alta detectados: ${haramiPatterns.size}"
-                            )
-                            _patternsData.value = haramiPatterns
+                            if (detectPatterns) {
+                                val haramiPatterns = repository.detectHaramiAlta(fullCandlesticks)
+                                Log.d(
+                                    "ChartViewModel",
+                                    "Padrões Harami de Alta detectados: ${haramiPatterns.size}"
+                                )
+                                _patternsData.value = haramiPatterns
+                            } else {
+                                _patternsData.value = emptyList()
+                            }
                         } else {
                             Log.w("ChartViewModel", "Nenhum candlestick completo retornado para $ticker")
                             _candlestickData.value = emptyList()
