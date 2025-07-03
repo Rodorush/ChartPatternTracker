@@ -78,7 +78,7 @@ fun AppNavHost(
                     onNavigateBack = { navController.popBackStack() },
                     onNextClick = { navController.navigate(Screen.SelectTimeframes.route) },
                     onChartClick = { ticker ->
-                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d"))
+                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", false))
                     }
                 )
             }
