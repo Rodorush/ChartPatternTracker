@@ -36,6 +36,7 @@ import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 @Composable
 fun MainScreen(
     onNavigateToSelectChartPattern: () -> Unit,
+    onNavigateToRealTimeQuotes: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit
 ) {
@@ -78,13 +79,7 @@ fun MainScreen(
                     Toast.LENGTH_SHORT
                 ).show()
             })
-        ButtonMenuItem(R.string.real_time_quotes, onClick = {
-            Toast.makeText(
-                context,
-                R.string.real_time_quotes,
-                Toast.LENGTH_SHORT
-            ).show()
-        })
+        ButtonMenuItem(R.string.real_time_quotes, onClick = onNavigateToRealTimeQuotes)
         ButtonMenuItem(R.string.technical_indicators, onClick = {
             Toast.makeText(
                 context,
@@ -131,6 +126,7 @@ fun MainScreenPreview() {
             ChartPatternTrackerTheme {
                 MainScreen(
                     onNavigateToSelectChartPattern = {},
+                    onNavigateToRealTimeQuotes = {},
                     onLogout = {})
             }
         }

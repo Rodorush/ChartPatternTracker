@@ -25,6 +25,7 @@ interface BrapiApiService {
         val stock: String,
         val name: String,
         val close: Double?,
-        val change: Double?
+        val change: Double?,
+        val logo: String?
     )
 }
