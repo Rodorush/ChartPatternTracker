@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
     implementation(libs.firebase.storage)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)

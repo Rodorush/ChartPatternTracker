@@ -38,7 +38,10 @@ import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,7 +142,10 @@ fun RealTimeQuotesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         AsyncImage(
-                            model = asset.logo,
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(asset.logo)
+                                .decoderFactory(SvgDecoder.Factory())
+                                .build(),
                             contentDescription = stringResource(R.string.logo),
                             modifier = Modifier.width(40.dp)
                         )

@@ -77,7 +77,9 @@ fun AppNavHost(
                     viewModel = screeningViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onNextClick = { navController.navigate(Screen.SelectTimeframes.route) },
-                    onChartClick = { ticker -> navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d")) }
+                    onChartClick = { ticker ->
+                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", false))
+                    }
                 )
             }
         }
@@ -86,7 +88,9 @@ fun AppNavHost(
             CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
                 RealTimeQuotesScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onRowClick = { ticker -> navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d")) }
+                    onRowClick = { ticker ->
+                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", false))
+                    }
                 )
             }
         }
@@ -110,23 +114,29 @@ fun AppNavHost(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onCardClick = { ticker, timeframe ->
-                    navController.navigate("chart_detail/$ticker/$timeframe")
+                    navController.navigate(Screen.ChartDetail.createRoute(ticker, timeframe))
                 }
             )
         }
 
         composable(
-            Screen.ChartDetail.route + "/{ticker}/{timeframe}",
+            Screen.ChartDetail.route + "/{ticker}/{timeframe}?detectPatterns={detectPatterns}",
             arguments = listOf(
                 navArgument("ticker") { type = NavType.StringType },
-                navArgument("timeframe") { type = NavType.StringType }
+                navArgument("timeframe") { type = NavType.StringType },
+                navArgument("detectPatterns") {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
             )
         ) { backStackEntry ->
             val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
             val timeframe = backStackEntry.arguments?.getString("timeframe") ?: "1d"
+            val detectPatterns = backStackEntry.arguments?.getBoolean("detectPatterns") ?: true
             ChartDetailScreen(
                 ticker = ticker,
                 timeframe = timeframe,
+                detectPatterns = detectPatterns,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
