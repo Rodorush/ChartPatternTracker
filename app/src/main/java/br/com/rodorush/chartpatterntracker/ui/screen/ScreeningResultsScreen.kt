@@ -51,7 +51,7 @@ import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 fun ScreeningResultsScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
-    onCardClick: (String, String) -> Unit = { _, _ -> }
+    onCardClick: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     Log.d("ScreeningResultsScreen", "Tela ScreeningResultsScreen carregada")
     // Coleta os resultados do ViewModel
@@ -121,7 +121,7 @@ fun ScreeningResultsScreen(
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (screeningResults.isEmpty()) {
                 Text(
-                    text = "Nenhum padrão Harami de Alta encontrado.",
+                    text = stringResource(id = R.string.no_patterns_found),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
@@ -134,7 +134,7 @@ fun ScreeningResultsScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onCardClick(result.asset.ticker, result.timeframe.value) }
+                                .clickable { onCardClick(result.asset.ticker, result.timeframe.value, result.pattern.id) }
                         ) {
                             Row(
                                 modifier = Modifier
@@ -195,6 +195,6 @@ fun ScreeningResultsScreen(
 @Composable
 fun ScreeningResultsScreenPreview() {
     ChartPatternTrackerTheme {
-        ScreeningResultsScreen()
+        ScreeningResultsScreen(onCardClick = { _, _, _ -> })
     }
 }

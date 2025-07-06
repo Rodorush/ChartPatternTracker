@@ -8,6 +8,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
+import br.com.rodorush.chartpatterntracker.model.pattern.PatternDetectorRegistry
 
 class CandlestickRepository(
     private val dao: CandlestickDao,
@@ -108,27 +109,23 @@ class CandlestickRepository(
         dao.deleteOld(ticker, timeframe, threshold)
     }
 
-    suspend fun detectHaramiAlta(candlesticks: List<Candlestick>): List<PatternOccurrence> {
+    suspend fun detectPattern(patternId: String, candlesticks: List<Candlestick>): List<PatternOccurrence> {
         return withContext(Dispatchers.Default) {
-            Log.d("CandlestickRepository", "Detectando Harami de Alta em ${candlesticks.size} candlesticks")
-            val occurrences = mutableListOf<PatternOccurrence>()
-            if (candlesticks.size < 2) return@withContext occurrences
-
-            for (i in 1 until candlesticks.size) {
-                val current = candlesticks[i]
-                val previous = candlesticks[i - 1]
-
-                // Critérios do Harami de Alta
-                val isBullish = current.close > current.open
-                val isBearish = previous.open > previous.close
-                val isContained = current.open > previous.close && current.close < previous.open
-
-                if (isBullish && isBearish && isContained) {
-                    occurrences.add(PatternOccurrence(listOf(previous, current)))
-                }
+            val detector = PatternDetectorRegistry.get(patternId)
+            if (detector == null) {
+                Log.w("CandlestickRepository", "Nenhum detector encontrado para $patternId")
+                emptyList()
+            } else {
+                detector.detect(candlesticks)
             }
-            Log.d("CandlestickRepository", "Padrões Harami de Alta detectados: ${occurrences.size}")
-            occurrences
         }
+    }
+
+    suspend fun detectPatterns(patternIds: List<String>, candlesticks: List<Candlestick>): Map<String, List<PatternOccurrence>> {
+        val results = mutableMapOf<String, List<PatternOccurrence>>()
+        for (id in patternIds) {
+            results[id] = detectPattern(id, candlesticks)
+        }
+        return results
     }
 }
