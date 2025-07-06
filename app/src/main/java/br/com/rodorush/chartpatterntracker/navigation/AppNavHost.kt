@@ -78,7 +78,7 @@ fun AppNavHost(
                     onNavigateBack = { navController.popBackStack() },
                     onNextClick = { navController.navigate(Screen.SelectTimeframes.route) },
                     onChartClick = { ticker ->
-                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", false))
+                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", null, false))
                     }
                 )
             }
@@ -89,7 +89,7 @@ fun AppNavHost(
                 RealTimeQuotesScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onRowClick = { ticker ->
-                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", false))
+                        navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", null, false))
                     }
                 )
             }
@@ -113,17 +113,18 @@ fun AppNavHost(
             ScreeningResultsScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onCardClick = { ticker, timeframe ->
-                    navController.navigate(Screen.ChartDetail.createRoute(ticker, timeframe))
+                onCardClick = { ticker, timeframe, patternId ->
+                    navController.navigate(Screen.ChartDetail.createRoute(ticker, timeframe, patternId))
                 }
             )
         }
 
         composable(
-            Screen.ChartDetail.route + "/{ticker}/{timeframe}?detectPatterns={detectPatterns}",
+            Screen.ChartDetail.route + "/{ticker}/{timeframe}?patternId={patternId}&detectPatterns={detectPatterns}",
             arguments = listOf(
                 navArgument("ticker") { type = NavType.StringType },
                 navArgument("timeframe") { type = NavType.StringType },
+                navArgument("patternId") { type = NavType.StringType; defaultValue = "" },
                 navArgument("detectPatterns") {
                     type = NavType.BoolType
                     defaultValue = true
@@ -132,10 +133,12 @@ fun AppNavHost(
         ) { backStackEntry ->
             val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
             val timeframe = backStackEntry.arguments?.getString("timeframe") ?: "1d"
+            val patternId = backStackEntry.arguments?.getString("patternId")?.takeIf { it.isNotEmpty() }
             val detectPatterns = backStackEntry.arguments?.getBoolean("detectPatterns") ?: true
             ChartDetailScreen(
                 ticker = ticker,
                 timeframe = timeframe,
+                patternId = patternId,
                 detectPatterns = detectPatterns,
                 onNavigateBack = { navController.popBackStack() }
             )

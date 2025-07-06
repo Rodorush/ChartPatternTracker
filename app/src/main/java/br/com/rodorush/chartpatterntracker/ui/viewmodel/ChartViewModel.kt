@@ -26,8 +26,8 @@ class ChartViewModel(
     private val _candlestickData = MutableStateFlow<List<Candlestick>>(emptyList())
     val candlestickData: StateFlow<List<Candlestick>> = _candlestickData
 
-    private val _patternsData = MutableStateFlow<List<PatternOccurrence>>(emptyList())
-    val patternsData: StateFlow<List<PatternOccurrence>> = _patternsData
+    private val _patternsData = MutableStateFlow<Map<String, List<PatternOccurrence>>>(emptyMap())
+    val patternsData: StateFlow<Map<String, List<PatternOccurrence>>> = _patternsData
 
     private val _currentSource = MutableStateFlow<AssetDataSource>(BrapiDataSource())
     val currentSource: StateFlow<AssetDataSource> = _currentSource
@@ -72,7 +72,13 @@ class ChartViewModel(
         Log.d("ChartViewModel", "API key definida com sucesso")
     }
 
-    fun fetchData(ticker: String, range: String, interval: String, detectPatterns: Boolean = true) {
+    fun fetchData(
+        ticker: String,
+        range: String,
+        interval: String,
+        detectPatterns: Boolean = true,
+        patternIds: List<String> = emptyList()
+    ) {
         if (ticker.isBlank() || interval.isBlank()) {
             Log.e("ChartViewModel", "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
             _error.value = "Parâmetros inválidos"
@@ -98,31 +104,32 @@ class ChartViewModel(
                         if (fullCandlesticks.isNotEmpty()) {
                             _candlestickData.value = fullCandlesticks
                             if (detectPatterns) {
-                                val haramiPatterns = repository.detectHaramiAlta(fullCandlesticks)
+                                val detected = repository.detectPatterns(patternIds, fullCandlesticks)
+                                _patternsData.value = detected
                                 Log.d(
                                     "ChartViewModel",
-                                    "Padrões Harami de Alta detectados: ${haramiPatterns.size}"
+                                    "Padrões detectados: " + detected.map { it.key to it.value.size }
                                 )
-                                _patternsData.value = haramiPatterns
                             } else {
-                                _patternsData.value = emptyList()
+                                _patternsData.value = emptyMap()
                             }
                         } else {
                             Log.w("ChartViewModel", "Nenhum candlestick completo retornado para $ticker")
                             _candlestickData.value = emptyList()
-                            _patternsData.value = emptyList()
+                            _patternsData.value = emptyMap()
                             _error.value = "Falha ao obter dados completos"
                         }
                     }
                 }.onFailure { e ->
                     Log.e("ChartViewModel", "Erro ao obter dados iniciais: ${e.message}", e)
                     _candlestickData.value = emptyList()
-                    _patternsData.value = emptyList()
+                    _patternsData.value = emptyMap()
                     _error.value = e.message ?: "Falha ao buscar dados iniciais"
                 }
             } catch (e: Exception) {
                 Log.e("ChartViewModel", "Erro inesperado em fetchData: ${e.message}", e)
                 _candlestickData.value = emptyList()
+                _patternsData.value = emptyMap()
                 _error.value = e.message ?: "Erro inesperado"
             } finally {
                 _isLoading.value = false

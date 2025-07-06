@@ -76,4 +76,5 @@
     <string name="last_price">Último Preço</string>
     <string name="change_percent">% Variação</string>
     <string name="view_chart">Ver gráfico</string>
+    <string name="no_patterns_found">Nenhum padrão encontrado.</string>
 </resources>

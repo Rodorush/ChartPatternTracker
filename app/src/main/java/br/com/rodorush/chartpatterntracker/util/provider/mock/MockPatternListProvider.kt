@@ -41,14 +41,14 @@ class MockPatternListProvider : PatternProvider {
         ),
         PatternItem(
             id = "3",
-            name = mapOf("pt" to "Engolfo de Alta", "en" to "Bullish Engulfing"),
+            name = mapOf("pt" to "Engolfo de Baixa", "en" to "Bearish Engulfing"),
             description = mapOf(
-                "pt" to "Um grande candle de alta engolfa completamente o candle de baixa anterior, sinalizando reversão.",
-                "en" to "A large bullish candle completely engulfs the previous bearish candle, signaling a reversal."
+                "pt" to "Um grande candle de baixa engolfa completamente o candle de alta anterior, sinalizando reversão.",
+                "en" to "A large bearish candle completely engulfs the previous bullish candle, signaling a reversal."
             ),
             indication = mapOf(
-                "pt" to "Reversão Altista",
-                "en" to "Bullish Reversal"
+                "pt" to "Reversão Baixista",
+                "en" to "Bearish Reversal"
             ),
             reliability = mapOf(
                 "pt" to "Alta",
