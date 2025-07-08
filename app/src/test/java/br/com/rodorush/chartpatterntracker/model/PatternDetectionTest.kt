@@ -23,7 +23,20 @@ class PatternDetectionTest {
         assertEquals(2, occurrences.size)
         occurrences.forEach { assertEquals(2, it.candles.size) }
     }
-}
+
+    @Test
+    fun detectBearishEngulfing_countsOccurrencesCorrectly() = runBlocking {
+        val candles = listOf(
+            Candlestick(time = 1L, open = 9f, high = 10.5f, low = 8.8f, close = 10f),
+            Candlestick(time = 2L, open = 10.2f, high = 10.4f, low = 8.5f, close = 8.8f)
+        )
+
+        val detector = br.com.rodorush.chartpatterntracker.model.pattern.BearishEngulfingDetector()
+        val occurrences = detector.detect(candles)
+
+        assertEquals(1, occurrences.size)
+        occurrences.forEach { assertEquals(2, it.candles.size) }
+    }
 
 fun detectHaramiAltaStandalone(candlesticks: List<Candlestick>): List<PatternOccurrence> {
     val occurrences = mutableListOf<PatternOccurrence>()
@@ -39,4 +52,5 @@ fun detectHaramiAltaStandalone(candlesticks: List<Candlestick>): List<PatternOcc
         }
     }
     return occurrences
+}
 }

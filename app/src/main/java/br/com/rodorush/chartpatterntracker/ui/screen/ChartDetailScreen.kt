@@ -46,6 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ChartDetailScreen(
     ticker: String,
     timeframe: String,
+    patternId: String? = null,
     detectPatterns: Boolean = true,
     onNavigateBack: () -> Unit
 ) {
@@ -65,14 +66,21 @@ fun ChartDetailScreen(
         onNavigateBack()
     }
 
-    LaunchedEffect(ticker, timeframe, detectPatterns) {
-        viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns)
+    LaunchedEffect(ticker, timeframe, patternId, detectPatterns) {
+        val ids = if (detectPatterns) {
+            patternId?.let { listOf(it) } ?: br.com.rodorush.chartpatterntracker.model.pattern.PatternDetectorRegistry.registeredIds()
+        } else emptyList()
+        viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns, ids)
     }
 
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = patternsData.flatMap { it.candles }.map { it.time }.toSet()
+                val highlightTimes = if (patternId != null) {
+                    patternsData[patternId].orEmpty().flatMap { it.candles }.map { it.time }.toSet()
+                } else {
+                    patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
+                }
                 val jsonData = candlestickData.toJsonArray(highlightTimes)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")

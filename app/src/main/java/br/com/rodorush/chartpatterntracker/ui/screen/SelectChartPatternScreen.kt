@@ -134,11 +134,14 @@ fun SelectChartPatternScreen(
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.home))
                     }
-                    Button(onClick = {
+                    Button(
+                        onClick = {
                         viewModel.updateSelectedPatterns(selected)
                         Log.d("SelectChartPatternScreen", "Botão Avançar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}")
                         onNextClick()
-                    }) {
+                        },
+                        enabled = selected.isNotEmpty()
+                    ) {
                         Text(stringResource(R.string.next))
                         Spacer(Modifier.width(4.dp))
                         Icon(
