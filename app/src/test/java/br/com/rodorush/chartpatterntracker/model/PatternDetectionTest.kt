@@ -38,6 +38,34 @@ class PatternDetectionTest {
         occurrences.forEach { assertEquals(2, it.candles.size) }
     }
 
+    @Test
+    fun detectMarteloDeAlta_countsOccurrencesCorrectly() = runBlocking {
+        val candles = listOf(
+            Candlestick(time = 1L, open = 10f, high = 10.3f, low = 8f, close = 10.2f)
+        )
+
+        val detector = br.com.rodorush.chartpatterntracker.model.pattern.MarteloDeAltaDetector()
+        val occurrences = detector.detect(candles)
+
+        assertEquals(1, occurrences.size)
+        occurrences.forEach { assertEquals(1, it.candles.size) }
+    }
+
+    @Test
+    fun detectTresForaDeAlta_countsOccurrencesCorrectly() = runBlocking {
+        val candles = listOf(
+            Candlestick(time = 1L, open = 10f, high = 10.5f, low = 9.5f, close = 9.7f),
+            Candlestick(time = 2L, open = 9.6f, high = 10.6f, low = 9.4f, close = 10.8f),
+            Candlestick(time = 3L, open = 10.7f, high = 11.2f, low = 10.6f, close = 11.1f)
+        )
+
+        val detector = br.com.rodorush.chartpatterntracker.model.pattern.TresForaDeAltaDetector()
+        val occurrences = detector.detect(candles)
+
+        assertEquals(1, occurrences.size)
+        occurrences.forEach { assertEquals(3, it.candles.size) }
+    }
+
 fun detectHaramiAltaStandalone(candlesticks: List<Candlestick>): List<PatternOccurrence> {
     val occurrences = mutableListOf<PatternOccurrence>()
     if (candlesticks.size < 2) return occurrences
