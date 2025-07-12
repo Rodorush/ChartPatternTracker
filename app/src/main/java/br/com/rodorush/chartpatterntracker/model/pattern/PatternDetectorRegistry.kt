@@ -4,10 +4,15 @@ object PatternDetectorRegistry {
     private val detectors = mutableMapOf<String, PatternDetector>()
 
     init {
-        // Harami de Alta - document ID 48
-        register("48", HaramiAltaDetector())
-        // Bearish Engulfing pattern - document ID 9
+        register("1", AbandonedBabyBearishDetector())
         register("9", BearishEngulfingDetector())
+        register("10", EveningDojiStarDetector())
+        register("11", EveningStarDetector())
+        register("24", ThreeOutsideDownDetector())
+        register("43", BullishDojiStarDetector())
+        register("46", BullishHammerDetector())
+        register("48", HaramiBullishDetector())
+        register("58", ThreeOutsideUpDetector())
     }
 
     fun register(id: String, detector: PatternDetector) {

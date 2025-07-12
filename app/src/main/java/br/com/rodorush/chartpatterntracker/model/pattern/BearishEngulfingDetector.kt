@@ -13,6 +13,8 @@ class BearishEngulfingDetector : PatternDetector {
         for (i in 1 until candlesticks.size) {
             val current = candlesticks[i]
             val previous = candlesticks[i - 1]
+
+            //TODO Confirmar regras do padrão
             val prevBullish = previous.close > previous.open
             val currBearish = current.close < current.open
             val engulfs = current.open > previous.close && current.close < previous.open
