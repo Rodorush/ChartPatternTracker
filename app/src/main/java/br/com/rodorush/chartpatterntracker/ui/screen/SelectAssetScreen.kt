@@ -62,8 +62,12 @@ fun SelectAssetsScreen(
 
     LaunchedEffect(Unit) {
         assetsProvider.fetchAssets { loadedAssets ->
-            assets = loadedAssets
-            Log.d("SelectAssetsScreen", "Ativos carregados: ${loadedAssets.map { it.ticker }}")
+            val filtered = loadedAssets.filterNot { it.ticker.endsWith("F", ignoreCase = true) }
+            assets = filtered
+            Log.d(
+                "SelectAssetsScreen",
+                "Ativos carregados: ${filtered.map { it.ticker }}"
+            )
         }
     }
 
