@@ -8,6 +8,7 @@ import br.com.rodorush.chartpatterntracker.model.PatternItem
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -33,7 +34,10 @@ class ScreeningViewModel(
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
 
-    val isLoading: StateFlow<Boolean> = chartViewModel.isLoading
+    private val _isScreening = MutableStateFlow(false)
+    val isScreening: StateFlow<Boolean> = _isScreening
+
+    private var screeningJob: Job? = null
 
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
         _selectedPatterns.value = patterns
@@ -55,60 +59,71 @@ class ScreeningViewModel(
         Log.d("ScreeningViewModel", "Padrões selecionados: ${_selectedPatterns.value.map { it.id to it.name }}")
         Log.d("ScreeningViewModel", "Ativos selecionados: ${_selectedAssets.value.map { it.ticker }}")
         Log.d("ScreeningViewModel", "Timeframes selecionados: ${_selectedTimeframes.value.map { it.value }}")
-        viewModelScope.launch {
+        screeningJob?.cancel()
+        screeningJob = viewModelScope.launch {
+            _isScreening.value = true
             _screeningResults.value = emptyList()
             val results = mutableListOf<ScreeningResult>()
-            for (pattern in _selectedPatterns.value) {
-                Log.d("ScreeningViewModel", "Processando padrão ${pattern.id}")
-                for (asset in _selectedAssets.value) {
-                    for (timeframe in _selectedTimeframes.value) {
-                        try {
-                            Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
-                            val patternsDetected = withTimeoutOrNull(15000L) {
-                                chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value, true, listOf(pattern.id))
-                                chartViewModel.isLoading.first { !it }
-                                chartViewModel.patternsData.first()
-                            }
-                            if (patternsDetected == null) {
-                                Log.e("ScreeningViewModel", "Timeout ao processar ${asset.ticker}-${timeframe.value}")
-                                continue
-                            }
-                            if (chartViewModel.error.value != null) {
-                                Log.e(
-                                    "ScreeningViewModel",
-                                    "Erro retornado pelo ChartViewModel para ${asset.ticker}-${timeframe.value}: ${chartViewModel.error.value}"
-                                )
-                                continue
-                            }
-                            val occurrences = patternsDetected[pattern.id].orEmpty()
-                            Log.d(
-                                "ScreeningViewModel",
-                                "Detectados ${occurrences.size} padrões ${pattern.id} para ${asset.ticker}-${timeframe.value}"
-                            )
-                            if (occurrences.isNotEmpty()) {
-                                val reliabilityText = pattern.getLocalized("reliability")
-                                val reliabilityStars = convertReliabilityToStars(reliabilityText)
-                                results.add(
-                                    ScreeningResult(
-                                        pattern = pattern,
-                                        asset = asset,
-                                        timeframe = timeframe,
-                                        reliability = reliabilityStars,
-                                        indication = pattern.getLocalized("indication"),
-                                        indicationIcon = br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
+            try {
+                for (pattern in _selectedPatterns.value) {
+                    Log.d("ScreeningViewModel", "Processando padrão ${pattern.id}")
+                    for (asset in _selectedAssets.value) {
+                        for (timeframe in _selectedTimeframes.value) {
+                            try {
+                                Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
+                                val patternsDetected = withTimeoutOrNull(15000L) {
+                                    chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value, true, listOf(pattern.id))
+                                    chartViewModel.isLoading.first { !it }
+                                    chartViewModel.patternsData.first()
+                                }
+                                if (patternsDetected == null) {
+                                    Log.e("ScreeningViewModel", "Timeout ao processar ${asset.ticker}-${timeframe.value}")
+                                    continue
+                                }
+                                if (chartViewModel.error.value != null) {
+                                    Log.e(
+                                        "ScreeningViewModel",
+                                        "Erro retornado pelo ChartViewModel para ${asset.ticker}-${timeframe.value}: ${chartViewModel.error.value}"
                                     )
+                                    continue
+                                }
+                                val occurrences = patternsDetected[pattern.id].orEmpty()
+                                Log.d(
+                                    "ScreeningViewModel",
+                                    "Detectados ${occurrences.size} padrões ${pattern.id} para ${asset.ticker}-${timeframe.value}"
                                 )
-                                _screeningResults.value = results.toList()
+                                if (occurrences.isNotEmpty()) {
+                                    val reliabilityText = pattern.getLocalized("reliability")
+                                    val reliabilityStars = convertReliabilityToStars(reliabilityText)
+                                    results.add(
+                                        ScreeningResult(
+                                            pattern = pattern,
+                                            asset = asset,
+                                            timeframe = timeframe,
+                                            reliability = reliabilityStars,
+                                            indication = pattern.getLocalized("indication"),
+                                            indicationIcon = br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
+                                        )
+                                    )
+                                    _screeningResults.value = results.toList()
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ScreeningViewModel", "Erro ao processar ${asset.ticker}-${timeframe.value}: ${e.message}", e)
                             }
-                        } catch (e: Exception) {
-                            Log.e("ScreeningViewModel", "Erro ao processar ${asset.ticker}-${timeframe.value}: ${e.message}", e)
                         }
                     }
                 }
+                Log.d("ScreeningViewModel", "startScreening concluído com ${results.size} resultados")
+            } finally {
+                _shouldRefresh.value = false
+                _isScreening.value = false
             }
-            Log.d("ScreeningViewModel", "startScreening concluído com ${results.size} resultados")
-            _shouldRefresh.value = false
         }
+    }
+
+    fun cancelScreening() {
+        screeningJob?.cancel()
+        _isScreening.value = false
     }
 
     private fun convertReliabilityToStars(reliability: String): String {

@@ -30,6 +30,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +58,7 @@ fun ScreeningResultsScreen(
     Log.d("ScreeningResultsScreen", "Tela ScreeningResultsScreen carregada")
     // Coleta os resultados do ViewModel
     val screeningResults by viewModel.screeningResults.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
     // Inicia a busca automaticamente
@@ -71,6 +73,17 @@ fun ScreeningResultsScreen(
 
     // Estado para o campo de busca
     var searchText by remember { mutableStateOf("") }
+
+    BackHandler(enabled = true) {
+        viewModel.cancelScreening()
+        onNavigateBack()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.cancelScreening()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -117,14 +130,16 @@ fun ScreeningResultsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else if (screeningResults.isEmpty()) {
-                Text(
-                    text = stringResource(id = R.string.no_patterns_found),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+            if (screeningResults.isEmpty()) {
+                if (isScreening) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else {
+                    Text(
+                        text = stringResource(id = R.string.no_patterns_found),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -185,6 +200,10 @@ fun ScreeningResultsScreen(
                             }
                         }
                     }
+                }
+                if (isScreening) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
             }
         }
