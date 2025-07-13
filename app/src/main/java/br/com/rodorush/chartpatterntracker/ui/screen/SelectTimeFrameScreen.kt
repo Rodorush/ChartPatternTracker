@@ -114,15 +114,24 @@ fun SelectTimeframesScreen(
                         viewModel.updateSelectedTimeframes(selected)
                         onNavigateBack()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.back))
                     }
-                    Button(onClick = {
-                        viewModel.updateSelectedTimeframes(selected)
-                        Log.d("SelectTimeframesScreen", "Botão Buscar clicado, timeframes selecionados: ${selected.map { it.value}}")
-                        onNextClick()
-                    }) {
+                    Button(
+                        onClick = {
+                            viewModel.updateSelectedTimeframes(selected)
+                            Log.d(
+                                "SelectTimeframesScreen",
+                                "Botão Buscar clicado, timeframes selecionados: ${selected.map { it.value }}"
+                            )
+                            onNextClick()
+                        },
+                        enabled = selected.isNotEmpty()
+                    ) {
                         Text(stringResource(R.string.search))
                         Spacer(Modifier.width(4.dp))
                         Icon(

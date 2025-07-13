@@ -124,18 +124,30 @@ fun SelectAssetsScreen(
                     val selected = assets.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
                         viewModel.updateSelectedAssets(selected)
-                        Log.d("SelectAssetsScreen", "Botão Voltar clicado, ativos selecionados: ${selected.map { it.ticker }}")
+                        Log.d(
+                            "SelectAssetsScreen",
+                            "Botão Voltar clicado, ativos selecionados: ${selected.map { it.ticker }}"
+                        )
                         onNavigateBack()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.back))
                     }
-                    Button(onClick = {
-                        viewModel.updateSelectedAssets(selected)
-                        Log.d("SelectAssetsScreen", "Botão Avançar clicado, ativos selecionados: ${selected.map { it.ticker }}")
-                        onNextClick()
-                    }) {
+                    Button(
+                        onClick = {
+                            viewModel.updateSelectedAssets(selected)
+                            Log.d(
+                                "SelectAssetsScreen",
+                                "Botão Avançar clicado, ativos selecionados: ${selected.map { it.ticker }}"
+                            )
+                            onNextClick()
+                        },
+                        enabled = selected.isNotEmpty()
+                    ) {
                         Text(stringResource(R.string.next))
                         Spacer(Modifier.width(4.dp))
                         Icon(
@@ -169,7 +181,10 @@ fun SelectAssetsScreen(
                 Spacer(modifier = Modifier.width(40.dp))
                 Text(text = stringResource(R.string.ticker), modifier = Modifier.weight(1f))
                 Text(text = stringResource(R.string.last_price), modifier = Modifier.width(80.dp))
-                Text(text = stringResource(R.string.change_percent), modifier = Modifier.width(80.dp))
+                Text(
+                    text = stringResource(R.string.change_percent),
+                    modifier = Modifier.width(80.dp)
+                )
                 Spacer(modifier = Modifier.width(40.dp))
             }
 
@@ -188,7 +203,10 @@ fun SelectAssetsScreen(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
-                                Log.d("SelectAssetsScreen", "Checkbox alterado: ${asset.ticker} = $isChecked")
+                                Log.d(
+                                    "SelectAssetsScreen",
+                                    "Checkbox alterado: ${asset.ticker} = $isChecked"
+                                )
                             }
                         )
                         Text(
@@ -199,9 +217,12 @@ fun SelectAssetsScreen(
                             text = "R$ %.2f".format(asset.lastPrice),
                             modifier = Modifier.width(80.dp)
                         )
-                        val changeColor = if (asset.changePercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        val changeColor =
+                            if (asset.changePercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                         Text(
-                            text = (if (asset.changePercent >= 0) "+" else "") + "%.2f%%".format(asset.changePercent),
+                            text = (if (asset.changePercent >= 0) "+" else "") + "%.2f%%".format(
+                                asset.changePercent
+                            ),
                             color = changeColor,
                             modifier = Modifier.width(80.dp)
                         )
