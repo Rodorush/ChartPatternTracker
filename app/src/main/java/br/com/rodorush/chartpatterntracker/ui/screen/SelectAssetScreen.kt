@@ -253,7 +253,10 @@ fun SelectAssetsScreen(
                         Log.d("SelectAssetsScreen", "Switch allChecked alterado: $toggled")
                     }
                 )
-                Text(stringResource(R.string.all_none))
+                Text(
+                    stringResource(R.string.all_none) +
+                        " - " + stringResource(R.string.total_count, assets.size)
+                )
             }
         }
     }

@@ -31,6 +31,7 @@
     <string name="select_the_chart_pattern">Select the Chart Patterns</string>
     <string name="step_1_of_3">Step 1 of 3</string>
     <string name="all_none">ALL/NONE</string>
+    <string name="total_count">Total: %1$d</string>
     <string name="next">Next</string>
     <string name="home">Home</string>
     <string name="search">Search</string>

@@ -219,7 +219,12 @@ fun SelectChartPatternScreen(
                         Log.d("SelectChartPatternScreen", "Switch allChecked alterado: $toggled")
                     }
                 )
-                Text(stringResource(R.string.all_none))
+                Text(
+                    stringResource(
+                        R.string.all_none
+                    ) + " - " +
+                        stringResource(R.string.total_count, patterns.size)
+                )
             }
         }
     }
