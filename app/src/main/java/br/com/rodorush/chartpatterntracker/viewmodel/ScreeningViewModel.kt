@@ -95,14 +95,16 @@ class ScreeningViewModel(
                                 if (occurrences.isNotEmpty()) {
                                     val reliabilityText = pattern.getLocalized("reliability")
                                     val reliabilityStars = convertReliabilityToStars(reliabilityText)
+                                    val indicationText = pattern.getLocalized("indication")
+                                    val indicationIconRes = convertIndicationToIcon(indicationText)
                                     results.add(
                                         ScreeningResult(
                                             pattern = pattern,
                                             asset = asset,
                                             timeframe = timeframe,
                                             reliability = reliabilityStars,
-                                            indication = pattern.getLocalized("indication"),
-                                            indicationIcon = br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
+                                            indication = indicationText,
+                                            indicationIcon = indicationIconRes
                                         )
                                     )
                                     _screeningResults.value = results.toList()
@@ -132,6 +134,20 @@ class ScreeningViewModel(
             "média", "media", "medium" -> "★★"
             "alta", "high" -> "★★★"
             else -> reliability
+        }
+    }
+
+    private fun convertIndicationToIcon(indication: String): Int {
+        return when (indication.lowercase()) {
+            "reversão baixista", "bearish reversal", "reversión bajista" ->
+                br.com.rodorush.chartpatterntracker.R.drawable.reversao_baixista
+            "reversão altista", "bullish reversal", "reversión alcista" ->
+                br.com.rodorush.chartpatterntracker.R.drawable.reversao_altista
+            "continuação de baixa", "bearish continuation", "continuación bajista" ->
+                br.com.rodorush.chartpatterntracker.R.drawable.continuacao_baixa
+            "continuação de alta", "bullish continuation", "continuación alcista" ->
+                br.com.rodorush.chartpatterntracker.R.drawable.continuacao_alta
+            else -> br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
         }
     }
 }

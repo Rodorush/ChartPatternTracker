@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -185,12 +186,12 @@ fun ScreeningResultsScreen(
                                     )
                                 }
 
-                                // Indicação com ícone
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Indicação com ícone em coluna
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Image(
                                         painter = painterResource(id = result.indicationIcon),
                                         contentDescription = result.indication,
-                                        modifier = Modifier.width(24.dp)
+                                        modifier = Modifier.size(64.dp)
                                     )
                                     Text(
                                         text = result.indication,
