@@ -47,6 +47,8 @@ import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -228,8 +230,9 @@ fun SelectAssetsScreen(
                         )
                         IconButton(onClick = { onChartClick(asset.ticker) }) {
                             Icon(
-                                imageVector = Icons.Default.ShowChart,
-                                contentDescription = stringResource(R.string.view_chart)
+                                painter = painterResource(id = R.drawable.castical_64px),
+                                contentDescription = stringResource(R.string.view_chart),
+                                tint = Color.Unspecified
                             )
                         }
                     }
