@@ -30,6 +30,7 @@
     <string name="select_the_chart_pattern">Selecione os Padrões Gráficos</string>
     <string name="step_1_of_3">Passo 1 de 3</string>
     <string name="all_none">TODOS/NENHUM</string>
+    <string name="total_count">Total: %1$d</string>
     <string name="next">Avançar</string>
     <string name="home">Início</string>
     <string name="search">Buscar</string>

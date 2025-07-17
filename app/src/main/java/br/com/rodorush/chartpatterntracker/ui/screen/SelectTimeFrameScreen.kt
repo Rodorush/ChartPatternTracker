@@ -197,7 +197,10 @@ fun SelectTimeframesScreen(
                         }
                     }
                 )
-                Text(stringResource(R.string.all_none))
+                Text(
+                    stringResource(R.string.all_none) +
+                        " - " + stringResource(R.string.total_count, timeframes.size)
+                )
             }
         }
     }

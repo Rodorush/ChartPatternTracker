@@ -31,6 +31,7 @@
     <string name="select_the_chart_pattern">Seleccione los Patrones de Gráficos</string>
     <string name="step_1_of_3">Paso 1 de 3</string>
     <string name="all_none">TODOS/NINGUNO</string>
+    <string name="total_count">Total: %1$d</string>
     <string name="next">Avanzar</string>
     <string name="home">Inicio</string>
     <string name="search">Buscar</string>
