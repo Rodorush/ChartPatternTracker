@@ -231,7 +231,7 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
-            put("time", item.time)
+            put("time", item.time / 1000)
             put("open", item.open)
             put("high", item.high)
             put("low", item.low)
