@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -29,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -67,6 +68,17 @@ fun SelectTimeframesScreen(
         }
     }
     var searchText by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val filteredIndices = remember(searchText, timeframes, context) {
+        timeframes.mapIndexedNotNull { index, timeframe ->
+            val name = context.getString(timeframe.nameRes)
+            if (name.contains(searchText, ignoreCase = true) || timeframe.value.contains(searchText, ignoreCase = true)) {
+                index
+            } else {
+                null
+            }
+        }
+    }
     var allChecked by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -160,7 +172,8 @@ fun SelectTimeframesScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                itemsIndexed(timeframes) { index, timeframe ->
+                items(filteredIndices) { index ->
+                    val timeframe = timeframes[index]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
