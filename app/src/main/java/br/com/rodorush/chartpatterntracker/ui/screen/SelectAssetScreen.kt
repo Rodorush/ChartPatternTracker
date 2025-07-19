@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -81,6 +81,11 @@ fun SelectAssetsScreen(
         }
     }
     var searchText by remember { mutableStateOf("") }
+    val filteredIndices = remember(searchText, assets) {
+        assets.mapIndexedNotNull { index, asset ->
+            if (asset.ticker.contains(searchText, ignoreCase = true)) index else null
+        }
+    }
     var allChecked by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -194,7 +199,8 @@ fun SelectAssetsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                itemsIndexed(assets) { index, asset ->
+                items(filteredIndices) { index ->
+                    val asset = assets[index]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

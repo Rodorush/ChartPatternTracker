@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
@@ -85,6 +85,11 @@ fun SelectChartPatternScreen(
         }
     }
     var searchText by remember { mutableStateOf("") }
+    val filteredIndices = remember(searchText, patterns) {
+        patterns.mapIndexedNotNull { index, pattern ->
+            if (pattern.getLocalized("name").contains(searchText, ignoreCase = true)) index else null
+        }
+    }
     var allChecked by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -173,7 +178,8 @@ fun SelectChartPatternScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                itemsIndexed(patterns) { index, pattern ->
+                items(filteredIndices) { index ->
+                    val pattern = patterns[index]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
