@@ -186,6 +186,11 @@ fun SelectTimeframesScreen(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
+                                if (checkStates.all { it }) {
+                                    viewModel.setAllTimeframesChecked(true)
+                                } else if (checkStates.none { it }) {
+                                    viewModel.setAllTimeframesChecked(false)
+                                }
                             }
                         )
                         Text(

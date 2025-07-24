@@ -201,6 +201,11 @@ fun SelectChartPatternScreen(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
+                                if (checkStates.all { it }) {
+                                    viewModel.setAllPatternsChecked(true)
+                                } else if (checkStates.none { it }) {
+                                    viewModel.setAllPatternsChecked(false)
+                                }
                                 Log.d("SelectChartPatternScreen", "Checkbox alterado: ${pattern.id} - ${pattern.getLocalized("name")} = $isChecked")
                             }
                         )

@@ -213,6 +213,11 @@ fun SelectAssetsScreen(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
+                                if (checkStates.all { it }) {
+                                    viewModel.setAllAssetsChecked(true)
+                                } else if (checkStates.none { it }) {
+                                    viewModel.setAllAssetsChecked(false)
+                                }
                                 Log.d(
                                     "SelectAssetsScreen",
                                     "Checkbox alterado: ${asset.ticker} = $isChecked"
