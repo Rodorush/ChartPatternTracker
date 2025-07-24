@@ -86,7 +86,7 @@ fun SelectAssetsScreen(
             if (asset.ticker.contains(searchText, ignoreCase = true)) index else null
         }
     }
-    var allChecked by remember { mutableStateOf(false) }
+    val allChecked by viewModel.allAssetsChecked.collectAsState()
 
     Scaffold(
         topBar = {
@@ -131,6 +131,7 @@ fun SelectAssetsScreen(
                     val selected = assets.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
                         viewModel.updateSelectedAssets(selected)
+                        viewModel.setAllAssetsChecked(allChecked)
                         Log.d(
                             "SelectAssetsScreen",
                             "Botão Voltar clicado, ativos selecionados: ${selected.map { it.ticker }}"
@@ -147,6 +148,7 @@ fun SelectAssetsScreen(
                     Button(
                         onClick = {
                             viewModel.updateSelectedAssets(selected)
+                            viewModel.setAllAssetsChecked(allChecked)
                             Log.d(
                                 "SelectAssetsScreen",
                                 "Botão Avançar clicado, ativos selecionados: ${selected.map { it.ticker }}"
@@ -255,11 +257,14 @@ fun SelectAssetsScreen(
                 Switch(
                     checked = allChecked,
                     onCheckedChange = { toggled ->
-                        allChecked = toggled
+                        viewModel.setAllAssetsChecked(toggled)
                         for (i in checkStates.indices) {
                             checkStates[i] = toggled
                         }
-                        Log.d("SelectAssetsScreen", "Switch allChecked alterado: $toggled")
+                        Log.d(
+                            "SelectAssetsScreen",
+                            "Switch allChecked alterado: $toggled"
+                        )
                     }
                 )
                 Text(

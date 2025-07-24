@@ -79,7 +79,7 @@ fun SelectTimeframesScreen(
             }
         }
     }
-    var allChecked by remember { mutableStateOf(false) }
+    val allChecked by viewModel.allTimeframesChecked.collectAsState()
 
     Scaffold(
         topBar = {
@@ -124,6 +124,7 @@ fun SelectTimeframesScreen(
                     val selected = timeframes.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
                         viewModel.updateSelectedTimeframes(selected)
+                        viewModel.setAllTimeframesChecked(allChecked)
                         onNavigateBack()
                     }) {
                         Icon(
@@ -136,6 +137,7 @@ fun SelectTimeframesScreen(
                     Button(
                         onClick = {
                             viewModel.updateSelectedTimeframes(selected)
+                            viewModel.setAllTimeframesChecked(allChecked)
                             Log.d(
                                 "SelectTimeframesScreen",
                                 "Botão Buscar clicado, timeframes selecionados: ${selected.map { it.value }}"
@@ -204,7 +206,7 @@ fun SelectTimeframesScreen(
                 Switch(
                     checked = allChecked,
                     onCheckedChange = { toggled ->
-                        allChecked = toggled
+                        viewModel.setAllTimeframesChecked(toggled)
                         for (i in checkStates.indices) {
                             checkStates[i] = toggled
                         }
