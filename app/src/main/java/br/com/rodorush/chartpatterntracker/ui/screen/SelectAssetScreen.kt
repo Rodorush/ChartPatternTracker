@@ -16,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -49,6 +48,10 @@ import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,12 +191,8 @@ fun SelectAssetsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(40.dp))
+                Spacer(modifier = Modifier.width(40.dp))
                 Text(text = stringResource(R.string.ticker), modifier = Modifier.weight(1f))
-                Text(text = stringResource(R.string.last_price), modifier = Modifier.width(80.dp))
-                Text(
-                    text = stringResource(R.string.change_percent),
-                    modifier = Modifier.width(80.dp)
-                )
                 Spacer(modifier = Modifier.width(40.dp))
             }
 
@@ -224,22 +223,17 @@ fun SelectAssetsScreen(
                                 )
                             }
                         )
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(asset.logo)
+                                .decoderFactory(SvgDecoder.Factory())
+                                .build(),
+                            contentDescription = stringResource(R.string.logo),
+                            modifier = Modifier.width(40.dp)
+                        )
                         Text(
                             text = asset.ticker,
                             modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "R$ %.2f".format(asset.lastPrice),
-                            modifier = Modifier.width(80.dp)
-                        )
-                        val changeColor =
-                            if (asset.changePercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        Text(
-                            text = (if (asset.changePercent >= 0) "+" else "") + "%.2f%%".format(
-                                asset.changePercent
-                            ),
-                            color = changeColor,
-                            modifier = Modifier.width(80.dp)
                         )
                         IconButton(onClick = { onChartClick(asset.ticker) }) {
                             Icon(
