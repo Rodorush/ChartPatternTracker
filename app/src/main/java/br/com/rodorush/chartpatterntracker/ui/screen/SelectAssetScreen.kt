@@ -211,6 +211,11 @@ fun SelectAssetsScreen(
                             checked = checkStates[index],
                             onCheckedChange = { isChecked ->
                                 checkStates[index] = isChecked
+                                if (checkStates.all { it }) {
+                                    allChecked = true
+                                } else if (checkStates.none { it }) {
+                                    allChecked = false
+                                }
                                 Log.d(
                                     "SelectAssetsScreen",
                                     "Checkbox alterado: ${asset.ticker} = $isChecked"
