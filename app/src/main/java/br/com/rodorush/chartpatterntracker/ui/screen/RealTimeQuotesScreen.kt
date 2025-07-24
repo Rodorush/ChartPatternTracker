@@ -56,7 +56,7 @@ fun RealTimeQuotesScreen(
     LaunchedEffect(Unit) {
         if (!isLoaded) {
             assetsProvider.fetchAssets { loadedAssets ->
-                assets = loadedAssets
+                assets = loadedAssets.sortedBy { it.ticker }
                 isLoaded = true
             }
         }

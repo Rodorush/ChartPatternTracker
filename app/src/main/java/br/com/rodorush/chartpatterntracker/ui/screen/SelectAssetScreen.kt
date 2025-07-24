@@ -65,10 +65,10 @@ fun SelectAssetsScreen(
     LaunchedEffect(Unit) {
         assetsProvider.fetchAssets { loadedAssets ->
             val filtered = loadedAssets.filterNot { it.ticker.endsWith("F", ignoreCase = true) }
-            assets = filtered
+            assets = filtered.sortedBy { it.ticker }
             Log.d(
                 "SelectAssetsScreen",
-                "Ativos carregados: ${filtered.map { it.ticker }}"
+                "Ativos carregados: ${assets.map { it.ticker }}"
             )
         }
     }

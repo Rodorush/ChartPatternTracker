@@ -72,8 +72,11 @@ fun SelectChartPatternScreen(
 
     LaunchedEffect(Unit) {
         patternProvider.fetchPatterns { loadedPatterns ->
-            patterns = loadedPatterns
-            Log.d("SelectChartPatternScreen", "Padrões carregados: ${loadedPatterns.map { it.id to it.getLocalized("name") }}")
+            patterns = loadedPatterns.sortedBy { it.getLocalized("name") }
+            Log.d(
+                "SelectChartPatternScreen",
+                "Padrões carregados: ${patterns.map { it.id to it.getLocalized("name") }}"
+            )
         }
     }
 
