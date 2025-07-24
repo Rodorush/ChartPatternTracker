@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,10 +15,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShowChart
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -40,6 +40,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,9 +50,9 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
-import android.util.Log
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,12 +205,8 @@ fun SelectAssetsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(40.dp))
+                Spacer(modifier = Modifier.width(40.dp))
                 Text(text = stringResource(R.string.ticker), modifier = Modifier.weight(1f))
-                Text(text = stringResource(R.string.last_price), modifier = Modifier.width(80.dp))
-                Text(
-                    text = stringResource(R.string.change_percent),
-                    modifier = Modifier.width(80.dp)
-                )
                 Spacer(modifier = Modifier.width(40.dp))
             }
 
@@ -238,22 +237,17 @@ fun SelectAssetsScreen(
                                 )
                             }
                         )
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(asset.logo)
+                                .decoderFactory(SvgDecoder.Factory())
+                                .build(),
+                            contentDescription = stringResource(R.string.logo),
+                            modifier = Modifier.width(40.dp)
+                        )
                         Text(
                             text = asset.ticker,
                             modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "R$ %.2f".format(asset.lastPrice),
-                            modifier = Modifier.width(80.dp)
-                        )
-                        val changeColor =
-                            if (asset.changePercent >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        Text(
-                            text = (if (asset.changePercent >= 0) "+" else "") + "%.2f%%".format(
-                                asset.changePercent
-                            ),
-                            color = changeColor,
-                            modifier = Modifier.width(80.dp)
                         )
                         IconButton(onClick = { onChartClick(asset.ticker) }) {
                             Icon(
@@ -288,7 +282,7 @@ fun SelectAssetsScreen(
                 )
                 Text(
                     stringResource(R.string.all_none) +
-                        " - " + stringResource(R.string.total_count, assets.size)
+                            " - " + stringResource(R.string.total_count, assets.size)
                 )
             }
         }
