@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -54,7 +55,8 @@ import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 fun SelectTimeframesScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
-    onNextClick: () -> Unit = {}
+    onNextClick: () -> Unit = {},
+    onNavigateHome: () -> Unit = {}
 ) {
     val timeframes = TimeframeItem.availableTimeframes
     val selectedTimeframes by viewModel.selectedTimeframes.collectAsState()
@@ -132,6 +134,18 @@ fun SelectTimeframesScreen(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.back))
+                    }
+                    Button(onClick = {
+                        viewModel.updateSelectedTimeframes(selected)
+                        Log.d(
+                            "SelectTimeframesScreen",
+                            "Botão Home clicado, timeframes selecionados: ${selected.map { it.value }}"
+                        )
+                        onNavigateHome()
+                    }) {
+                        Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.home))
                     }
                     Button(
                         onClick = {
@@ -223,6 +237,6 @@ fun SelectTimeframesScreen(
 @Composable
 fun SelectTimeframesScreenPreview() {
     ChartPatternTrackerTheme {
-        SelectTimeframesScreen()
+        SelectTimeframesScreen(onNavigateHome = {})
     }
 }
