@@ -90,7 +90,7 @@ fun SelectChartPatternScreen(
             if (pattern.getLocalized("name").contains(searchText, ignoreCase = true)) index else null
         }
     }
-    var allChecked by remember { mutableStateOf(false) }
+    val allChecked by viewModel.allPatternsChecked.collectAsState()
 
     Scaffold(
         topBar = {
@@ -135,7 +135,11 @@ fun SelectChartPatternScreen(
                     val selected = patterns.filterIndexed { index, _ -> checkStates[index] }
                     Button(onClick = {
                         viewModel.updateSelectedPatterns(selected)
-                        Log.d("SelectChartPatternScreen", "Botão Home clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}")
+                        viewModel.setAllPatternsChecked(allChecked)
+                        Log.d(
+                            "SelectChartPatternScreen",
+                            "Botão Home clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}"
+                        )
                         onNavigateBack()
                     }) {
                         Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
@@ -145,7 +149,11 @@ fun SelectChartPatternScreen(
                     Button(
                         onClick = {
                         viewModel.updateSelectedPatterns(selected)
-                        Log.d("SelectChartPatternScreen", "Botão Avançar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}")
+                        viewModel.setAllPatternsChecked(allChecked)
+                        Log.d(
+                            "SelectChartPatternScreen",
+                            "Botão Avançar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}"
+                        )
                         onNextClick()
                         },
                         enabled = selected.isNotEmpty()
@@ -229,11 +237,14 @@ fun SelectChartPatternScreen(
                 Switch(
                     checked = allChecked,
                     onCheckedChange = { toggled ->
-                        allChecked = toggled
+                        viewModel.setAllPatternsChecked(toggled)
                         for (i in checkStates.indices) {
                             checkStates[i] = toggled
                         }
-                        Log.d("SelectChartPatternScreen", "Switch allChecked alterado: $toggled")
+                        Log.d(
+                            "SelectChartPatternScreen",
+                            "Switch allChecked alterado: $toggled"
+                        )
                     }
                 )
                 Text(

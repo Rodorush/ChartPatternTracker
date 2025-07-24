@@ -37,6 +37,16 @@ class ScreeningViewModel(
     private val _isScreening = MutableStateFlow(false)
     val isScreening: StateFlow<Boolean> = _isScreening
 
+    // Stores the state of the "All/None" switches for each selection screen
+    private val _allPatternsChecked = MutableStateFlow(false)
+    val allPatternsChecked: StateFlow<Boolean> = _allPatternsChecked
+
+    private val _allAssetsChecked = MutableStateFlow(false)
+    val allAssetsChecked: StateFlow<Boolean> = _allAssetsChecked
+
+    private val _allTimeframesChecked = MutableStateFlow(false)
+    val allTimeframesChecked: StateFlow<Boolean> = _allTimeframesChecked
+
     private var screeningJob: Job? = null
 
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
@@ -52,6 +62,18 @@ class ScreeningViewModel(
     fun updateSelectedTimeframes(timeframes: List<TimeframeItem>) {
         _selectedTimeframes.value = timeframes
         _shouldRefresh.value = true
+    }
+
+    fun setAllPatternsChecked(value: Boolean) {
+        _allPatternsChecked.value = value
+    }
+
+    fun setAllAssetsChecked(value: Boolean) {
+        _allAssetsChecked.value = value
+    }
+
+    fun setAllTimeframesChecked(value: Boolean) {
+        _allTimeframesChecked.value = value
     }
 
     fun startScreening() {
