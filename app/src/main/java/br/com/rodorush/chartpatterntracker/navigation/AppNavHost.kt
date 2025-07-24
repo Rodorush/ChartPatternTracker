@@ -77,6 +77,7 @@ fun AppNavHost(
                     viewModel = screeningViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onNextClick = { navController.navigate(Screen.SelectTimeframes.route) },
+                    onNavigateHome = { navController.popBackStack(Screen.Main.route, false) },
                     onChartClick = { ticker ->
                         navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", null, false))
                     }
@@ -102,7 +103,8 @@ fun AppNavHost(
             SelectTimeframesScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onNextClick = { navController.navigate(Screen.ScreeningResults.route) }
+                onNextClick = { navController.navigate(Screen.ScreeningResults.route) },
+                onNavigateHome = { navController.popBackStack(Screen.Main.route, false) }
             )
         }
 
@@ -113,6 +115,7 @@ fun AppNavHost(
             ScreeningResultsScreen(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = { navController.popBackStack(Screen.Main.route, false) },
                 onCardClick = { ticker, timeframe, patternId ->
                     navController.navigate(Screen.ChartDetail.createRoute(ticker, timeframe, patternId))
                 }
