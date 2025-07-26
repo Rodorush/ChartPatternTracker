@@ -210,7 +210,7 @@ fun ScreeningResultsScreen(
                                         .build(),
                                     placeholder = painterResource(id = R.drawable.castical_64px),
                                     contentDescription = stringResource(R.string.pattern_description),
-                                    modifier = Modifier.size(56.dp)
+                                    modifier = Modifier.size(60.dp)
                                 )
                                 Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                                     Text(
