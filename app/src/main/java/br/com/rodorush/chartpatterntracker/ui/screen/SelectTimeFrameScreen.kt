@@ -231,9 +231,9 @@ fun SelectTimeframesScreen(
                         }
                     }
                 )
+                val selectedCount = checkStates.count { it }
                 Text(
-                    stringResource(R.string.all_none) +
-                        " - " + stringResource(R.string.total_count, timeframes.size)
+                    stringResource(R.string.total_count, selectedCount, timeframes.size)
                 )
             }
         }
