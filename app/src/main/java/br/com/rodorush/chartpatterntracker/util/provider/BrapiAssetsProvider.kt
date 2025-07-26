@@ -22,6 +22,7 @@ class BrapiAssetsProvider : AssetsProvider {
             val assets = response.stocks.map {
                 AssetItem(
                     ticker = it.stock,
+                    name = it.name,
                     lastPrice = it.close ?: 0.0,
                     changePercent = it.change ?: 0.0,
                     logo = it.logo ?: ""

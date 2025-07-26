@@ -245,10 +245,15 @@ fun SelectAssetsScreen(
                             contentDescription = stringResource(R.string.logo),
                             modifier = Modifier.width(40.dp)
                         )
-                        Text(
-                            text = asset.ticker,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = asset.ticker)
+                            if (asset.name.isNotEmpty()) {
+                                Text(
+                                    text = asset.name,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                         IconButton(onClick = { onChartClick(asset.ticker) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.castical_64px),
