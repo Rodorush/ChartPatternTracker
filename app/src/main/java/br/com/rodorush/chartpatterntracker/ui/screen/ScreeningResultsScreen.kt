@@ -43,15 +43,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,15 +198,21 @@ fun ScreeningResultsScreen(
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Miniatura do padrão (placeholder)
-                                Image(
-                                    painter = painterResource(id = R.drawable.castical_64px),
+                                // Miniatura do padrão
+                                var imageUrl by remember { mutableStateOf<String?>(null) }
+                                LaunchedEffect(result.pattern.id) {
+                                    imageUrl = loadImageUrlFromStorage(result.pattern.id)
+                                }
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(imageUrl)
+                                        .crossfade(true)
+                                        .build(),
+                                    placeholder = painterResource(id = R.drawable.castical_64px),
                                     contentDescription = stringResource(R.string.pattern_description),
-                                    modifier = Modifier.width(40.dp)
+                                    modifier = Modifier.size(56.dp)
                                 )
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                                     Text(
                                         text = stringResource(result.timeframe.nameRes),
                                         style = MaterialTheme.typography.bodyMedium
