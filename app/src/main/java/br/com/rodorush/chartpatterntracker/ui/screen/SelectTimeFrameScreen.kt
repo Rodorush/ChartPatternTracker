@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -124,19 +125,18 @@ fun SelectTimeframesScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val selected = timeframes.filterIndexed { index, _ -> checkStates[index] }
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.updateSelectedTimeframes(selected)
                         viewModel.setAllTimeframesChecked(allChecked)
                         onNavigateBack()
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
+                            modifier = Modifier.size(32.dp)
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.back))
                     }
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.updateSelectedTimeframes(selected)
                         Log.d(
                             "SelectTimeframesScreen",
@@ -144,11 +144,13 @@ fun SelectTimeframesScreen(
                         )
                         onNavigateHome()
                     }) {
-                        Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.home))
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = stringResource(R.string.home),
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
-                    Button(
+                    IconButton(
                         onClick = {
                             viewModel.updateSelectedTimeframes(selected)
                             viewModel.setAllTimeframesChecked(allChecked)
@@ -160,11 +162,10 @@ fun SelectTimeframesScreen(
                         },
                         enabled = selected.isNotEmpty()
                     ) {
-                        Text(stringResource(R.string.search))
-                        Spacer(Modifier.width(4.dp))
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = stringResource(R.string.search)
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search),
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }

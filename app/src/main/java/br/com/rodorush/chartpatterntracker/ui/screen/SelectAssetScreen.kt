@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -134,7 +135,7 @@ fun SelectAssetsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val selected = assets.filterIndexed { index, _ -> checkStates[index] }
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.updateSelectedAssets(selected)
                         viewModel.setAllAssetsChecked(allChecked)
                         Log.d(
@@ -145,12 +146,11 @@ fun SelectAssetsScreen(
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
+                            modifier = Modifier.size(32.dp)
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.back))
                     }
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.updateSelectedAssets(selected)
                         Log.d(
                             "SelectAssetsScreen",
@@ -158,11 +158,13 @@ fun SelectAssetsScreen(
                         )
                         onNavigateHome()
                     }) {
-                        Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.home))
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = stringResource(R.string.home),
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
-                    Button(
+                    IconButton(
                         onClick = {
                             viewModel.updateSelectedAssets(selected)
                             viewModel.setAllAssetsChecked(allChecked)
@@ -174,11 +176,10 @@ fun SelectAssetsScreen(
                         },
                         enabled = selected.isNotEmpty()
                     ) {
-                        Text(stringResource(R.string.next))
-                        Spacer(Modifier.width(4.dp))
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = stringResource(R.string.next)
+                            contentDescription = stringResource(R.string.next),
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
