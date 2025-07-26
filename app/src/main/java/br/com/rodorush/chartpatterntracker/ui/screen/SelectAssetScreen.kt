@@ -205,9 +205,6 @@ fun SelectAssetsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(40.dp))
-                Spacer(modifier = Modifier.width(40.dp))
-                Text(text = stringResource(R.string.ticker), modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(40.dp))
             }
 
             LazyColumn(
@@ -245,10 +242,15 @@ fun SelectAssetsScreen(
                             contentDescription = stringResource(R.string.logo),
                             modifier = Modifier.width(40.dp)
                         )
-                        Text(
-                            text = asset.ticker,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                            Text(text = asset.ticker)
+                            if (asset.name.isNotEmpty()) {
+                                Text(
+                                    text = asset.name,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                         IconButton(onClick = { onChartClick(asset.ticker) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.castical_64px),
