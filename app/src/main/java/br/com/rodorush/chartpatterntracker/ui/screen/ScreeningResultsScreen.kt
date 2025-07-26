@@ -23,7 +23,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -135,25 +134,27 @@ fun ScreeningResultsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.cancelScreening()
                         onNavigateBack()
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
+                            modifier = Modifier.size(32.dp)
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.back))
                     }
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.cancelScreening()
                         onNavigateHome()
                     }) {
-                        Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.home))
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = stringResource(R.string.home),
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
+                    Spacer(Modifier.size(48.dp))
                 }
             }
         }
@@ -210,7 +211,7 @@ fun ScreeningResultsScreen(
                                         .build(),
                                     placeholder = painterResource(id = R.drawable.castical_64px),
                                     contentDescription = stringResource(R.string.pattern_description),
-                                    modifier = Modifier.size(56.dp)
+                                    modifier = Modifier.size(60.dp)
                                 )
                                 Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                                     Text(
