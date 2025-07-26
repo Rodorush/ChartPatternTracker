@@ -255,11 +255,9 @@ fun SelectChartPatternScreen(
                         )
                     }
                 )
+                val selectedCount = checkStates.count { it }
                 Text(
-                    stringResource(
-                        R.string.all_none
-                    ) + " - " +
-                        stringResource(R.string.total_count, patterns.size)
+                    stringResource(R.string.total_count, selectedCount, patterns.size)
                 )
             }
         }
