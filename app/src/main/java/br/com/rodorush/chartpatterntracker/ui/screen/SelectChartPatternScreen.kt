@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,7 +20,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -136,7 +136,7 @@ fun SelectChartPatternScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val selected = patterns.filterIndexed { index, _ -> checkStates[index] }
-                    Button(onClick = {
+                    IconButton(onClick = {
                         viewModel.updateSelectedPatterns(selected)
                         viewModel.setAllPatternsChecked(allChecked)
                         Log.d(
@@ -145,11 +145,13 @@ fun SelectChartPatternScreen(
                         )
                         onNavigateBack()
                     }) {
-                        Icon(Icons.Default.Home, contentDescription = stringResource(R.string.home))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.home))
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = stringResource(R.string.home),
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
-                    Button(
+                    IconButton(
                         onClick = {
                         viewModel.updateSelectedPatterns(selected)
                         viewModel.setAllPatternsChecked(allChecked)
@@ -161,11 +163,10 @@ fun SelectChartPatternScreen(
                         },
                         enabled = selected.isNotEmpty()
                     ) {
-                        Text(stringResource(R.string.next))
-                        Spacer(Modifier.width(4.dp))
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = stringResource(R.string.next)
+                            contentDescription = stringResource(R.string.next),
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
