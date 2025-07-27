@@ -186,7 +186,11 @@ fun ScreeningResultsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(screeningResults) { result ->
+                    val filteredResults = screeningResults.filter { result ->
+                        result.asset.ticker.contains(searchText, ignoreCase = true) ||
+                            result.pattern.getLocalized("name").contains(searchText, ignoreCase = true)
+                    }
+                    items(filteredResults) { result ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
