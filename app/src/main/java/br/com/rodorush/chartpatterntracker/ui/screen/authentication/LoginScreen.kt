@@ -229,6 +229,23 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
 
         Spacer(modifier = Modifier.padding(16.dp))
 
+        Row {
+            Text(
+                text = stringResource(R.string.forgot_password),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = stringResource(R.string.recover),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { }
+            )
+        }
+
+        Spacer(modifier = Modifier.padding(8.dp))
+
         // Texto "Don't have an account?"
         Row {
             Text(

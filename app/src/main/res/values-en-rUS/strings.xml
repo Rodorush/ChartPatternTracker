@@ -78,4 +78,7 @@
     <string name="last_price">Last Price</string>
     <string name="change_percent">% Change</string>
     <string name="view_chart">View chart</string>
+    <string name="no_patterns_found">No pattern found.</string>
+    <string name="forgot_password">Forgot your password?</string>
+    <string name="recover">RECOVER</string>
 </resources>
