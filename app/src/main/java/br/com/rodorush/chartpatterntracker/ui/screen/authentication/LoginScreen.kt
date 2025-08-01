@@ -240,7 +240,31 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                 text = stringResource(R.string.recover),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { }
+                modifier = Modifier.clickable {
+                    if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.invalid_email),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        authProvider.sendPasswordResetEmail(email) { success, error ->
+                            if (success) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.password_reset_email_sent),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    error ?: context.getString(R.string.login_error),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
             )
         }
 

@@ -42,4 +42,13 @@ class MockAuthProvider : AuthProvider {
         // Simula o logout
         onResult()
     }
+
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        // Simula envio de email de recuperação
+        if (email.contains("@")) {
+            onResult(true, null)
+        } else {
+            onResult(false, "Invalid email format")
+        }
+    }
 }

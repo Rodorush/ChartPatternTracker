@@ -58,4 +58,15 @@ class FirebaseAuthProvider : AuthProvider {
         auth.signOut()
         onResult()
     }
+
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
 }

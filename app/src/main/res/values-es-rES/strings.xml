@@ -81,4 +81,6 @@
     <string name="no_patterns_found">No se encontró ningún patrón.</string>
     <string name="forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="recover">RECUPERAR</string>
+    <string name="invalid_email">Por favor, introduce un correo electrónico válido.</string>
+    <string name="password_reset_email_sent">Correo de recuperación enviado.</string>
 </resources>
