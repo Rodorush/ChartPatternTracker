@@ -243,7 +243,7 @@ fun SelectChartPatternScreen(
                             placeholder = painterResource(id = R.drawable.castical_64px),
                             contentDescription = stringResource(R.string.pattern_description),
                             modifier = Modifier
-                                .width(40.dp)
+                                .size(64.dp)
                                 .clickable {
                                     onNavigateToDetails(pattern.id)
                                 }

@@ -89,7 +89,8 @@ fun SelectAssetsScreen(
     var searchText by remember { mutableStateOf("") }
     val filteredIndices = remember(searchText, assets) {
         assets.mapIndexedNotNull { index, asset ->
-            if (asset.ticker.contains(searchText, ignoreCase = true)) index else null
+            if (asset.ticker.contains(searchText, ignoreCase = true) ||
+                asset.name.contains(searchText, ignoreCase = true)) index else null
         }
     }
     val allChecked by viewModel.allAssetsChecked.collectAsState()
