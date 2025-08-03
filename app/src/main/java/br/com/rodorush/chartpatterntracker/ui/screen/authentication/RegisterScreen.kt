@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,23 +54,15 @@ fun RegisterScreen(
     // Estados para os campos
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var acceptTerms by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val isButtonEnabled = remember {
         mutableStateOf(false)
     }
 
-    LaunchedEffect(name, email, password, confirmPassword, acceptTerms) {
-        isButtonEnabled.value = name.isNotBlank() &&
-                email.isNotBlank() &&
-                Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
-                password.isNotBlank() &&
-                confirmPassword.isNotBlank() &&
-                password == confirmPassword &&
-                acceptTerms
+    LaunchedEffect(name, email) {
+        isButtonEnabled.value = name.isNotBlank() && email.isNotBlank()
     }
 
     // Layout principal
@@ -138,61 +129,40 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.padding(8.dp))
 
-            // Campo Password
-            SignInInputField(
-                label = stringResource(R.string.password),
-                placeholder = "********",
-                value = password,
-                onValueChange = { password = it },
-                isPassword = true
-            )
-
-            Spacer(modifier = Modifier.padding(8.dp))
-
-            // Campo Password
-            SignInInputField(
-                label = stringResource(R.string.confirm_the_password),
-                placeholder = "********",
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                isPassword = true
-            )
-
-            // Checkbox + Texto: Terms & policy
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = acceptTerms,
-                    onCheckedChange = { acceptTerms = it }
-                )
+            if (emailError) {
                 Text(
-                    text = stringResource(R.string.i_understood_the_terms_policy),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(R.string.invalid_email_format),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
                 )
             }
 
             // Botão SIGN UP
             Button(
                 onClick = {
-                    authProvider.createUserWithEmailAndPassword(email, password) { success, error ->
-                        if (success) {
-                            Toast.makeText(context, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
-                            onNavigateToLogin()
-                        } else {
-                            val errorMessage = when (error) {
-                                "The email address is already in use by another account." ->
-                                    context.getString(R.string.email_already_exists)
+                    if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        emailError = true
+                    } else {
+                        emailError = false
+                        authProvider.createUserWithEmailAndPassword(email, "123456") { success, error ->
+                            if (success) {
+                                Toast.makeText(context, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                                onNavigateToLogin()
+                            } else {
+                                val errorMessage = when (error) {
+                                    "The email address is already in use by another account." ->
+                                        context.getString(R.string.email_already_exists)
 
-                                "A network error (such as timeout, interrupted connection or unreachable host) has occurred." ->
-                                    context.getString(R.string.network_error)
-                                else ->
-                                    context.getString(R.string.registration_error)
+                                    "A network error (such as timeout, interrupted connection or unreachable host) has occurred." ->
+                                        context.getString(R.string.network_error)
+                                    else ->
+                                        context.getString(R.string.registration_error)
+                                }
+                                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                             }
-                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                         }
                     }
                 },

@@ -22,6 +22,7 @@
     <string name="create_your_account">Crie sua conta</string>
     <string name="name">Nome</string>
     <string name="confirm_the_password">Confirme a senha</string>
+    <string name="invalid_email_format">Por favor, insira um e-mail válido, como exemplo@dominio.com</string>
     <string name="i_understood_the_terms_policy">Eu entendi os termos e a política.</string>
     <string name="or_sign_up_with">ou cadastre-se com</string>
     <string name="have_an_account">Já tem uma conta?</string>
