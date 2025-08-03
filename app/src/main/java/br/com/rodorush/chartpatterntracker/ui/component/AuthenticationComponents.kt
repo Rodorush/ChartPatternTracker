@@ -28,7 +28,9 @@ fun SignInInputField(
     placeholder: String,
     value: String,
     onValueChange: (String) -> Unit,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    isError: Boolean = false,
+    errorMessage: String? = null
 ) {
     TextField(
         value = value,
@@ -36,6 +38,15 @@ fun SignInInputField(
         label = { Text(label) },
         placeholder = { Text(placeholder) },
         singleLine = true,
+        isError = isError,
+        supportingText = {
+            if (isError && errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(
             keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email,

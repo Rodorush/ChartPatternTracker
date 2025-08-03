@@ -20,6 +20,7 @@
     <string name="registration_error">Erro ao tentar efetuar o cadastro, tente novamente</string>
     <string name="network_error">Erro de conexão, verifique sua internet e tente novamente.</string>
     <string name="email_example">email@dominio.com.br</string>
+    <string name="invalid_email_format">Por favor, insira um e-mail válido, como exemplo@dominio.com</string>
     <string name="create_your_account">Crie sua conta</string>
     <string name="name">Nome</string>
     <string name="confirm_the_password">Confirme a senha</string>

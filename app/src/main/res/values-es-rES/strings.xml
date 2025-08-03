@@ -20,6 +20,7 @@
     <string name="registration_error">Error al intentar registrarse, inténtelo de nuevo.</string>
     <string name="network_error">Error de conexión, verifica tu internet e inténtalo de nuevo.</string>
     <string name="email_example">correo@dominio.com</string>
+    <string name="invalid_email_format">Por favor, introduce un correo válido, como ejemplo@dominio.com</string>
     <string name="create_your_account">Crea tu cuenta</string>
     <string name="name">Nombre</string>
     <string name="confirm_the_password">Confirma la contraseña</string>

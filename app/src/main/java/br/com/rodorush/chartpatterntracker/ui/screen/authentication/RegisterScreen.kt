@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,22 +55,18 @@ fun RegisterScreen(
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var acceptTerms by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val isButtonEnabled = remember {
         mutableStateOf(false)
     }
 
-    LaunchedEffect(name, email, password, confirmPassword, acceptTerms) {
+    LaunchedEffect(name, email, password, emailError) {
         isButtonEnabled.value = name.isNotBlank() &&
                 email.isNotBlank() &&
-                Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
-                password.isNotBlank() &&
-                confirmPassword.isNotBlank() &&
-                password == confirmPassword &&
-                acceptTerms
+                !emailError &&
+                password.isNotBlank()
     }
 
     // Layout principal
@@ -133,7 +128,12 @@ fun RegisterScreen(
                 label = "Email",
                 placeholder = stringResource(R.string.email_example),
                 value = email,
-                onValueChange = { email = it }
+                onValueChange = {
+                    email = it
+                    emailError = it.isNotBlank() && !Patterns.EMAIL_ADDRESS.matcher(it).matches()
+                },
+                isError = emailError,
+                errorMessage = stringResource(R.string.invalid_email_format)
             )
 
             Spacer(modifier = Modifier.padding(8.dp))
@@ -147,33 +147,7 @@ fun RegisterScreen(
                 isPassword = true
             )
 
-            Spacer(modifier = Modifier.padding(8.dp))
-
-            // Campo Password
-            SignInInputField(
-                label = stringResource(R.string.confirm_the_password),
-                placeholder = "********",
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                isPassword = true
-            )
-
-            // Checkbox + Texto: Terms & policy
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = acceptTerms,
-                    onCheckedChange = { acceptTerms = it }
-                )
-                Text(
-                    text = stringResource(R.string.i_understood_the_terms_policy),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            Spacer(modifier = Modifier.padding(16.dp))
 
             // Botão SIGN UP
             Button(
