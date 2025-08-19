@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -81,11 +82,21 @@ fun ChartDetailScreen(
                 } else {
                     patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
                 }
-                val jsonData = candlestickData.toJsonArray(highlightTimes)
-                Log.d("ChartDetailScreen", "JSON Data: $jsonData")
-                Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
+                val candleJson = candlestickData.toJsonArray(highlightTimes)
+                val relevantPatterns = if (patternId != null) {
+                    patternsData.filterKeys { it == patternId }
+                } else {
+                    patternsData
+                }
+                val markerJson = relevantPatterns.toMarkersJson()
+                val payload = JSONObject().apply {
+                    put("candles", candleJson)
+                    put("markers", markerJson)
+                }
+                Log.d("ChartDetailScreen", "JSON Data: $payload")
+                Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles and ${markerJson.length()} markers")
                 coroutineScope.launch {
-                    webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    webView.evaluateJavascript("updateChart($payload)", null)
                 }
             }
         }
@@ -211,9 +222,18 @@ class WebAppInterface(
                                 console.error("Chart not initialized. Initializing now...");
                                 initializeChart();
                             }
-                            const data = JSON.parse('$jsonData');
+                            const payload = JSON.parse('$jsonData');
+                            const data = payload.candles || [];
+                            const markers = payload.markers || [];
                             candlestickSeries.setData(data);
+                            candlestickSeries.setMarkers(markers);
                             chart.timeScale().fitContent();
+                            setTimeout(() => {
+                                document.querySelectorAll('.pane-markers .pane-marker-label').forEach(l => {
+                                    l.style.writingMode = 'vertical-rl';
+                                    l.style.textOrientation = 'mixed';
+                                });
+                            }, 0);
                         })();
                         """.trimIndent(), null
                     )
@@ -227,7 +247,7 @@ class WebAppInterface(
     }
 }
 
-fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): String {
+fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): JSONArray {
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
@@ -251,5 +271,24 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
         }
         jsonArray.put(jsonObject)
     }
-    return jsonArray.toString().replace("\"", "\\\"")
+    return jsonArray
+}
+
+fun Map<String, List<PatternOccurrence>>.toMarkersJson(): JSONArray {
+    val markersArray = JSONArray()
+    for ((id, occurrences) in this) {
+        val name = br.com.rodorush.chartpatterntracker.model.pattern.PatternNames.names[id] ?: id
+        for (occurrence in occurrences) {
+            val first = occurrence.candles.firstOrNull() ?: continue
+            val marker = JSONObject().apply {
+                put("time", first.time / 1000)
+                put("position", "aboveBar")
+                put("shape", "square")
+                put("color", "#000000")
+                put("text", name)
+            }
+            markersArray.put(marker)
+        }
+    }
+    return markersArray
 }

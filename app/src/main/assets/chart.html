@@ -54,14 +54,15 @@
         }
     }
 
-    window.updateChart = function(jsonData) {
+    window.updateChart = function(payload) {
         if (!chart || !candlestickSeries) {
             console.error("Chart not initialized. Call initializeChart first.");
             return;
         }
         try {
-            const data = JSON.parse(jsonData);
-            console.log("Raw data received:", data);
+            const data = payload.candles || [];
+            const markers = payload.markers || [];
+            console.log("Raw data received:", data, markers);
 
             // Verificar a última vela e ignorá-la se tiver OHLC com zero
             let finalData = data;
@@ -75,8 +76,15 @@
             }
 
             candlestickSeries.setData(finalData);
+            candlestickSeries.setMarkers(markers);
             chart.timeScale().fitContent();
-            console.log("Chart updated with data, count:", finalData.length);
+            setTimeout(() => {
+                document.querySelectorAll('.pane-markers .pane-marker-label').forEach(label => {
+                    label.style.writingMode = 'vertical-rl';
+                    label.style.textOrientation = 'mixed';
+                });
+            }, 0);
+            console.log("Chart updated with data, count:", finalData.length, "markers:", markers.length);
         } catch (e) {
             console.error("Error updating chart:", e);
         }
