@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,6 +60,8 @@ fun ChartDetailScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val patternProvider = LocalPatternProvider.current
+    var patternNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     // Gerenciar o botão Back do Android
     BackHandler(enabled = true) {
@@ -73,15 +76,33 @@ fun ChartDetailScreen(
         viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns, ids)
     }
 
-    LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
+    LaunchedEffect(Unit) {
+        patternProvider.fetchPatterns { loaded ->
+            patternNames = loaded.associate { it.id to it.getLocalized("name") }
+        }
+    }
+
+    LaunchedEffect(candlestickData, patternsData, isChartInitialized, patternNames) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = if (patternId != null) {
-                    patternsData[patternId].orEmpty().flatMap { it.candles }.map { it.time }.toSet()
+                val highlightTimes: Set<Long>
+                val labelMap: Map<Long, String>
+                if (patternId != null) {
+                    val occurrences = patternsData[patternId].orEmpty()
+                    highlightTimes = occurrences.flatMap { it.candles }.map { it.time }.toSet()
+                    labelMap = occurrences.associate { occ ->
+                        occ.candles.first().time to (patternNames[patternId] ?: patternId)
+                    }
                 } else {
-                    patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
+                    val allOccurrences = patternsData.flatMap { (id, list) ->
+                        list.map { id to it }
+                    }
+                    highlightTimes = allOccurrences.flatMap { it.second.candles }.map { it.time }.toSet()
+                    labelMap = allOccurrences.associate { (id, occ) ->
+                        occ.candles.first().time to (patternNames[id] ?: id)
+                    }
                 }
-                val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val jsonData = candlestickData.toJsonArray(highlightTimes, labelMap)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
@@ -227,7 +248,10 @@ class WebAppInterface(
     }
 }
 
-fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): String {
+fun List<Candlestick>.toJsonArray(
+    highlightTimes: Set<Long> = emptySet(),
+    labels: Map<Long, String> = emptyMap()
+): String {
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
@@ -248,8 +272,13 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
                     put("borderColor", "#000000")
                 }
             }
+            labels[item.time]?.let { label ->
+                put("patternLabel", label)
+            }
         }
         jsonArray.put(jsonObject)
     }
-    return jsonArray.toString().replace("\"", "\\\"")
+    return jsonArray.toString()
+        .replace("\"", "\\\"")
+        .replace("'", "\\'")
 }

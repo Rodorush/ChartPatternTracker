@@ -75,6 +75,18 @@
             }
 
             candlestickSeries.setData(finalData);
+
+            const markers = finalData
+                .filter(item => item.patternLabel)
+                .map(item => ({
+                    time: item.time,
+                    position: 'inBar',
+                    shape: 'square',
+                    color: '#000000',
+                    text: item.patternLabel.split('').join('\n'),
+                }));
+            candlestickSeries.setMarkers(markers);
+
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
