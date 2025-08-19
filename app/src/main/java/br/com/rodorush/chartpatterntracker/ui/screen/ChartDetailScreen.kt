@@ -19,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
+import br.com.rodorush.chartpatterntracker.model.TimeframeItem
+import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -94,7 +99,20 @@ fun ChartDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { /* Vazio, apenas o ícone de voltar */ },
+                title = {
+                    val timeframeName = TimeframeItem.availableTimeframes
+                        .firstOrNull { it.value.equals(timeframe, ignoreCase = true) }
+                        ?.let { stringResource(it.nameRes) }
+                        ?: timeframe.uppercase()
+                    Text(
+                        text = stringResource(
+                            R.string.chart_detail_title,
+                            ticker.uppercase(),
+                            timeframeName
+                        ),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = {
                         Log.d("ChartDetailScreen", "UI Back button clicked")
