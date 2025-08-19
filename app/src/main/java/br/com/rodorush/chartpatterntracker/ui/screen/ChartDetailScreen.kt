@@ -32,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
+import br.com.rodorush.chartpatterntracker.model.pattern.PatternDetectorRegistry
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -76,16 +78,19 @@ fun ChartDetailScreen(
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = if (patternId != null) {
-                    patternsData[patternId].orEmpty().flatMap { it.candles }.map { it.time }.toSet()
+                val relevantPatterns = if (patternId != null) {
+                    mapOf(patternId to patternsData[patternId].orEmpty())
                 } else {
-                    patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
+                    patternsData
                 }
-                val jsonData = candlestickData.toJsonArray(highlightTimes)
-                Log.d("ChartDetailScreen", "JSON Data: $jsonData")
+                val highlightTimes = relevantPatterns.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
+                val candlesJson = candlestickData.toJsonArray(highlightTimes)
+                val markersJson = relevantPatterns.toMarkersJson()
+                Log.d("ChartDetailScreen", "Candles JSON: $candlesJson")
+                Log.d("ChartDetailScreen", "Markers JSON: $markersJson")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
-                    webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    webView.evaluateJavascript("updateChart('$candlesJson', '$markersJson')", null)
                 }
             }
         }
@@ -252,4 +257,25 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
         jsonArray.put(jsonObject)
     }
     return jsonArray.toString().replace("\"", "\\\"")
+}
+
+fun Map<String, List<PatternOccurrence>>.toMarkersJson(): String {
+    val markersArray = JSONArray()
+    for ((patternId, occurrences) in this) {
+        val detector = PatternDetectorRegistry.get(patternId)
+        val rawName = detector?.javaClass?.simpleName?.removeSuffix("Detector") ?: patternId
+        val name = rawName.replace(Regex("([a-z])([A-Z])"), "$1 $2")
+        for (occurrence in occurrences) {
+            val first = occurrence.candles.firstOrNull() ?: continue
+            val marker = JSONObject().apply {
+                put("time", first.time / 1000)
+                put("position", "aboveBar")
+                put("color", "#2962FF")
+                put("shape", "circle")
+                put("text", name)
+            }
+            markersArray.put(marker)
+        }
+    }
+    return markersArray.toString().replace("\"", "\\\"")
 }

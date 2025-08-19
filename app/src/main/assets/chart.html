@@ -54,13 +54,13 @@
         }
     }
 
-    window.updateChart = function(jsonData) {
+    window.updateChart = function(candleData, markerData) {
         if (!chart || !candlestickSeries) {
             console.error("Chart not initialized. Call initializeChart first.");
             return;
         }
         try {
-            const data = JSON.parse(jsonData);
+            const data = JSON.parse(candleData);
             console.log("Raw data received:", data);
 
             // Verificar a última vela e ignorá-la se tiver OHLC com zero
@@ -75,6 +75,15 @@
             }
 
             candlestickSeries.setData(finalData);
+
+            const markers = JSON.parse(markerData);
+            markers.forEach(marker => {
+                if (marker.text) {
+                    marker.text = marker.text.split('').join('\n');
+                }
+            });
+            candlestickSeries.setMarkers(markers);
+
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
