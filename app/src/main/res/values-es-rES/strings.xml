@@ -79,4 +79,5 @@
     <string name="change_percent">% Variación</string>
     <string name="view_chart">Ver gráfico</string>
     <string name="chart_detail_title">%1$s - %2$s</string>
+    <string name="total_results_found">Total de resultados: %1$d</string>
 </resources>

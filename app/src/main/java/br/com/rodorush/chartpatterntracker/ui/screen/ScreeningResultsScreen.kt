@@ -183,14 +183,14 @@ fun ScreeningResultsScreen(
                     )
                 }
             } else {
+                val filteredResults = screeningResults.filter { result ->
+                    result.asset.ticker.contains(searchText, ignoreCase = true) ||
+                        result.pattern.getLocalized("name").contains(searchText, ignoreCase = true)
+                }
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    val filteredResults = screeningResults.filter { result ->
-                        result.asset.ticker.contains(searchText, ignoreCase = true) ||
-                            result.pattern.getLocalized("name").contains(searchText, ignoreCase = true)
-                    }
                     items(filteredResults) { result ->
                         Card(
                             modifier = Modifier
@@ -253,6 +253,13 @@ fun ScreeningResultsScreen(
                         }
                     }
                 }
+                Text(
+                    text = stringResource(R.string.total_results_found, filteredResults.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 8.dp)
+                )
                 if (isScreening) {
                     Spacer(modifier = Modifier.height(16.dp))
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
