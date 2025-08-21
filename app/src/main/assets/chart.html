@@ -54,7 +54,7 @@
         }
     }
 
-    window.updateChart = function(jsonData) {
+    window.updateChart = function(jsonData, markersJson) {
         if (!chart || !candlestickSeries) {
             console.error("Chart not initialized. Call initializeChart first.");
             return;
@@ -75,6 +75,12 @@
             }
 
             candlestickSeries.setData(finalData);
+
+            if (markersJson) {
+                const markers = JSON.parse(markersJson);
+                candlestickSeries.setMarkers(markers);
+            }
+
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
