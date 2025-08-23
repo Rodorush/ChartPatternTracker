@@ -38,14 +38,15 @@
             console.log("Chart has addSeries:", typeof chart.addSeries === 'function');
             console.log("LightweightCharts.CandlestickSeries available:", typeof LightweightCharts.CandlestickSeries !== 'undefined');
 
-            console.log("Adding candlestick series using addSeries...");
-            candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+            console.log("Adding candlestick series using addCandlestickSeries...");
+            candlestickSeries = chart.addCandlestickSeries({
                 upColor: '#26A69A',
                 downColor: '#EF5350',
                 borderVisible: false,
                 wickUpColor: '#26A69A',
                 wickDownColor: '#EF5350'
             });
+            console.log("candlestickSeries has setMarkers:", typeof candlestickSeries.setMarkers === 'function');
 
             console.log("Chart initialized successfully");
             AndroidInterface.chartInitialized();
