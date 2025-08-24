@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
+import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +64,8 @@ fun ChartDetailScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
+    val patternProvider = LocalPatternProvider.current
+    var patternName by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
     // Gerenciar o botão Back do Android
@@ -78,6 +81,14 @@ fun ChartDetailScreen(
         viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns, ids)
     }
 
+    LaunchedEffect(patternId) {
+        if (patternId != null) {
+            patternProvider.fetchPatternById(patternId) { pattern ->
+                patternName = pattern?.getLocalized("name")
+            }
+        }
+    }
+
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
@@ -91,6 +102,17 @@ fun ChartDetailScreen(
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(patternName, isChartInitialized) {
+        if (!patternName.isNullOrEmpty() && isChartInitialized) {
+            webViewRef?.let { webView ->
+                val escaped = patternName!!.replace("'", "\\'")
+                coroutineScope.launch {
+                    webView.evaluateJavascript("setWatermark('$escaped')", null)
                 }
             }
         }
