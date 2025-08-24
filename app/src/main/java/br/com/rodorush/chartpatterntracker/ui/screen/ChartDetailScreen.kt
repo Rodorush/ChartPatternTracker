@@ -40,6 +40,7 @@ import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -91,16 +92,13 @@ fun ChartDetailScreen(
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = if (patternId != null) {
-                    patternsData[patternId].orEmpty().flatMap { it.candles }.map { it.time }.toSet()
-                } else {
-                    patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
-                }
-                val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val jsonData = candlestickData.toJsonArray()
+                val rectsJson = patternsData.toRectanglesJson(patternId)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
+                Log.d("ChartDetailScreen", "Rectangles Data: $rectsJson")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
-                    webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    webView.evaluateJavascript("updateChart('$jsonData', '$rectsJson')", null)
                 }
             }
         }
@@ -235,7 +233,7 @@ class WebAppInterface(
     }
 
     @JavascriptInterface
-    fun updateChart(jsonData: String) {
+    fun updateChart(candlesJson: String, rectsJson: String) {
         if (!isDestroyed) {
             Log.d("ChartDetailScreen", "JavaScript: updateChart called")
             webView.post {
@@ -243,13 +241,19 @@ class WebAppInterface(
                     webView.evaluateJavascript(
                         """
                         (function() {
-                            if (!chart || !candlestickSeries) {
+                            if (!chart) {
                                 console.error("Chart not initialized. Initializing now...");
                                 initializeChart();
                             }
-                            const data = JSON.parse('$jsonData');
-                            candlestickSeries.setData(data);
-                            chart.timeScale().fitContent();
+                            const data = JSON.parse('$candlesJson');
+                            chart.setData({ candles: data });
+                            if (data.length > 0) {
+                                chart.setTimestampRange(data[0].timestamp, data[data.length - 1].timestamp);
+                            }
+                            const rects = JSON.parse('$rectsJson');
+                            if (typeof drawRectangles === 'function') {
+                                drawRectangles(rects);
+                            }
                         })();
                         """.trimIndent(), null
                     )
@@ -263,29 +267,45 @@ class WebAppInterface(
     }
 }
 
-fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): String {
+fun List<Candlestick>.toJsonArray(): String {
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
-            put("time", item.time / 1000)
+            put("timestamp", item.time)
             put("open", item.open)
-            put("high", item.high)
-            put("low", item.low)
+            put("hi", item.high)
+            put("lo", item.low)
             put("close", item.close)
             put("volume", item.volume ?: 0)
-            if (item.time in highlightTimes) {
-                if (item.close > item.open) {
-                    put("color", "#0000FF")
-                    put("wickColor", "#0000FF")
-                    put("borderColor", "#0000FF")
-                } else {
-                    put("color", "#000000")
-                    put("wickColor", "#000000")
-                    put("borderColor", "#000000")
-                }
-            }
+            put("id", item.time.toString())
         }
         jsonArray.put(jsonObject)
+    }
+    return jsonArray.toString().replace("\"", "\\\"")
+}
+
+fun Map<String, List<PatternOccurrence>>.toRectanglesJson(patternId: String? = null): String {
+    val occurrences = if (patternId != null) {
+        this[patternId].orEmpty()
+    } else {
+        this.values.flatten()
+    }
+    val jsonArray = JSONArray()
+    for (occurrence in occurrences) {
+        val candles = occurrence.candles
+        if (candles.isNotEmpty()) {
+            val start = candles.first()
+            val end = candles.last()
+            val low = candles.minOf { it.low }
+            val high = candles.maxOf { it.high }
+            val jsonObject = JSONObject().apply {
+                put("from", start.time)
+                put("to", end.time)
+                put("low", low)
+                put("high", high)
+            }
+            jsonArray.put(jsonObject)
+        }
     }
     return jsonArray.toString().replace("\"", "\\\"")
 }
