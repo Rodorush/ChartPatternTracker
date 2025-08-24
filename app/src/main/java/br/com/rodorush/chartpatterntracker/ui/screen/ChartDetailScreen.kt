@@ -38,6 +38,7 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,6 +65,8 @@ fun ChartDetailScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val patternProvider = LocalPatternProvider.current
+    var patternNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     // Gerenciar o botão Back do Android
     BackHandler(enabled = true) {
@@ -78,7 +81,20 @@ fun ChartDetailScreen(
         viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns, ids)
     }
 
-    LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
+    LaunchedEffect(patternsData) {
+        val ids = patternsData.filter { it.value.isNotEmpty() }.keys
+        ids.forEach { id ->
+            if (!patternNames.containsKey(id)) {
+                patternProvider.fetchPatternById(id) { pattern ->
+                    pattern?.let {
+                        patternNames = patternNames + (id to it.getLocalized("name"))
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(candlestickData, patternsData, isChartInitialized, patternNames) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
                 val highlightTimes = if (patternId != null) {
@@ -87,10 +103,20 @@ fun ChartDetailScreen(
                     patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
                 }
                 val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val patternIdsWithOccurrences = if (patternId != null) {
+                    setOf(patternId)
+                } else {
+                    patternsData.filterValues { it.isNotEmpty() }.keys
+                }
+                val watermarkText = patternIdsWithOccurrences.mapNotNull { patternNames[it] }.distinct().joinToString(", ")
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    if (watermarkText.isNotBlank()) {
+                        val escaped = watermarkText.replace("'", "\\'")
+                        webView.evaluateJavascript("setWatermark('$escaped')", null)
+                    }
                 }
             }
         }
