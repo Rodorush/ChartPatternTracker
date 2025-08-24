@@ -56,7 +56,8 @@ fun RealTimeQuotesScreen(
     LaunchedEffect(Unit) {
         if (!isLoaded) {
             assetsProvider.fetchAssets { loadedAssets ->
-                assets = loadedAssets.sortedBy { it.ticker }
+                val filtered = loadedAssets.filterNot { it.ticker.endsWith("F", ignoreCase = true) }
+                assets = filtered.sortedBy { it.ticker }
                 isLoaded = true
             }
         }
