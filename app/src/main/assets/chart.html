@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="file:///android_asset/lightweight-charts.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { margin: 0; padding: 0; }
         #chart { width: 100%; height: 100%; }
@@ -38,8 +38,8 @@
             console.log("Chart has addSeries:", typeof chart.addSeries === 'function');
             console.log("LightweightCharts.CandlestickSeries available:", typeof LightweightCharts.CandlestickSeries !== 'undefined');
 
-            console.log("Adding candlestick series using addSeries...");
-            candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+            console.log("Adding candlestick series...");
+            candlestickSeries = chart.addCandlestickSeries({
                 upColor: '#26A69A',
                 downColor: '#EF5350',
                 borderVisible: false,
@@ -75,6 +75,17 @@
             }
 
             candlestickSeries.setData(finalData);
+
+            const middleIndex = Math.floor(finalData.length / 2);
+            const testMarker = {
+                time: finalData[middleIndex].time,
+                position: 'aboveBar',
+                color: 'black',
+                shape: 'circle',
+                text: 'Hello World!',
+            };
+            candlestickSeries.setMarkers([testMarker]);
+
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
