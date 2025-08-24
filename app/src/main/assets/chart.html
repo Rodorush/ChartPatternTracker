@@ -6,7 +6,9 @@
     <script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { margin: 0; padding: 0; }
-        #chart { width: 100%; height: 100%; }
+        #chart { width: 100%; height: 100%; position: relative; }
+        #patterns-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .pattern-rect { position: absolute; border: 2px solid rgba(255, 165, 0, 0.8); background-color: rgba(255, 165, 0, 0.2); }
     </style>
 </head>
 <body>
@@ -17,6 +19,8 @@
 
     let chart;
     let candlestickSeries;
+    let overlay;
+    let currentPatterns = [];
 
     function initializeChart() {
         try {
@@ -26,7 +30,8 @@
             }
 
             console.log("Creating chart...");
-            chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            const container = document.getElementById('chart');
+            chart = LightweightCharts.createChart(container, {
                 width: window.innerWidth,
                 height: window.innerHeight,
                 layout: { background: { color: '#ffffff' }, textColor: '#000000' },
@@ -47,6 +52,16 @@
                 wickDownColor: '#EF5350'
             });
 
+            overlay = document.createElement('div');
+            overlay.id = 'patterns-overlay';
+            container.appendChild(overlay);
+
+            chart.timeScale().subscribeVisibleTimeRangeChange(() => drawPatternRectangles(currentPatterns));
+            window.addEventListener('resize', () => {
+                chart.resize(window.innerWidth, window.innerHeight);
+                drawPatternRectangles(currentPatterns);
+            });
+
             console.log("Chart initialized successfully");
             AndroidInterface.chartInitialized();
         } catch (e) {
@@ -54,7 +69,31 @@
         }
     }
 
-    window.updateChart = function(jsonData) {
+    function drawPatternRectangles(patterns) {
+        currentPatterns = patterns;
+        if (!overlay) return;
+        overlay.innerHTML = '';
+        const timeScale = chart.timeScale();
+        const priceScale = candlestickSeries.priceScale();
+        patterns.forEach(p => {
+            const x1 = timeScale.timeToCoordinate(p.startTime);
+            const x2 = timeScale.timeToCoordinate(p.endTime);
+            const y1 = priceScale.priceToCoordinate(p.high);
+            const y2 = priceScale.priceToCoordinate(p.low);
+            if (x1 === null || x2 === null || y1 === null || y2 === null) {
+                return;
+            }
+            const rect = document.createElement('div');
+            rect.className = 'pattern-rect';
+            rect.style.left = Math.min(x1, x2) + 'px';
+            rect.style.width = Math.abs(x2 - x1) + 'px';
+            rect.style.top = Math.min(y1, y2) + 'px';
+            rect.style.height = Math.abs(y2 - y1) + 'px';
+            overlay.appendChild(rect);
+        });
+    }
+
+    window.updateChart = function(jsonData, patternsJson) {
         if (!chart || !candlestickSeries) {
             console.error("Chart not initialized. Call initializeChart first.");
             return;
@@ -77,6 +116,9 @@
             candlestickSeries.setData(finalData);
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
+
+            const patterns = JSON.parse(patternsJson || '[]');
+            drawPatternRectangles(patterns);
         } catch (e) {
             console.error("Error updating chart:", e);
         }
