@@ -6,7 +6,17 @@
     <script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { margin: 0; padding: 0; }
-        #chart { width: 100%; height: 100%; }
+        #chart {
+            width: 100%;
+            height: 100%;
+            position: relative; /* Permite sobrepor elementos como os retângulos */
+        }
+        .pattern-rectangle {
+            position: absolute;
+            border: 2px solid red;
+            background-color: rgba(255, 0, 0, 0.1);
+            pointer-events: none; /* Evita interferir com interações do gráfico */
+        }
     </style>
 </head>
 <body>
@@ -54,7 +64,7 @@
         }
     }
 
-    window.updateChart = function(jsonData) {
+    window.updateChart = function(jsonData, rectanglesJson) {
         if (!chart || !candlestickSeries) {
             console.error("Chart not initialized. Call initializeChart first.");
             return;
@@ -77,10 +87,39 @@
             candlestickSeries.setData(finalData);
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
+
+            if (rectanglesJson) {
+                const rectangles = JSON.parse(rectanglesJson);
+                drawRectangles(rectangles);
+            }
         } catch (e) {
             console.error("Error updating chart:", e);
         }
     };
+
+    function drawRectangles(rectangles) {
+        const container = document.getElementById('chart');
+        // Remove retângulos existentes
+        const existing = container.querySelectorAll('.pattern-rectangle');
+        existing.forEach(el => el.remove());
+
+        rectangles.forEach(rect => {
+            const left = chart.timeScale().timeToCoordinate(rect.start);
+            const right = chart.timeScale().timeToCoordinate(rect.end);
+            const top = candlestickSeries.priceToCoordinate(rect.top);
+            const bottom = candlestickSeries.priceToCoordinate(rect.bottom);
+            if (left === null || right === null || top === null || bottom === null) {
+                return;
+            }
+            const div = document.createElement('div');
+            div.className = 'pattern-rectangle';
+            div.style.left = Math.min(left, right) + 'px';
+            div.style.top = Math.min(top, bottom) + 'px';
+            div.style.width = Math.abs(right - left) + 'px';
+            div.style.height = Math.abs(bottom - top) + 'px';
+            container.appendChild(div);
+        });
+    }
 
     window.onload = function() {
         console.log("Window loaded, initializing chart...");

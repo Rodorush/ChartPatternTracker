@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
@@ -87,10 +88,16 @@ fun ChartDetailScreen(
                     patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
                 }
                 val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val rectanglesJson = if (patternId != null) {
+                    patternsData[patternId].orEmpty().toRectanglesJson()
+                } else {
+                    patternsData.values.flatten().toRectanglesJson()
+                }
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
+                Log.d("ChartDetailScreen", "Rectangles Data: $rectanglesJson")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
-                    webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    webView.evaluateJavascript("updateChart('$jsonData', '$rectanglesJson')", null)
                 }
             }
         }
@@ -268,6 +275,27 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
             }
         }
         jsonArray.put(jsonObject)
+    }
+    return jsonArray.toString().replace("\"", "\\\"")
+}
+
+fun List<PatternOccurrence>.toRectanglesJson(): String {
+    val jsonArray = JSONArray()
+    for (occurrence in this) {
+        val candles = occurrence.candles
+        if (candles.isNotEmpty()) {
+            val start = candles.first().time / 1000
+            val end = candles.last().time / 1000
+            val top = candles.maxOf { it.high }
+            val bottom = candles.minOf { it.low }
+            val obj = JSONObject().apply {
+                put("start", start)
+                put("end", end)
+                put("top", top)
+                put("bottom", bottom)
+            }
+            jsonArray.put(obj)
+        }
     }
     return jsonArray.toString().replace("\"", "\\\"")
 }
