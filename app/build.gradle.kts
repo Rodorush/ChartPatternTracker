@@ -122,4 +122,6 @@ dependencies {
     implementation(libs.firebase.analytics.ktx)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
+    implementation(libs.charts.kt)
+    implementation(libs.kotlinx.datetime)
 }

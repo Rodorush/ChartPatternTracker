@@ -16,6 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven(url = "https://maven.pkg.jetbrains.space/data2viz/p/maven/public") {
+            content { includeGroup("io.data2viz.charts") }
+        }
+        mavenLocal()
     }
 }
 
