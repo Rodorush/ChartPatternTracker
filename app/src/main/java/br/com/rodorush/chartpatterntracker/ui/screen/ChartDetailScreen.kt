@@ -243,13 +243,11 @@ class WebAppInterface(
                     webView.evaluateJavascript(
                         """
                         (function() {
-                            if (!chart || !candlestickSeries) {
+                            if (!chart) {
                                 console.error("Chart not initialized. Initializing now...");
                                 initializeChart();
                             }
-                            const data = JSON.parse('$jsonData');
-                            candlestickSeries.setData(data);
-                            chart.timeScale().fitContent();
+                            window.updateChart('$jsonData');
                         })();
                         """.trimIndent(), null
                     )
