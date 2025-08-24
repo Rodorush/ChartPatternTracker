@@ -39,7 +39,8 @@
             console.log("LightweightCharts.CandlestickSeries available:", typeof LightweightCharts.CandlestickSeries !== 'undefined');
 
             console.log("Adding candlestick series...");
-            candlestickSeries = chart.addSeries('Candlestick', {
+            candlestickSeries = chart.addSeries({
+                type: 'Candlestick',
                 upColor: '#26A69A',
                 downColor: '#EF5350',
                 borderVisible: false,
