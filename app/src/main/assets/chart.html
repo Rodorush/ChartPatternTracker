@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://www.unpkg.com/@devexperts/dxcharts-lite@2.0.1/dist/dxchart.min.js"></script>
     <style>
         body { margin: 0; padding: 0; }
         #chart { width: 100%; height: 100%; }
@@ -13,39 +13,21 @@
 <div id="chart"></div>
 <script>
     console.log("Starting chart.html script execution");
-    console.log("LightweightCharts available:", typeof LightweightCharts !== 'undefined');
+    console.log("DXChart available:", typeof DXChart !== 'undefined');
 
     let chart;
-    let candlestickSeries;
 
     function initializeChart() {
         try {
-            if (typeof LightweightCharts === 'undefined') {
-                console.error("LightweightCharts is not loaded");
+            if (typeof DXChart === 'undefined') {
+                console.error("DXChart is not loaded");
                 return;
             }
 
             console.log("Creating chart...");
-            chart = LightweightCharts.createChart(document.getElementById('chart'), {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                layout: { background: { color: '#ffffff' }, textColor: '#000000' },
-                grid: { vertLines: { color: '#e0e0e0' }, horzLines: { color: '#e0e0e0' } },
-                timeScale: { timeVisible: true, secondsVisible: false }
-            });
+            const container = document.getElementById('chart');
+            chart = DXChart.createChart(container);
             console.log("Chart created:", chart !== null && typeof chart === 'object');
-            console.log("Chart has addCandlestickSeries:", typeof chart.addCandlestickSeries === 'function');
-            console.log("Chart has addSeries:", typeof chart.addSeries === 'function');
-            console.log("LightweightCharts.CandlestickSeries available:", typeof LightweightCharts.CandlestickSeries !== 'undefined');
-
-            console.log("Adding candlestick series using addSeries...");
-            candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-                upColor: '#26A69A',
-                downColor: '#EF5350',
-                borderVisible: false,
-                wickUpColor: '#26A69A',
-                wickDownColor: '#EF5350'
-            });
 
             console.log("Chart initialized successfully");
             AndroidInterface.chartInitialized();
@@ -55,7 +37,7 @@
     }
 
     window.updateChart = function(jsonData) {
-        if (!chart || !candlestickSeries) {
+        if (!chart) {
             console.error("Chart not initialized. Call initializeChart first.");
             return;
         }
@@ -74,8 +56,10 @@
                 }
             }
 
-            candlestickSeries.setData(finalData);
-            chart.timeScale().fitContent();
+            chart.setData({ candles: finalData });
+            if (chart.chartComponent && typeof chart.chartComponent.resetChartScale === 'function') {
+                chart.chartComponent.resetChartScale();
+            }
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
             console.error("Error updating chart:", e);
