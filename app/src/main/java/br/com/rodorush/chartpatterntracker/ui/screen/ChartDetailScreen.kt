@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
@@ -87,10 +88,16 @@ fun ChartDetailScreen(
                     patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
                 }
                 val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val rectanglesJson = if (patternId != null) {
+                    mapOf(patternId to patternsData[patternId].orEmpty()).toRectanglesJson()
+                } else {
+                    patternsData.toRectanglesJson()
+                }
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    webView.evaluateJavascript("highlightPatterns('$rectanglesJson')", null)
                 }
             }
         }
@@ -268,6 +275,27 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
             }
         }
         jsonArray.put(jsonObject)
+    }
+    return jsonArray.toString().replace("\"", "\\\"")
+}
+
+fun Map<String, List<PatternOccurrence>>.toRectanglesJson(): String {
+    val jsonArray = JSONArray()
+    for (occurrences in this.values) {
+        for (occurrence in occurrences) {
+            if (occurrence.candles.isNotEmpty()) {
+                val times = occurrence.candles.map { it.time / 1000 }
+                val highs = occurrence.candles.map { it.high }
+                val lows = occurrence.candles.map { it.low }
+                val obj = JSONObject().apply {
+                    put("timeStart", times.minOrNull()!!)
+                    put("timeEnd", times.maxOrNull()!!)
+                    put("high", highs.maxOrNull()!!)
+                    put("low", lows.minOrNull()!!)
+                }
+                jsonArray.put(obj)
+            }
+        }
     }
     return jsonArray.toString().replace("\"", "\\\"")
 }
