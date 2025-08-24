@@ -75,6 +75,17 @@
             }
 
             candlestickSeries.setData(finalData);
+
+            const middleIndex = Math.floor(finalData.length / 2);
+            const testMarker = {
+                time: finalData[middleIndex].time,
+                position: 'aboveBar',
+                color: 'black',
+                shape: 'circle',
+                text: 'Hello World!',
+            };
+            candlestickSeries.setMarkers([testMarker]);
+
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
