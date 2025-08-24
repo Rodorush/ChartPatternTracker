@@ -249,6 +249,7 @@ class WebAppInterface(
                             }
                             const data = JSON.parse('$jsonData');
                             candlestickSeries.setData(data);
+                            chart.data.setTimestampRange(data[0].timestamp, data[data.length - 1].timestamp);
                             chart.timeScale().fitContent();
                         })();
                         """.trimIndent(), null

@@ -75,6 +75,7 @@
             }
 
             candlestickSeries.setData(finalData);
+            chart.data.setTimestampRange(finalData[0].timestamp, finalData[finalData.length - 1].timestamp);
             chart.timeScale().fitContent();
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
