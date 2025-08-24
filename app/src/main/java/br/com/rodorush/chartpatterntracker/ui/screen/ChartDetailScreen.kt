@@ -38,6 +38,7 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,6 +65,8 @@ fun ChartDetailScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val patternProvider = LocalPatternProvider.current
+    var patternName by remember { mutableStateOf<String?>(null) }
 
     // Gerenciar o botão Back do Android
     BackHandler(enabled = true) {
@@ -76,6 +79,21 @@ fun ChartDetailScreen(
             patternId?.let { listOf(it) } ?: br.com.rodorush.chartpatterntracker.model.pattern.PatternDetectorRegistry.registeredIds()
         } else emptyList()
         viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns, ids)
+    }
+
+    LaunchedEffect(patternId) {
+        patternId?.let { id ->
+            patternProvider.fetchPatternById(id) { pattern ->
+                patternName = pattern?.getLocalized("name")
+            }
+        }
+    }
+
+    LaunchedEffect(patternName, isChartInitialized) {
+        if (!patternName.isNullOrEmpty() && isChartInitialized) {
+            val escaped = patternName!!.replace("'", "\\'")
+            webViewRef?.evaluateJavascript("setWatermark('$escaped')", null)
+        }
     }
 
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
