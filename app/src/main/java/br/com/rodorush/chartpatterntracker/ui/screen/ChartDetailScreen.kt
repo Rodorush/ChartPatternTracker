@@ -8,6 +8,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -38,6 +39,7 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,6 +66,8 @@ fun ChartDetailScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val patternProvider = LocalPatternProvider.current
+    var patternName by remember { mutableStateOf<String?>(null) }
 
     // Gerenciar o botão Back do Android
     BackHandler(enabled = true) {
@@ -76,6 +80,12 @@ fun ChartDetailScreen(
             patternId?.let { listOf(it) } ?: br.com.rodorush.chartpatterntracker.model.pattern.PatternDetectorRegistry.registeredIds()
         } else emptyList()
         viewModel.fetchData(ticker, "3mo", timeframe, detectPatterns, ids)
+        patternName = null
+        patternId?.let { id ->
+            patternProvider.fetchPatternById(id) { pattern ->
+                patternName = pattern?.getLocalized("name")
+            }
+        }
     }
 
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
@@ -104,14 +114,22 @@ fun ChartDetailScreen(
                         .firstOrNull { it.value.equals(timeframe, ignoreCase = true) }
                         ?.let { stringResource(it.nameRes) }
                         ?: timeframe.uppercase()
-                    Text(
-                        text = stringResource(
-                            R.string.chart_detail_title,
-                            ticker.uppercase(),
-                            timeframeName
-                        ),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
+                    Column {
+                        Text(
+                            text = stringResource(
+                                R.string.chart_detail_title,
+                                ticker.uppercase(),
+                                timeframeName
+                            ),
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        patternName?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = {
