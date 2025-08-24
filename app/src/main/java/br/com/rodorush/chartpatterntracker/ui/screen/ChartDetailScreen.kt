@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
@@ -96,11 +97,17 @@ fun ChartDetailScreen(
                 } else {
                     patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
                 }
+                val rectangles = if (patternId != null) {
+                    patternsData[patternId].orEmpty()
+                } else {
+                    patternsData.values.flatten()
+                }
                 val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val rectanglesJson = rectangles.toRectanglesJson()
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
-                    webView.evaluateJavascript("updateChart('$jsonData')", null)
+                    webView.evaluateJavascript("updateChart('$jsonData', '$rectanglesJson')", null)
                 }
             }
         }
@@ -286,6 +293,26 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
             }
         }
         jsonArray.put(jsonObject)
+    }
+    return jsonArray.toString().replace("\"", "\\\"")
+}
+
+fun Collection<PatternOccurrence>.toRectanglesJson(): String {
+    val jsonArray = JSONArray()
+    for (occurrence in this) {
+        if (occurrence.candles.isNotEmpty()) {
+            val start = occurrence.candles.first()
+            val end = occurrence.candles.last()
+            val minLow = occurrence.candles.minOf { it.low }
+            val maxHigh = occurrence.candles.maxOf { it.high }
+            val obj = JSONObject().apply {
+                put("startTime", start.time / 1000)
+                put("endTime", end.time / 1000)
+                put("min", minLow)
+                put("max", maxHigh)
+            }
+            jsonArray.put(obj)
+        }
     }
     return jsonArray.toString().replace("\"", "\\\"")
 }
