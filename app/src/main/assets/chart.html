@@ -82,6 +82,23 @@
         }
     };
 
+    window.updateWatermark = function(text) {
+        if (!chart) {
+            console.error("Chart not initialized. Call initializeChart first.");
+            return;
+        }
+        chart.applyOptions({
+            watermark: {
+                visible: true,
+                fontSize: 48,
+                horzAlign: 'center',
+                vertAlign: 'center',
+                color: 'rgba(0, 0, 0, 0.15)',
+                text: text
+            }
+        });
+    };
+
     window.onload = function() {
         console.log("Window loaded, initializing chart...");
         initializeChart();

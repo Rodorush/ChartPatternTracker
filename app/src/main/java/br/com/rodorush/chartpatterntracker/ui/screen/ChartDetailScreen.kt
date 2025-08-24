@@ -38,6 +38,7 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,6 +65,8 @@ fun ChartDetailScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val patternProvider = LocalPatternProvider.current
+    var watermarkText by remember { mutableStateOf<String?>(null) }
 
     // Gerenciar o botão Back do Android
     BackHandler(enabled = true) {
@@ -93,6 +96,25 @@ fun ChartDetailScreen(
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
                 }
             }
+        }
+    }
+
+    LaunchedEffect(patternId, patternsData) {
+        val id = patternId ?: patternsData.keys.firstOrNull()
+        id?.let {
+            patternProvider.fetchPatternById(it) { pattern ->
+                watermarkText = pattern?.getLocalized("name")
+            }
+        }
+    }
+
+    LaunchedEffect(watermarkText, isChartInitialized) {
+        val text = watermarkText
+        if (!text.isNullOrBlank() && isChartInitialized) {
+            webViewRef?.evaluateJavascript(
+                "updateWatermark(${JSONObject.quote(text)})",
+                null
+            )
         }
     }
 
