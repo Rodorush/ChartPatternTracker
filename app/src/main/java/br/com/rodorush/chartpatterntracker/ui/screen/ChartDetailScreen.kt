@@ -91,12 +91,16 @@ fun ChartDetailScreen(
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = if (patternId != null) {
-                    patternsData[patternId].orEmpty().flatMap { it.candles }.map { it.time }.toSet()
+                val highlightRanges = if (patternId != null) {
+                    patternsData[patternId].orEmpty().map { occ ->
+                        occ.candles.first().time to occ.candles.last().time
+                    }
                 } else {
-                    patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
+                    patternsData.values.flatten().map { occ ->
+                        occ.candles.first().time to occ.candles.last().time
+                    }
                 }
-                val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val jsonData = candlestickData.toDxChartJson(highlightRanges)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
@@ -234,58 +238,38 @@ class WebAppInterface(
         }
     }
 
-    @JavascriptInterface
-    fun updateChart(jsonData: String) {
-        if (!isDestroyed) {
-            Log.d("ChartDetailScreen", "JavaScript: updateChart called")
-            webView.post {
-                if (!isDestroyed) {
-                    webView.evaluateJavascript(
-                        """
-                        (function() {
-                            if (!chart || !candlestickSeries) {
-                                console.error("Chart not initialized. Initializing now...");
-                                initializeChart();
-                            }
-                            const data = JSON.parse('$jsonData');
-                            candlestickSeries.setData(data);
-                            chart.timeScale().fitContent();
-                        })();
-                        """.trimIndent(), null
-                    )
-                } else {
-                    Log.w("ChartDetailScreen", "JavaScript: updateChart ignored, WebView destroyed")
-                }
-            }
-        } else {
-            Log.w("ChartDetailScreen", "JavaScript: updateChart ignored, WebView destroyed")
-        }
-    }
 }
 
-fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): String {
-    val jsonArray = JSONArray()
+fun List<Candlestick>.toDxChartJson(highlightRanges: List<Pair<Long, Long>> = emptyList()): String {
+    val candlesArray = JSONArray()
     for (item in this) {
-        val jsonObject = JSONObject().apply {
-            put("time", item.time / 1000)
+        val candleObject = JSONObject().apply {
+            put("id", item.time.toString())
+            put("timestamp", item.time)
             put("open", item.open)
-            put("high", item.high)
-            put("low", item.low)
+            put("hi", item.high)
+            put("lo", item.low)
             put("close", item.close)
             put("volume", item.volume ?: 0)
-            if (item.time in highlightTimes) {
-                if (item.close > item.open) {
-                    put("color", "#0000FF")
-                    put("wickColor", "#0000FF")
-                    put("borderColor", "#0000FF")
-                } else {
-                    put("color", "#000000")
-                    put("wickColor", "#000000")
-                    put("borderColor", "#000000")
-                }
-            }
         }
-        jsonArray.put(jsonObject)
+        candlesArray.put(candleObject)
     }
-    return jsonArray.toString().replace("\"", "\\\"")
+    val highlightsArray = JSONArray()
+    highlightRanges.forEach { (from, to) ->
+        val highlightObject = JSONObject().apply {
+            put("type", "REGULAR")
+            put("from", from)
+            put("to", to)
+            put("border", JSONObject().apply {
+                put("left", true)
+                put("right", true)
+            })
+        }
+        highlightsArray.put(highlightObject)
+    }
+    val root = JSONObject().apply {
+        put("candles", candlesArray)
+        put("highlights", highlightsArray)
+    }
+    return root.toString().replace("\"", "\\\"")
 }
