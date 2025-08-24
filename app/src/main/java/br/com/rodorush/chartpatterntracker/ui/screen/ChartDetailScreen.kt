@@ -243,13 +243,12 @@ class WebAppInterface(
                     webView.evaluateJavascript(
                         """
                         (function() {
-                            if (!chart || !candlestickSeries) {
+                            if (!chart) {
                                 console.error("Chart not initialized. Initializing now...");
                                 initializeChart();
                             }
                             const data = JSON.parse('$jsonData');
-                            candlestickSeries.setData(data);
-                            chart.timeScale().fitContent();
+                            chart.setData({ candles: data });
                         })();
                         """.trimIndent(), null
                     )
@@ -267,7 +266,7 @@ fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): Strin
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
-            put("time", item.time / 1000)
+            put("timestamp", item.time)
             put("open", item.open)
             put("high", item.high)
             put("low", item.low)
