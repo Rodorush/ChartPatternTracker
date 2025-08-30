@@ -243,13 +243,13 @@ class WebAppInterface(
                     webView.evaluateJavascript(
                         """
                         (function() {
-                            if (!chart || !candlestickSeries) {
-                                console.error("Chart not initialized. Initializing now...");
+                            if (!chart) {
+                                console.error('Chart not initialized. Initializing now...');
                                 initializeChart();
                             }
                             const data = JSON.parse('$jsonData');
-                            candlestickSeries.setData(data);
-                            chart.timeScale().fitContent();
+                            chart.setData({ candles: data });
+                            chart.setAutoScale(true);
                         })();
                         """.trimIndent(), null
                     )
@@ -263,27 +263,17 @@ class WebAppInterface(
     }
 }
 
-fun List<Candlestick>.toJsonArray(highlightTimes: Set<Long> = emptySet()): String {
+fun List<Candlestick>.toJsonArray(_highlightTimes: Set<Long> = emptySet()): String {
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
-            put("time", item.time / 1000)
+            put("id", item.time.toString())
+            put("timestamp", item.time)
             put("open", item.open)
-            put("high", item.high)
-            put("low", item.low)
+            put("hi", item.high)
+            put("lo", item.low)
             put("close", item.close)
             put("volume", item.volume ?: 0)
-            if (item.time in highlightTimes) {
-                if (item.close > item.open) {
-                    put("color", "#0000FF")
-                    put("wickColor", "#0000FF")
-                    put("borderColor", "#0000FF")
-                } else {
-                    put("color", "#000000")
-                    put("wickColor", "#000000")
-                    put("borderColor", "#000000")
-                }
-            }
         }
         jsonArray.put(jsonObject)
     }
