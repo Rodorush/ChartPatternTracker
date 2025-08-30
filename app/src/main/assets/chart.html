@@ -62,8 +62,17 @@
                 }
             }
 
-            chart.setData({ candles: finalData });
-            chart.setAutoScale(true);
+            try {
+                chart.setData({ candles: finalData });
+            } catch (e) {
+                console.error("Error setting chart data:", e);
+            }
+
+            try {
+                chart.setAutoScale(true);
+            } catch (e) {
+                console.error("Error setting auto scale:", e);
+            }
             console.log("Chart updated with data, count:", finalData.length);
         } catch (e) {
             console.error("Error updating chart:", e);
