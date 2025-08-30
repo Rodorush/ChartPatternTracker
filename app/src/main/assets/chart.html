@@ -12,8 +12,17 @@
         }
     </script>
     <style>
-        body { margin: 0; padding: 0; }
-        #chart { width: 100%; height: 100%; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Garante que o contêiner tenha altura renderizável dentro do WebView */
+        #chart {
+            width: 100%;
+            height: 100vh; /* evita altura 0 quando body não tem altura explícita */
+        }
     </style>
 </head>
 <body>
@@ -34,6 +43,28 @@
             console.log("Creating chart...");
             chart = DXChart.createChart(document.getElementById('chart'));
             console.log("Chart created:", chart !== null && typeof chart === 'object');
+            try {
+                chart.setChartType('candle');
+                console.log('Chart type set to candle');
+            } catch (e) {
+                console.warn('Failed to set chart type to candle:', e);
+            }
+
+            // Log container size to ensure it has renderable dimensions
+            const el = document.getElementById('chart');
+            const rect = el.getBoundingClientRect();
+            console.log('Chart container size:', rect.width + 'x' + rect.height);
+            if (rect.height === 0 || rect.width === 0) {
+                console.warn('Chart container has zero size; check CSS/layout.');
+                try {
+                    const fallback = Math.max(300, window.innerHeight || screen.height || 0);
+                    if (fallback > 0) {
+                        el.style.height = fallback + 'px';
+                        const r2 = el.getBoundingClientRect();
+                        console.log('Applied fallback height, new size:', r2.width + 'x' + r2.height);
+                    }
+                } catch (_) {}
+            }
 
             console.log("Chart initialized successfully");
             AndroidInterface.chartInitialized();
@@ -48,7 +79,7 @@
             return;
         }
         try {
-            const data = JSON.parse(jsonData);
+            const data = (typeof jsonData === 'string') ? JSON.parse(jsonData) : jsonData;
             console.log("Raw data received:", JSON.stringify(data));
 
             // Verificar a última vela e ignorá-la se tiver OHLC com zero
@@ -56,7 +87,8 @@
             if (data.length > 0) {
                 const lastCandle = data[data.length - 1];
                 console.log("Last candle:", JSON.stringify(lastCandle));
-                if (lastCandle.open === 0 || lastCandle.high === 0 || lastCandle.low === 0 || lastCandle.close === 0) {
+                // dxcharts-lite usa chaves: open, close, hi, lo, timestamp
+                if (lastCandle.open === 0 || lastCandle.hi === 0 || lastCandle.lo === 0 || lastCandle.close === 0) {
                     console.log("Ignoring last candle due to zero OHLC value");
                     finalData = data.slice(0, -1); // Remove a última vela
                 }
@@ -73,7 +105,21 @@
             } catch (e) {
                 console.error("Error setting auto scale:", e);
             }
+            // Try again on next frame to ensure layout applied
+            try {
+                requestAnimationFrame(() => chart.setAutoScale(true));
+            } catch (e) {
+                console.warn('AutoScale on next frame failed:', e);
+            }
             console.log("Chart updated with data, count:", finalData.length);
+            try { setTimeout(() => {
+                try {
+                    const el2 = document.getElementById('chart');
+                    const r3 = el2.getBoundingClientRect();
+                    console.log('Post-update size:', r3.width + 'x' + r3.height);
+                    chart.setAutoScale(true);
+                } catch (e) { console.warn('Post-update autoscale failed:', e); }
+            }, 100); } catch (_e) {}
         } catch (e) {
             console.error("Error updating chart:", e);
         }
@@ -83,6 +129,16 @@
         console.log("Window loaded, initializing chart...");
         initializeChart();
     };
+
+    window.addEventListener('resize', () => {
+        try {
+            const rect = document.getElementById('chart').getBoundingClientRect();
+            console.log('Window resize; chart container size:', rect.width + 'x' + rect.height);
+            chart && chart.setAutoScale(true);
+        } catch (e) {
+            console.warn('Resize handler error:', e);
+        }
+    });
 </script>
 </body>
 </html>

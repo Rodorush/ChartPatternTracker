@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -100,6 +101,8 @@ fun ChartDetailScreen(
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
                 coroutineScope.launch {
+                    // Pequeno atraso para garantir que o layout do WebView concluiu
+                    try { kotlinx.coroutines.delay(50) } catch (_: Exception) {}
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
                 }
             }
@@ -145,47 +148,83 @@ fun ChartDetailScreen(
             )
         },
         content = { paddingValues ->
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues) // Respeita o espaço da TopAppBar
+                    .padding(paddingValues)
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
 
-                if (error != null) {
-                    Text(
-                        text = "Error: $error",
-                        modifier = Modifier.align(Alignment.Center)
+                    if (error != null) {
+                        Text(
+                            text = "Error: $error",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    AndroidView(
+                        modifier = Modifier.matchParentSize(),
+                        factory = { ctx ->
+                            WebView(ctx).apply {
+                                webViewRef = this
+                                // Assegura LayoutParams preenchendo o contêiner
+                                layoutParams = android.view.ViewGroup.LayoutParams(
+                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                                )
+                                settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
+                                addJavascriptInterface(WebAppInterface(this) { isChartInitialized = true }, "AndroidInterface")
+                                webViewClient = object : WebViewClient() {
+                                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                                        val url = request.url.toString()
+                                        Log.d("ChartDetailScreen", "WebView loading URL: $url")
+                                        return !url.startsWith("file:///android_asset/")
+                                    }
+
+                                    override fun onPageFinished(view: WebView, url: String) {
+                                        Log.d("ChartDetailScreen", "WebView page finished: $url")
+                                        // Força a inicialização do gráfico caso o onload não dispare
+                                        view.evaluateJavascript(
+                                            (
+                                                """
+                                                (function(){
+                                                    try {
+                                                        console.log('[Android] onPageFinished: attempting initializeChart');
+                                                        if (typeof initializeChart === 'function') {
+                                                            initializeChart();
+                                                        } else {
+                                                            console.warn('[Android] initializeChart is not defined yet');
+                                                        }
+                                                        var el = document.getElementById('chart');
+                                                        if (el) {
+                                                            var r = el.getBoundingClientRect();
+                                                            console.log('[Android] chart container size after finish:', r.width + 'x' + r.height);
+                                                        }
+                                                    } catch (e) {
+                                                        console.error('[Android] initializeChart error:', e);
+                                                    }
+                                                })();
+                                                """
+                                                ).trimIndent(),
+                                            null
+                                        )
+                                    }
+                                }
+                                loadUrl("file:///android_asset/chart.html")
+                                Log.d("ChartDetailScreen", "WebView created and loading chart.html")
+                            }
+                        },
+                        update = { /* Evitar recarga */ }
                     )
                 }
-
-                AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { ctx ->
-                        WebView(ctx).apply {
-                            webViewRef = this
-                            settings.javaScriptEnabled = true
-                            settings.domStorageEnabled = true
-                            addJavascriptInterface(WebAppInterface(this) { isChartInitialized = true }, "AndroidInterface")
-                            webViewClient = object : WebViewClient() {
-                                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                                    val url = request.url.toString()
-                                    Log.d("ChartDetailScreen", "WebView loading URL: $url")
-                                    return !url.startsWith("file:///android_asset/")
-                                }
-
-                                override fun onPageFinished(view: WebView, url: String) {
-                                    Log.d("ChartDetailScreen", "WebView page finished: $url")
-                                }
-                            }
-                            loadUrl("file:///android_asset/chart.html")
-                            Log.d("ChartDetailScreen", "WebView created and loading chart.html")
-                        }
-                    },
-                    update = { /* Evitar recarga */ }
-                )
             }
         }
     )
@@ -267,15 +306,16 @@ fun List<Candlestick>.toJsonArray(_highlightTimes: Set<Long> = emptySet()): Stri
     val jsonArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
-            put("id", item.time.toString())
+            // DXCharts Lite expects keys: timestamp, open, close, hi, lo, volume
             put("timestamp", item.time)
             put("open", item.open)
-            put("high", item.high)
-            put("low", item.low)
             put("close", item.close)
+            put("hi", item.high)
+            put("lo", item.low)
             put("volume", item.volume ?: 0)
         }
         jsonArray.put(jsonObject)
     }
+    // Escape quotes to safely pass as a single-quoted JS string literal
     return jsonArray.toString().replace("\"", "\\\"")
 }
