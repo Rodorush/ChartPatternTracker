@@ -49,13 +49,13 @@
         }
         try {
             const data = JSON.parse(jsonData);
-            console.log("Raw data received:", data);
+            console.log("Raw data received:", JSON.stringify(data));
 
             // Verificar a última vela e ignorá-la se tiver OHLC com zero
             let finalData = data;
             if (data.length > 0) {
                 const lastCandle = data[data.length - 1];
-                console.log("Last candle:", lastCandle);
+                console.log("Last candle:", JSON.stringify(lastCandle));
                 if (lastCandle.open === 0 || lastCandle.high === 0 || lastCandle.low === 0 || lastCandle.close === 0) {
                     console.log("Ignoring last candle due to zero OHLC value");
                     finalData = data.slice(0, -1); // Remove a última vela
