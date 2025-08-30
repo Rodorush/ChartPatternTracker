@@ -56,7 +56,7 @@
             if (data.length > 0) {
                 const lastCandle = data[data.length - 1];
                 console.log("Last candle:", lastCandle);
-                if (lastCandle.open === 0 || lastCandle.hi === 0 || lastCandle.lo === 0 || lastCandle.close === 0) {
+                if (lastCandle.open === 0 || lastCandle.high === 0 || lastCandle.low === 0 || lastCandle.close === 0) {
                     console.log("Ignoring last candle due to zero OHLC value");
                     finalData = data.slice(0, -1); // Remove a última vela
                 }

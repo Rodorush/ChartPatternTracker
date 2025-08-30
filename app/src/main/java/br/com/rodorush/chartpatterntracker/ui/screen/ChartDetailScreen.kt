@@ -270,8 +270,8 @@ fun List<Candlestick>.toJsonArray(_highlightTimes: Set<Long> = emptySet()): Stri
             put("id", item.time.toString())
             put("timestamp", item.time)
             put("open", item.open)
-            put("hi", item.high)
-            put("lo", item.low)
+            put("high", item.high)
+            put("low", item.low)
             put("close", item.close)
             put("volume", item.volume ?: 0)
         }
