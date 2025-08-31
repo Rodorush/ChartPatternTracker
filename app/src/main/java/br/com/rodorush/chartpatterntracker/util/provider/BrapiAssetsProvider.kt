@@ -20,11 +20,12 @@ class BrapiAssetsProvider : AssetsProvider {
         try {
             val response = service.getQuoteList("Bearer $token")
             val assets = response.stocks.map {
+                val norm = normalizeName(it.name)
                 AssetItem(
                     ticker = it.stock,
-                    shortName = it.name, // /quote/list só tem 'name'; usamos como shortName por padrão
-                    longName = it.name,
-                    name = it.name,
+                    shortName = norm, // /quote/list só tem 'name'; usamos como shortName por padrão
+                    longName = norm,
+                    name = norm,
                     lastPrice = it.close ?: 0.0,
                     changePercent = it.change ?: 0.0,
                     logo = it.logo ?: ""
@@ -34,5 +35,10 @@ class BrapiAssetsProvider : AssetsProvider {
         } catch (e: Exception) {
             onResult(emptyList())
         }
+    }
+
+    private fun normalizeName(s: String?): String {
+        if (s.isNullOrBlank()) return ""
+        return s.trim().replace("\\s+".toRegex(), " ")
     }
 }

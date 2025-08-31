@@ -70,12 +70,17 @@ class ScreeningViewModel(
         try {
             val resp = brapiService.getQuoteInfo(ticker, BuildConfig.BRAPI_TOKEN)
             val info = resp.results.firstOrNull()
-            val pair = Pair(info?.shortName, info?.longName)
+            val pair = Pair(normalizeName(info?.shortName), normalizeName(info?.longName))
             assetInfoCache[ticker] = pair
             pair
         } catch (e: Exception) {
             Pair(null, null)
         }
+    }
+
+    private fun normalizeName(s: String?): String? {
+        if (s.isNullOrBlank()) return null
+        return s.trim().replace("\\s+".toRegex(), " ")
     }
 
     fun updateSelectedPatterns(patterns: List<PatternItem>) {

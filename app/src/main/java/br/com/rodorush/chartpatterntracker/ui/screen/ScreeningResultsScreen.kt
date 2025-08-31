@@ -241,15 +241,15 @@ fun ScreeningResultsScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     // shortName preferencial; enriquece com /quote/{ticker} se necessário
+                                    fun normalizeName(s: String): String = s.trim().replace("\\s+".toRegex(), " ")
                                     var displayShortName by remember(result.asset.ticker) {
-                                        mutableStateOf(
-                                            when {
-                                                result.asset.shortName.isNotBlank() -> result.asset.shortName
-                                                result.asset.name.isNotBlank() -> result.asset.name
-                                                result.asset.longName.isNotBlank() -> result.asset.longName
-                                                else -> ""
-                                            }
-                                        )
+                                        val base = when {
+                                            result.asset.shortName.isNotBlank() -> result.asset.shortName
+                                            result.asset.name.isNotBlank() -> result.asset.name
+                                            result.asset.longName.isNotBlank() -> result.asset.longName
+                                            else -> ""
+                                        }
+                                        mutableStateOf(normalizeName(base))
                                     }
                                     LaunchedEffect(result.asset.ticker) {
                                         if (displayShortName.isBlank()) {
@@ -262,7 +262,7 @@ fun ScreeningResultsScreen(
                                                 val resp = service.getQuoteInfo(result.asset.ticker, BuildConfig.BRAPI_TOKEN)
                                                 val info = resp.results.firstOrNull()
                                                 val sn = info?.shortName ?: info?.longName
-                                                if (!sn.isNullOrBlank()) displayShortName = sn
+                                                if (!sn.isNullOrBlank()) displayShortName = normalizeName(sn)
                                             } catch (_: Exception) {
                                                 // silencioso: mantém fallback
                                             }
