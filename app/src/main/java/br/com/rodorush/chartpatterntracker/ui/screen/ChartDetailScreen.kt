@@ -47,6 +47,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,14 +93,39 @@ fun ChartDetailScreen(
     LaunchedEffect(candlestickData, patternsData, isChartInitialized) {
         if (candlestickData.isNotEmpty() && isChartInitialized) {
             webViewRef?.let { webView ->
-                val highlightTimes = if (patternId != null) {
-                    patternsData[patternId].orEmpty().flatMap { it.candles }.map { it.time }.toSet()
+                // Construir intervalos de destaque por ocorrência
+                val occurrences = if (patternId != null) {
+                    patternsData[patternId].orEmpty()
                 } else {
-                    patternsData.values.flatten().flatMap { it.candles }.map { it.time }.toSet()
+                    patternsData.values.flatten()
                 }
-                val jsonData = candlestickData.toJsonArray(highlightTimes)
+                val step = timeframeToMillis(timeframe)
+                val highlightRanges = occurrences.mapNotNull { occ ->
+                    val times = occ.candles.map { it.time }.sorted()
+                    if (times.isEmpty()) null else {
+                        val from = times.first()
+                        val last = times.last()
+                        val to = last + step
+                        val minPrice = occ.candles.minOf { it.low.toDouble() }.toFloat()
+                        val maxPrice = occ.candles.maxOf { it.high.toDouble() }.toFloat()
+                        mapOf(
+                            "type" to "REGULAR",
+                            "from" to from,
+                            "to" to to,
+                            "min" to minPrice,
+                            "max" to maxPrice,
+                            "border" to mapOf("left" to true, "right" to true),
+                            "label" to mapOf(
+                                "text" to (patternName ?: patternId ?: "Pattern"),
+                                "placement" to "right-right"
+                            )
+                        )
+                    }
+                }
+
+                val jsonData = candlestickData.toChartPayload(highlightRanges)
                 Log.d("ChartDetailScreen", "JSON Data: $jsonData")
-                Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles")
+                Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles and ${highlightRanges.size} highlights")
                 coroutineScope.launch {
                     // Pequeno atraso para garantir que o layout do WebView concluiu
                     try { kotlinx.coroutines.delay(50) } catch (_: Exception) {}
@@ -302,8 +328,8 @@ class WebAppInterface(
     }
 }
 
-fun List<Candlestick>.toJsonArray(_highlightTimes: Set<Long> = emptySet()): String {
-    val jsonArray = JSONArray()
+fun List<Candlestick>.toChartPayload(highlights: List<Map<String, Any?>> = emptyList()): String {
+    val candlesArray = JSONArray()
     for (item in this) {
         val jsonObject = JSONObject().apply {
             // DXCharts Lite expects keys: timestamp, open, close, hi, lo, volume
@@ -314,8 +340,42 @@ fun List<Candlestick>.toJsonArray(_highlightTimes: Set<Long> = emptySet()): Stri
             put("lo", item.low)
             put("volume", item.volume ?: 0)
         }
-        jsonArray.put(jsonObject)
+        candlesArray.put(jsonObject)
+    }
+
+    val payload = JSONObject().apply {
+        put("candles", candlesArray)
+        if (highlights.isNotEmpty()) {
+            val highlightsArray = JSONArray()
+            for (h in highlights) {
+                val hObj = JSONObject()
+                h["type"]?.let { hObj.put("type", it) }
+                h["from"]?.let { hObj.put("from", it) }
+                h["to"]?.let { hObj.put("to", it) }
+                (h["label"] as? Map<*, *>)?.let { labelMap ->
+                    val lObj = JSONObject()
+                    labelMap["text"]?.let { lObj.put("text", it) }
+                    labelMap["placement"]?.let { lObj.put("placement", it) }
+                    hObj.put("label", lObj)
+                }
+                highlightsArray.put(hObj)
+            }
+            put("highlights", highlightsArray)
+        }
     }
     // Escape quotes to safely pass as a single-quoted JS string literal
-    return jsonArray.toString().replace("\"", "\\\"")
+    return payload.toString().replace("\"", "\\\"")
+}
+
+private fun timeframeToMillis(tf: String): Long = when (tf.lowercase(Locale.getDefault())) {
+    "1m", "1min", "1minuto" -> 60_000L
+    "5m" -> 5 * 60_000L
+    "15m" -> 15 * 60_000L
+    "30m" -> 30 * 60_000L
+    "1h", "1hr", "1hora" -> 60 * 60_000L
+    "4h" -> 4 * 60 * 60_000L
+    "1d", "1dia" -> 24 * 60 * 60_000L
+    "1wk", "1w", "1sem" -> 7 * 24 * 60 * 60_000L
+    "1mo", "1mês", "1mes" -> 30L * 24 * 60 * 60_000L
+    else -> 24 * 60 * 60_000L // fallback
 }
