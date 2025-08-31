@@ -17,6 +17,13 @@ interface BrapiApiService {
         @Query("token") token: String
     ): BrapiResponse
 
+    // Endpoint leve para obter metadados do ativo (shortName/longName)
+    @GET("api/quote/{ticker}")
+    suspend fun getQuoteInfo(
+        @Path("ticker") ticker: String,
+        @Query("token") token: String
+    ): BrapiQuoteInfoResponse
+
     data class QuoteListResponse(
         val stocks: List<StockQuote>
     )

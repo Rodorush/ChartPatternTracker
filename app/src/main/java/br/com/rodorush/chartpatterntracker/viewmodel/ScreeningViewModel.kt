@@ -14,6 +14,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import br.com.rodorush.chartpatterntracker.api.BrapiApiService
+import br.com.rodorush.chartpatterntracker.BuildConfig
 
 class ScreeningViewModel(
     private val chartViewModel: ChartViewModel
@@ -48,6 +54,29 @@ class ScreeningViewModel(
     val allTimeframesChecked: StateFlow<Boolean> = _allTimeframesChecked
 
     private var screeningJob: Job? = null
+
+    // Cache simples de metadados do ativo (short/long name) por ticker
+    private val assetInfoCache = mutableMapOf<String, Pair<String?, String?>>()
+    private val retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://brapi.dev/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+    private val brapiService by lazy { retrofit.create(BrapiApiService::class.java) }
+
+    private suspend fun fetchAssetInfo(ticker: String): Pair<String?, String?> = withContext(Dispatchers.IO) {
+        assetInfoCache[ticker]?.let { return@withContext it }
+        try {
+            val resp = brapiService.getQuoteInfo(ticker, BuildConfig.BRAPI_TOKEN)
+            val info = resp.results.firstOrNull()
+            val pair = Pair(info?.shortName, info?.longName)
+            assetInfoCache[ticker] = pair
+            pair
+        } catch (e: Exception) {
+            Pair(null, null)
+        }
+    }
 
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
         _selectedPatterns.value = patterns
@@ -119,10 +148,16 @@ class ScreeningViewModel(
                                     val reliabilityStars = convertReliabilityToStars(reliabilityText)
                                     val indicationText = pattern.getLocalized("indication")
                                     val indicationIconRes = convertIndicationToIcon(indicationText)
+                                    // Enriquecer AssetItem com shortName/longName reais do /quote/{ticker}
+                                    val (sn, ln) = fetchAssetInfo(asset.ticker)
+                                    val enrichedAsset = asset.copy(
+                                        shortName = sn ?: asset.shortName,
+                                        longName = ln ?: asset.longName
+                                    )
                                     results.add(
                                         ScreeningResult(
                                             pattern = pattern,
-                                            asset = asset,
+                                            asset = enrichedAsset,
                                             timeframe = timeframe,
                                             reliability = reliabilityStars,
                                             indication = indicationText,

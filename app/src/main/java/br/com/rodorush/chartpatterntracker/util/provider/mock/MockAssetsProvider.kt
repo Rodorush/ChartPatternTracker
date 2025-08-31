@@ -6,10 +6,10 @@ import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvid
 class MockAssetsProvider : AssetsProvider {
     override suspend fun fetchAssets(onResult: (List<AssetItem>) -> Unit) {
         val mockAssets = listOf(
-            AssetItem("PETR4", "Petrobras", 38.5, 1.2),
-            AssetItem("VALE3", "Vale", 62.3, -0.8),
-            AssetItem("ITUB4", "Itaú Unibanco", 29.1, 0.0),
-            AssetItem("BBDC4", "Bradesco", 17.4, 2.3)
+            AssetItem(ticker = "PETR4", shortName = "Petrobras PN", longName = "Petróleo Brasileiro S.A. - Petrobras", name = "Petrobras", lastPrice = 38.5, changePercent = 1.2),
+            AssetItem(ticker = "VALE3", shortName = "Vale ON", longName = "Vale S.A.", name = "Vale", lastPrice = 62.3, changePercent = -0.8),
+            AssetItem(ticker = "ITUB4", shortName = "Itaú Unibanco PN", longName = "Itaú Unibanco Holding S.A.", name = "Itaú Unibanco", lastPrice = 29.1, changePercent = 0.0),
+            AssetItem(ticker = "BBDC4", shortName = "Bradesco PN", longName = "Banco Bradesco S.A.", name = "Bradesco", lastPrice = 17.4, changePercent = 2.3)
         )
         onResult(mockAssets)
     }
