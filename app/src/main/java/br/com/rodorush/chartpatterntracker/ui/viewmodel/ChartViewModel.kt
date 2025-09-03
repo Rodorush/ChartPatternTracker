@@ -12,6 +12,7 @@ import br.com.rodorush.chartpatterntracker.data.AssetDataSource
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
 import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
+import br.com.rodorush.chartpatterntracker.model.PatternDisplayMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -28,6 +29,16 @@ class ChartViewModel(
 
     private val _patternsData = MutableStateFlow<Map<String, List<PatternOccurrence>>>(emptyMap())
     val patternsData: StateFlow<Map<String, List<PatternOccurrence>>> = _patternsData
+
+    private val _patternDisplayMode = MutableStateFlow(
+        runCatching {
+            PatternDisplayMode.valueOf(
+                preferences.getString("pattern_display_mode", PatternDisplayMode.ALL.name)
+                    ?: PatternDisplayMode.ALL.name
+            )
+        }.getOrDefault(PatternDisplayMode.ALL)
+    )
+    val patternDisplayMode: StateFlow<PatternDisplayMode> = _patternDisplayMode
 
     private val _currentSource = MutableStateFlow<AssetDataSource>(BrapiDataSource())
     val currentSource: StateFlow<AssetDataSource> = _currentSource
@@ -54,6 +65,34 @@ class ChartViewModel(
             _currentSource.value.setApiKey(BuildConfig.BRAPI_TOKEN)
         }
     }
+
+    fun setPatternDisplayMode(mode: PatternDisplayMode) {
+        _patternDisplayMode.value = mode
+        preferences.edit { putString("pattern_display_mode", mode.name) }
+        _patternsData.value = applyDisplayMode(lastDetectedPatterns, _candlestickData.value)
+    }
+
+    private fun applyDisplayMode(
+        detected: Map<String, List<PatternOccurrence>>,
+        candles: List<Candlestick>
+    ): Map<String, List<PatternOccurrence>> {
+        return when (patternDisplayMode.value) {
+            PatternDisplayMode.ALL -> detected
+            PatternDisplayMode.ONLY_RECENT -> {
+                if (candles.isEmpty()) return emptyMap()
+                detected.mapValues { entry ->
+                    entry.value.filter { occ ->
+                        val k = occ.candles.size
+                        if (candles.size < k) return@filter false
+                        val tail = candles.takeLast(k)
+                        occ.candles == tail
+                    }
+                }.filterValues { it.isNotEmpty() }
+            }
+        }
+    }
+
+    private var lastDetectedPatterns: Map<String, List<PatternOccurrence>> = emptyMap()
 
     fun setDataSource(sourceName: String) {
         val newSource = sources[sourceName] ?: return
@@ -105,7 +144,8 @@ class ChartViewModel(
                             _candlestickData.value = fullCandlesticks
                             if (detectPatterns) {
                                 val detected = repository.detectPatterns(patternIds, fullCandlesticks)
-                                _patternsData.value = detected
+                                lastDetectedPatterns = detected
+                                _patternsData.value = applyDisplayMode(detected, fullCandlesticks)
                                 Log.d(
                                     "ChartViewModel",
                                     "Padrões detectados: " + detected.map { it.key to it.value.size }
