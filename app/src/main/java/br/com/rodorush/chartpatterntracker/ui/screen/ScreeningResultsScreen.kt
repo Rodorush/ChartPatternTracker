@@ -53,6 +53,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import br.com.rodorush.chartpatterntracker.api.BrapiApiService
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.tasks.await
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -265,6 +268,24 @@ fun ScreeningResultsScreen(
                                                 if (!sn.isNullOrBlank()) displayShortName = normalizeName(sn)
                                             } catch (_: Exception) {
                                                 // silencioso: mantém fallback
+                                            }
+                                        }
+                                    }
+                                    var cachedToFirestore by remember(result.asset.ticker) { mutableStateOf(false) }
+                                    LaunchedEffect(result.asset.ticker, displayShortName) {
+                                        if (!cachedToFirestore && displayShortName.isNotBlank()) {
+                                            try {
+                                                val db = FirebaseFirestore.getInstance()
+                                                val docRef = db.collection("assets").document(result.asset.ticker)
+                                                val doc = docRef.get().await()
+                                                val existing = doc.getString("shortName")
+                                                if (existing.isNullOrBlank()) {
+                                                    docRef.set(mapOf("shortName" to displayShortName), SetOptions.merge()).await()
+                                                    Log.d("ScreeningResultsScreen", "shortName salvo no Firestore para ${result.asset.ticker}")
+                                                }
+                                                cachedToFirestore = true
+                                            } catch (_: Exception) {
+                                                // silencioso: regras ainda podem bloquear; sem travar UI
                                             }
                                         }
                                     }

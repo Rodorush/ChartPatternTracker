@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.util.provider
 
+import android.util.Log
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
@@ -19,20 +20,23 @@ class BrapiAssetsProvider : AssetsProvider {
     override suspend fun fetchAssets(onResult: (List<AssetItem>) -> Unit) {
         try {
             val response = service.getQuoteList("Bearer $token")
-            val assets = response.stocks.map {
-                val norm = normalizeName(it.name)
+            val stocks = response.stocks
+            Log.d("BrapiAssetsProvider", "Carregados ${stocks.size} ativos do /quote/list")
+            val assets = stocks.map { stock ->
+                val norm = normalizeName(stock.name)
                 AssetItem(
-                    ticker = it.stock,
-                    shortName = norm, // /quote/list só tem 'name'; usamos como shortName por padrão
+                    ticker = stock.stock,
+                    shortName = norm, // será substituído por shortName do Firestore no item visível, quando houver
                     longName = norm,
                     name = norm,
-                    lastPrice = it.close ?: 0.0,
-                    changePercent = it.change ?: 0.0,
-                    logo = it.logo ?: ""
+                    lastPrice = stock.close ?: 0.0,
+                    changePercent = stock.change ?: 0.0,
+                    logo = stock.logo ?: ""
                 )
             }
             onResult(assets)
         } catch (e: Exception) {
+            Log.e("BrapiAssetsProvider", "Erro ao carregar lista de ativos: ${e.message}", e)
             onResult(emptyList())
         }
     }

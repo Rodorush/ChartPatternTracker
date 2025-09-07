@@ -20,6 +20,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.BuildConfig
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.tasks.await
 
 class ScreeningViewModel(
     private val chartViewModel: ChartViewModel
@@ -65,12 +68,55 @@ class ScreeningViewModel(
     }
     private val brapiService by lazy { retrofit.create(BrapiApiService::class.java) }
 
+    private suspend fun ensureAssetNamesCached(ticker: String) = withContext(Dispatchers.IO) {
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val docRef = db.collection("assets").document(ticker)
+            val doc = docRef.get().await()
+            val hasShort = !doc.getString("shortName").isNullOrBlank()
+            val hasLong = !doc.getString("longName").isNullOrBlank()
+            if (hasShort && hasLong) return@withContext
+
+            val resp = brapiService.getQuoteInfo(ticker, BuildConfig.BRAPI_TOKEN)
+            val info = resp.results.firstOrNull()
+            val sn = normalizeName(info?.shortName)
+            val ln = normalizeName(info?.longName)
+            val data = mutableMapOf<String, Any>()
+            if (!hasShort && sn != null) data["shortName"] = sn
+            if (!hasLong && ln != null) data["longName"] = ln
+            if (data.isNotEmpty()) {
+                docRef.set(data, SetOptions.merge()).await()
+                Log.d("ScreeningViewModel", "Persistidos metadados no Firestore para $ticker: ${data.keys}")
+            }
+        } catch (e: Exception) {
+            Log.w("ScreeningViewModel", "Falha ao garantir cache de nomes para $ticker: ${e.message}")
+        }
+    }
+
     private suspend fun fetchAssetInfo(ticker: String): Pair<String?, String?> = withContext(Dispatchers.IO) {
         assetInfoCache[ticker]?.let { return@withContext it }
         try {
             val resp = brapiService.getQuoteInfo(ticker, BuildConfig.BRAPI_TOKEN)
             val info = resp.results.firstOrNull()
-            val pair = Pair(normalizeName(info?.shortName), normalizeName(info?.longName))
+            val sn = normalizeName(info?.shortName)
+            val ln = normalizeName(info?.longName)
+            val pair = Pair(sn, ln)
+            // Persistir em Firestore se ainda não existir
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val docRef = db.collection("assets").document(ticker)
+                val doc = docRef.get().await()
+                val existingSn = doc.getString("shortName")
+                val existingLn = doc.getString("longName")
+                if ((sn != null && existingSn.isNullOrBlank()) || (ln != null && existingLn.isNullOrBlank())) {
+                    val data = mutableMapOf<String, Any>()
+                    if (sn != null) data["shortName"] = sn
+                    if (ln != null) data["longName"] = ln
+                    if (data.isNotEmpty()) docRef.set(data, SetOptions.merge()).await()
+                }
+            } catch (_: Exception) {
+                // Ignora falhas de cache para não impactar o fluxo
+            }
             assetInfoCache[ticker] = pair
             pair
         } catch (e: Exception) {

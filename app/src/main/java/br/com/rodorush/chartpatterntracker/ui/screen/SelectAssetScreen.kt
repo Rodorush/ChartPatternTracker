@@ -54,6 +54,8 @@ import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,8 +91,9 @@ fun SelectAssetsScreen(
     var searchText by remember { mutableStateOf("") }
     val filteredIndices = remember(searchText, assets) {
         assets.mapIndexedNotNull { index, asset ->
+            val displayName = if (asset.shortName.isNotEmpty()) asset.shortName else asset.name
             if (asset.ticker.contains(searchText, ignoreCase = true) ||
-                asset.name.contains(searchText, ignoreCase = true)) index else null
+                displayName.contains(searchText, ignoreCase = true)) index else null
         }
     }
     val allChecked by viewModel.allAssetsChecked.collectAsState()
@@ -215,6 +218,22 @@ fun SelectAssetsScreen(
             ) {
                 items(filteredIndices) { index ->
                     val asset = assets[index]
+                    val ticker = asset.ticker
+                    var rowDisplayName by remember(ticker) {
+                        mutableStateOf(if (asset.shortName.isNotEmpty()) asset.shortName else asset.name)
+                    }
+                    LaunchedEffect(ticker) {
+                        try {
+                            val db = FirebaseFirestore.getInstance()
+                            val doc = db.collection("assets").document(ticker).get().await()
+                            val cached = doc.getString("shortName")
+                            if (!cached.isNullOrBlank()) {
+                                rowDisplayName = cached
+                            }
+                        } catch (_: Exception) {
+                            // silencioso: mantém fallback
+                        }
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -246,9 +265,9 @@ fun SelectAssetsScreen(
                         )
                         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                             Text(text = asset.ticker)
-                            if (asset.name.isNotEmpty()) {
+                            if (rowDisplayName.isNotEmpty()) {
                                 Text(
-                                    text = asset.name,
+                                    text = rowDisplayName,
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
