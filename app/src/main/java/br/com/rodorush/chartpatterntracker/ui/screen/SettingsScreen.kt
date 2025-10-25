@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -15,6 +18,8 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -29,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.model.PatternDisplayMode
 import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -37,8 +43,9 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
-    val viewModel: ChartViewModel = koinViewModel() // Deixa o Koin fornecer o ViewModel
+    val viewModel: ChartViewModel = koinViewModel()
     val currentSource by viewModel.currentSource.collectAsState()
+    val displayMode by viewModel.patternDisplayMode.collectAsState()
     var apiKeyInput by remember { mutableStateOf("") }
     var selectedSource by remember { mutableStateOf(currentSource.javaClass.simpleName.removeSuffix("DataSource")) }
     var expanded by remember { mutableStateOf(false) }
@@ -54,6 +61,41 @@ fun SettingsScreen(
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(top = 32.dp)
         )
+
+        // Card: Exibição dos padrões (Switch)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.pattern_display_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Divider()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(R.string.pattern_display_only_recent))
+                    Switch(
+                        checked = displayMode == PatternDisplayMode.ONLY_RECENT,
+                        onCheckedChange = { checked ->
+                            viewModel.setPatternDisplayMode(
+                                if (checked) PatternDisplayMode.ONLY_RECENT else PatternDisplayMode.ALL
+                            )
+                        },
+                        colors = SwitchDefaults.colors()
+                    )
+                }
+            }
+        }
 
         ExposedDropdownMenuBox(
             expanded = expanded,

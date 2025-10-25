@@ -80,4 +80,7 @@
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total de resultados: %1$d</string>
     <string name="no_patterns_found">Nenhum padrão encontrado.</string>
+    <string name="pattern_display_title">Exibição dos padrões</string>
+    <string name="pattern_display_all">Todas as ocorrências</string>
+    <string name="pattern_display_only_recent">Somente nas velas atuais</string>
 </resources>

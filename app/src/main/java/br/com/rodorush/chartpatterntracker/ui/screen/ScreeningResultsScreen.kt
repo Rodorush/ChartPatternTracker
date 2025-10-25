@@ -47,8 +47,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import br.com.rodorush.chartpatterntracker.api.BrapiApiService
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.tasks.await
+import br.com.rodorush.chartpatterntracker.BuildConfig
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import br.com.rodorush.chartpatterntracker.R
@@ -184,8 +192,14 @@ fun ScreeningResultsScreen(
                 }
             } else {
                 val filteredResults = screeningResults.filter { result ->
-                    result.asset.ticker.contains(searchText, ignoreCase = true) ||
-                        result.pattern.getLocalized("name").contains(searchText, ignoreCase = true)
+                    val q = searchText.trim()
+                    if (q.isEmpty()) true else {
+                        result.asset.ticker.contains(q, ignoreCase = true) ||
+                        result.asset.shortName.contains(q, ignoreCase = true) ||
+                        result.asset.longName.contains(q, ignoreCase = true) ||
+                        result.asset.name.contains(q, ignoreCase = true) ||
+                        result.pattern.getLocalized("name").contains(q, ignoreCase = true)
+                    }
                 }
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -217,7 +231,9 @@ fun ScreeningResultsScreen(
                                     contentDescription = stringResource(R.string.pattern_description),
                                     modifier = Modifier.size(60.dp)
                                 )
-                                Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                                Column(modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 8.dp)) {
                                     Text(
                                         text = stringResource(result.timeframe.nameRes),
                                         style = MaterialTheme.typography.bodyMedium
@@ -227,18 +243,72 @@ fun ScreeningResultsScreen(
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
+                                    // shortName preferencial; enriquece com /quote/{ticker} se necessário
+                                    fun normalizeName(s: String): String = s.trim().replace("\\s+".toRegex(), " ")
+                                    var displayShortName by remember(result.asset.ticker) {
+                                        val base = when {
+                                            result.asset.shortName.isNotBlank() -> result.asset.shortName
+                                            result.asset.name.isNotBlank() -> result.asset.name
+                                            result.asset.longName.isNotBlank() -> result.asset.longName
+                                            else -> ""
+                                        }
+                                        mutableStateOf(normalizeName(base))
+                                    }
+                                    LaunchedEffect(result.asset.ticker) {
+                                        if (displayShortName.isBlank()) {
+                                            try {
+                                                val retrofit = Retrofit.Builder()
+                                                    .baseUrl("https://brapi.dev/")
+                                                    .addConverterFactory(GsonConverterFactory.create())
+                                                    .build()
+                                                val service = retrofit.create(BrapiApiService::class.java)
+                                                val resp = service.getQuoteInfo(result.asset.ticker, BuildConfig.BRAPI_TOKEN)
+                                                val info = resp.results.firstOrNull()
+                                                val sn = info?.shortName ?: info?.longName
+                                                if (!sn.isNullOrBlank()) displayShortName = normalizeName(sn)
+                                            } catch (_: Exception) {
+                                                // silencioso: mantém fallback
+                                            }
+                                        }
+                                    }
+                                    var cachedToFirestore by remember(result.asset.ticker) { mutableStateOf(false) }
+                                    LaunchedEffect(result.asset.ticker, displayShortName) {
+                                        if (!cachedToFirestore && displayShortName.isNotBlank()) {
+                                            try {
+                                                val db = FirebaseFirestore.getInstance()
+                                                val docRef = db.collection("assets").document(result.asset.ticker)
+                                                val doc = docRef.get().await()
+                                                val existing = doc.getString("shortName")
+                                                if (existing.isNullOrBlank()) {
+                                                    docRef.set(mapOf("shortName" to displayShortName), SetOptions.merge()).await()
+                                                    Log.d("ScreeningResultsScreen", "shortName salvo no Firestore para ${result.asset.ticker}")
+                                                }
+                                                cachedToFirestore = true
+                                            } catch (_: Exception) {
+                                                // silencioso: regras ainda podem bloquear; sem travar UI
+                                            }
+                                        }
+                                    }
+                                    if (displayShortName.isNotBlank()) {
+                                        Text(
+                                            text = displayShortName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                     Text(
                                         text = result.pattern.getLocalized("name"),
                                         style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    Text(
-                                        text = "Confiabilidade: ${result.reliability}",
-                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
 
                                 // Indicação com ícone em coluna
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "Confiabilidade: ${result.reliability}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
                                     Image(
                                         painter = painterResource(id = result.indicationIcon),
                                         contentDescription = result.indication,
