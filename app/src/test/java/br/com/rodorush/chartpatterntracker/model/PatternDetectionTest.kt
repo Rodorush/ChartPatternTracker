@@ -66,6 +66,24 @@ class PatternDetectionTest {
         occurrences.forEach { assertEquals(3, it.candles.size) }
     }
 
+    @Test
+    fun detectHaramiCross_detectsDojiInsideBearishBody() = runBlocking {
+        val candles = listOf(
+            // Vela de baixa forte
+            Candlestick(time = 1L, open = 10.5f, high = 10.8f, low = 8.4f, close = 8.6f),
+            // Doji contido no corpo da anterior
+            Candlestick(time = 2L, open = 9.22f, high = 9.32f, low = 9.15f, close = 9.23f),
+            // Vela qualquer para garantir que apenas a primeira dupla conta
+            Candlestick(time = 3L, open = 9.6f, high = 10.2f, low = 9.5f, close = 9.8f)
+        )
+
+        val detector = br.com.rodorush.chartpatterntracker.model.pattern.HaramiCrossDetector()
+        val occurrences = detector.detect(candles)
+
+        assertEquals(1, occurrences.size)
+        occurrences.forEach { assertEquals(2, it.candles.size) }
+    }
+
 fun detectHaramiAltaStandalone(candlesticks: List<Candlestick>): List<PatternOccurrence> {
     val occurrences = mutableListOf<PatternOccurrence>()
     if (candlesticks.size < 2) return occurrences

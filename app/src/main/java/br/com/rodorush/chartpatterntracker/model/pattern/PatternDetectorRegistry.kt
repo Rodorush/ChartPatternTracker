@@ -12,6 +12,7 @@ object PatternDetectorRegistry {
         register("43", BullishDojiStarDetector())
         register("46", BullishHammerDetector())
         register("48", HaramiBullishDetector())
+        register("49", HaramiCrossDetector())
         register("58", ThreeOutsideUpDetector())
     }
 
