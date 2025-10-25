@@ -24,6 +24,10 @@ class ChartViewModel(
     private val preferences: SharedPreferences,
     private val repository: CandlestickRepository
 ) : ViewModel() {
+    companion object {
+        private const val PREF_PATTERN_DISPLAY_MODE = "pattern_display_mode"
+    }
+
     private val _candlestickData = MutableStateFlow<List<Candlestick>>(emptyList())
     val candlestickData: StateFlow<List<Candlestick>> = _candlestickData
 
@@ -33,7 +37,7 @@ class ChartViewModel(
     private val _patternDisplayMode = MutableStateFlow(
         runCatching {
             PatternDisplayMode.valueOf(
-                preferences.getString("pattern_display_mode", PatternDisplayMode.ALL.name)
+                preferences.getString(PREF_PATTERN_DISPLAY_MODE, PatternDisplayMode.ALL.name)
                     ?: PatternDisplayMode.ALL.name
             )
         }.getOrDefault(PatternDisplayMode.ALL)
@@ -55,7 +59,23 @@ class ChartViewModel(
         "AlphaVantage" to AlphaVantageDataSource()
     )
 
+    private val preferenceListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { sharedPrefs, key ->
+            if (key == PREF_PATTERN_DISPLAY_MODE) {
+                val stored = sharedPrefs.getString(PREF_PATTERN_DISPLAY_MODE, PatternDisplayMode.ALL.name)
+                    ?: PatternDisplayMode.ALL.name
+                val newMode = runCatching { PatternDisplayMode.valueOf(stored) }
+                    .getOrDefault(PatternDisplayMode.ALL)
+                if (newMode != _patternDisplayMode.value) {
+                    Log.d("ChartViewModel", "pattern_display_mode alterado via SharedPreferences para $newMode")
+                    _patternDisplayMode.value = newMode
+                    _patternsData.value = applyDisplayMode(lastDetectedPatterns, _candlestickData.value)
+                }
+            }
+        }
+
     init {
+        preferences.registerOnSharedPreferenceChangeListener(preferenceListener)
         val savedSource = preferences.getString("data_source", "Brapi") ?: "Brapi"
         setDataSource(savedSource)
         if (BuildConfig.BRAPI_TOKEN.isBlank()) {
@@ -67,8 +87,9 @@ class ChartViewModel(
     }
 
     fun setPatternDisplayMode(mode: PatternDisplayMode) {
+        if (_patternDisplayMode.value == mode) return
         _patternDisplayMode.value = mode
-        preferences.edit { putString("pattern_display_mode", mode.name) }
+        preferences.edit { putString(PREF_PATTERN_DISPLAY_MODE, mode.name) }
         _patternsData.value = applyDisplayMode(lastDetectedPatterns, _candlestickData.value)
     }
 
@@ -129,42 +150,79 @@ class ChartViewModel(
         viewModelScope.launch {
             Log.d("ChartViewModel", "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
-                Log.d("ChartViewModel", "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}")
-                val initialCandlesticks = _currentSource.value.getHistoricalData(ticker, range, interval)
-                initialCandlesticks.onSuccess { initialData ->
-                    Log.d("ChartViewModel", "Dados iniciais obtidos: ${initialData.size} candlesticks")
-                    if (initialData.isEmpty()) {
-                        Log.w("ChartViewModel", "Nenhum dado inicial retornado para $ticker")
-                        _error.value = "Nenhum dado disponível"
-                        _candlestickData.value = emptyList()
-                    } else {
-                        val fullCandlesticks = repository.fetchCandlesticks(ticker, interval, range)
-                        Log.d("ChartViewModel", "Candlesticks completos obtidos: ${fullCandlesticks.size}")
-                        if (fullCandlesticks.isNotEmpty()) {
-                            _candlestickData.value = fullCandlesticks
-                            if (detectPatterns) {
-                                val detected = repository.detectPatterns(patternIds, fullCandlesticks)
-                                lastDetectedPatterns = detected
-                                _patternsData.value = applyDisplayMode(detected, fullCandlesticks)
-                                Log.d(
-                                    "ChartViewModel",
-                                    "Padrões detectados: " + detected.map { it.key to it.value.size }
-                                )
-                            } else {
-                                _patternsData.value = emptyMap()
-                            }
+                var finalCandlesticks: List<Candlestick>? = null
+
+                runCatching { repository.fetchCandlesticks(ticker, interval, range) }
+                    .onSuccess { cached ->
+                        if (cached.isNotEmpty()) {
+                            finalCandlesticks = cached
+                            Log.d(
+                                "ChartViewModel",
+                                "Candlesticks obtidos via Room/Firestore: ${cached.size}"
+                            )
                         } else {
-                            Log.w("ChartViewModel", "Nenhum candlestick completo retornado para $ticker")
-                            _candlestickData.value = emptyList()
-                            _patternsData.value = emptyMap()
-                            _error.value = "Falha ao obter dados completos"
+                            Log.d(
+                                "ChartViewModel",
+                                "Cache local vazio para $ticker-$interval; tentando fonte remota"
+                            )
                         }
                     }
-                }.onFailure { e ->
-                    Log.e("ChartViewModel", "Erro ao obter dados iniciais: ${e.message}", e)
+                    .onFailure { e ->
+                        Log.w(
+                            "ChartViewModel",
+                            "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
+                            e
+                        )
+                    }
+
+                if (finalCandlesticks == null) {
+                    Log.d(
+                        "ChartViewModel",
+                        "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}"
+                    )
+                    val remoteCandlesticks =
+                        _currentSource.value.getHistoricalData(ticker, range, interval)
+                    remoteCandlesticks.onSuccess { remoteData ->
+                        Log.d(
+                            "ChartViewModel",
+                            "Fonte remota retornou ${remoteData.size} candlesticks"
+                        )
+                        if (remoteData.isNotEmpty()) {
+                            finalCandlesticks = remoteData
+                        } else {
+                            Log.w(
+                                "ChartViewModel",
+                                "Nenhum dado remoto retornado para $ticker"
+                            )
+                            _error.value = "Nenhum dado disponível"
+                        }
+                    }.onFailure { e ->
+                        Log.e(
+                            "ChartViewModel",
+                            "Erro ao obter dados remotos: ${e.message}",
+                            e
+                        )
+                        _error.value = e.message ?: "Falha ao buscar dados iniciais"
+                    }
+                }
+
+                val candlesticks = finalCandlesticks.orEmpty()
+                if (candlesticks.isEmpty()) {
                     _candlestickData.value = emptyList()
                     _patternsData.value = emptyMap()
-                    _error.value = e.message ?: "Falha ao buscar dados iniciais"
+                } else {
+                    _candlestickData.value = candlesticks
+                    if (detectPatterns) {
+                        val detected = repository.detectPatterns(patternIds, candlesticks)
+                        lastDetectedPatterns = detected
+                        _patternsData.value = applyDisplayMode(detected, candlesticks)
+                        Log.d(
+                            "ChartViewModel",
+                            "Padrões detectados: " + detected.map { it.key to it.value.size }
+                        )
+                    } else {
+                        _patternsData.value = emptyMap()
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("ChartViewModel", "Erro inesperado em fetchData: ${e.message}", e)
@@ -192,5 +250,10 @@ class ChartViewModel(
             jsonArray.put(jsonObject)
         }
         return jsonArray.toString()
+    }
+
+    override fun onCleared() {
+        preferences.unregisterOnSharedPreferenceChangeListener(preferenceListener)
+        super.onCleared()
     }
 }
