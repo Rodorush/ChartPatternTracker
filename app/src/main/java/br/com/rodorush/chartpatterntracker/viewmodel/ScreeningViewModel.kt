@@ -7,7 +7,7 @@ import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.model.PatternItem
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
-import br.com.rodorush.chartpatterntracker.ui.viewmodel.ChartViewModel
+import br.com.rodorush.chartpatterntracker.viewmodel.ChartViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

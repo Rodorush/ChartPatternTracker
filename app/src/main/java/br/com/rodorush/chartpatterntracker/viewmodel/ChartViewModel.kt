@@ -1,24 +1,24 @@
-package br.com.rodorush.chartpatterntracker.ui.viewmodel
+package br.com.rodorush.chartpatterntracker.viewmodel
 
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.data.AlphaVantageDataSource
+import br.com.rodorush.chartpatterntracker.data.AssetDataSource
 import br.com.rodorush.chartpatterntracker.data.BrapiDataSource
 import br.com.rodorush.chartpatterntracker.data.MockDataSource
-import br.com.rodorush.chartpatterntracker.data.AssetDataSource
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
-import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import br.com.rodorush.chartpatterntracker.model.PatternDisplayMode
+import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import androidx.core.content.edit
 
 class ChartViewModel(
     private val preferences: SharedPreferences,
