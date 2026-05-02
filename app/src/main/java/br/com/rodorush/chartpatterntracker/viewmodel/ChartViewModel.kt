@@ -236,6 +236,28 @@ class ChartViewModel(
         }
     }
 
+    /**
+     * Executa detecção isolada para um único (ticker, interval) sem mutar o estado público
+     * (`_candlestickData`, `_patternsData`, `_isLoading`, `_error`). Usado pelo screening em
+     * lote, onde o ChartViewModel é compartilhado e qualquer mutação causaria contaminação
+     * cruzada entre iterações ou com a tela de gráfico ativa.
+     */
+    suspend fun runScreening(
+        ticker: String,
+        range: String,
+        interval: String,
+        patternIds: List<String>
+    ): Map<String, List<PatternOccurrence>> {
+        if (ticker.isBlank() || interval.isBlank() || patternIds.isEmpty()) return emptyMap()
+        val cached = runCatching { repository.fetchCandlesticks(ticker, interval, range) }
+            .getOrNull()
+            .orEmpty()
+        val candlesticks = if (cached.isNotEmpty()) cached
+        else _currentSource.value.getHistoricalData(ticker, range, interval).getOrNull().orEmpty()
+        if (candlesticks.isEmpty()) return emptyMap()
+        return repository.detectPatterns(patternIds, candlesticks)
+    }
+
     fun getCandlestickDataAsJson(): String {
         val jsonArray = JSONArray()
         _candlestickData.value.forEach { candlestick ->

@@ -40,7 +40,7 @@
 
 O **ChartPatternTracker** é um aplicativo Android nativo, escrito em Kotlin com Jetpack Compose, que automatiza a detecção de **padrões de candlestick** em ativos do mercado financeiro brasileiro (B3) e exibe gráficos interativos para apoiar a tomada de decisão de traders.
 
-Ele nasceu como **Trabalho de Conclusão de Curso (TCC)** da Pós-Graduação em **Desenvolvimento de Sistemas para Dispositivos Móveis** do **Instituto Federal de São Paulo (IFSP) — Campus São Carlos**, desenvolvido por **Rodolfo Pereira de Andrade** sob orientação do **Prof. Dr. Pedro Nobile**.
+Iniciativa originada como **Trabalho de Conclusão de Curso (TCC)** da Pós-Graduação em **Desenvolvimento de Sistemas para Dispositivos Móveis** do **Instituto Federal de São Paulo (IFSP) — Campus São Carlos** (autor: **Rodolfo Pereira de Andrade**, orientador: **Prof. Dr. Pedro Nobile**), atualmente em transição para **produto comercial**, com lançamento Beta planejado na Google Play e roadmap de monetização (ver [`ROADMAP.md`](ROADMAP.md)).
 
 ### O problema
 
@@ -131,7 +131,7 @@ Traders precisam monitorar dezenas de ativos simultaneamente em diferentes timef
 
 ## Padrões de candlestick suportados
 
-A detecção é orquestrada pelo `PatternDetectorRegistry`, que registra implementações da interface `PatternDetector`. Os detectores atualmente registrados são:
+A detecção é orquestrada pelo `PatternDetectorRegistry`, que registra implementações da interface `PatternDetector`. As regras de cada padrão foram validadas contra a literatura técnica clássica (Steve Nison, *Japanese Candlestick Charting Techniques*; Thomas Bulkowski, *Encyclopedia of Candlestick Charts*) e estão documentadas em comentário no topo de cada `*Detector.kt`. Os detectores atualmente registrados são:
 
 | ID | Padrão | Tipo | Velas |
 |----|--------|------|-------|
@@ -448,13 +448,18 @@ Para adicionar um novo idioma:
 
 Os testes unitários ficam em `app/src/test/java/br/com/rodorush/chartpatterntracker/`.
 
-Atualmente cobertos (5 detectores) em `PatternDetectionTest.kt`:
+`PatternDetectionTest.kt` cobre os **10 detectores** registrados, com casos positivos, casos negativos limítrofes e validação de boundary (entrada vazia / lista menor que o mínimo do padrão):
 
-- Harami Bullish
+- Abandoned Baby Bearish
 - Bearish Engulfing
+- Bullish Doji Star
 - Bullish Hammer
-- Three Outside Up
+- Evening Doji Star
+- Evening Star
+- Harami Bullish
 - Harami Cross
+- Three Outside Down
+- Three Outside Up
 
 **Execução:**
 
@@ -462,7 +467,7 @@ Atualmente cobertos (5 detectores) em `PatternDetectionTest.kt`:
 ./gradlew test
 ```
 
-Os testes usam `runBlocking` para coroutines e JUnit 4. Há infraestrutura para testes instrumentados (Espresso, Compose Test) já presente como dependência, ainda não exercitada.
+Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso, Compose Test) já presente como dependência, ainda não exercitada.
 
 ---
 
@@ -495,11 +500,10 @@ Os testes usam `runBlocking` para coroutines e JUnit 4. Há infraestrutura para 
 
 ## Limitações conhecidas
 
-- Detectores de padrões marcados com `//TODO Confirmar regras do padrão` — as regras devem ser validadas contra a literatura técnica.
 - Algumas velas retornam com valor `0` da Brapi para certos ativos — em investigação.
 - Previews do Compose na IDE falham quando há fontes de dados externas envolvidas.
 - Build de release ainda **sem ofuscamento** (`isMinifyEnabled = false`).
-- Apenas 5 dos 10 detectores têm cobertura de testes.
+- Algumas telas (ex.: `SelectAssetScreen`) ainda contêm chamadas Firestore inline — refatoração rastreada em `REFACT-04` no roadmap.
 
 A lista completa, com prioridades e itens planejados, está em [`ROADMAP.md`](ROADMAP.md).
 

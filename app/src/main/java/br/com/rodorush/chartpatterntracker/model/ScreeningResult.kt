@@ -6,5 +6,7 @@ data class ScreeningResult(
     val timeframe: TimeframeItem,
     val reliability: String,
     val indication: String,
-    val indicationIcon: Int
+    val indicationIcon: Int,
+    val displayShortName: String = "",
+    val patternImageUrl: String? = null
 )

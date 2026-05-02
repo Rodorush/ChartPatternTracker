@@ -3,26 +3,27 @@ package br.com.rodorush.chartpatterntracker.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.rodorush.chartpatterntracker.BuildConfig
+import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.model.PatternItem
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
-import br.com.rodorush.chartpatterntracker.viewmodel.ChartViewModel
+import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import br.com.rodorush.chartpatterntracker.api.BrapiApiService
-import br.com.rodorush.chartpatterntracker.BuildConfig
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import kotlinx.coroutines.tasks.await
+import java.util.concurrent.ConcurrentHashMap
 
 class ScreeningViewModel(
     private val chartViewModel: ChartViewModel
@@ -39,14 +40,12 @@ class ScreeningViewModel(
     private val _screeningResults = MutableStateFlow<List<ScreeningResult>>(emptyList())
     val screeningResults: StateFlow<List<ScreeningResult>> = _screeningResults
 
-    // Flag to indicate if a new screening run is required
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
 
     private val _isScreening = MutableStateFlow(false)
     val isScreening: StateFlow<Boolean> = _isScreening
 
-    // Stores the state of the "All/None" switches for each selection screen
     private val _allPatternsChecked = MutableStateFlow(false)
     val allPatternsChecked: StateFlow<Boolean> = _allPatternsChecked
 
@@ -58,8 +57,9 @@ class ScreeningViewModel(
 
     private var screeningJob: Job? = null
 
-    // Cache simples de metadados do ativo (short/long name) por ticker
-    private val assetInfoCache = mutableMapOf<String, Pair<String?, String?>>()
+    private val assetInfoCache = ConcurrentHashMap<String, Pair<String?, String?>>()
+    private val patternImageCache = ConcurrentHashMap<String, String>()
+
     private val retrofit by lazy {
         Retrofit.Builder()
             .baseUrl("https://brapi.dev/")
@@ -68,31 +68,6 @@ class ScreeningViewModel(
     }
     private val brapiService by lazy { retrofit.create(BrapiApiService::class.java) }
 
-    private suspend fun ensureAssetNamesCached(ticker: String) = withContext(Dispatchers.IO) {
-        try {
-            val db = FirebaseFirestore.getInstance()
-            val docRef = db.collection("assets").document(ticker)
-            val doc = docRef.get().await()
-            val hasShort = !doc.getString("shortName").isNullOrBlank()
-            val hasLong = !doc.getString("longName").isNullOrBlank()
-            if (hasShort && hasLong) return@withContext
-
-            val resp = brapiService.getQuoteInfo(ticker, BuildConfig.BRAPI_TOKEN)
-            val info = resp.results.firstOrNull()
-            val sn = normalizeName(info?.shortName)
-            val ln = normalizeName(info?.longName)
-            val data = mutableMapOf<String, Any>()
-            if (!hasShort && sn != null) data["shortName"] = sn
-            if (!hasLong && ln != null) data["longName"] = ln
-            if (data.isNotEmpty()) {
-                docRef.set(data, SetOptions.merge()).await()
-                Log.d("ScreeningViewModel", "Persistidos metadados no Firestore para $ticker: ${data.keys}")
-            }
-        } catch (e: Exception) {
-            Log.w("ScreeningViewModel", "Falha ao garantir cache de nomes para $ticker: ${e.message}")
-        }
-    }
-
     private suspend fun fetchAssetInfo(ticker: String): Pair<String?, String?> = withContext(Dispatchers.IO) {
         assetInfoCache[ticker]?.let { return@withContext it }
         try {
@@ -100,11 +75,9 @@ class ScreeningViewModel(
             val info = resp.results.firstOrNull()
             val sn = normalizeName(info?.shortName)
             val ln = normalizeName(info?.longName)
-            val pair = Pair(sn, ln)
-            // Persistir em Firestore se ainda não existir
+            val pair = sn to ln
             try {
-                val db = FirebaseFirestore.getInstance()
-                val docRef = db.collection("assets").document(ticker)
+                val docRef = FirebaseFirestore.getInstance().collection("assets").document(ticker)
                 val doc = docRef.get().await()
                 val existingSn = doc.getString("shortName")
                 val existingLn = doc.getString("longName")
@@ -115,18 +88,33 @@ class ScreeningViewModel(
                     if (data.isNotEmpty()) docRef.set(data, SetOptions.merge()).await()
                 }
             } catch (_: Exception) {
-                // Ignora falhas de cache para não impactar o fluxo
+                // Falha de cache no Firestore não impacta o resultado do screening.
             }
             assetInfoCache[ticker] = pair
             pair
         } catch (e: Exception) {
-            Pair(null, null)
+            Log.w(TAG, "Falha ao obter info do ativo $ticker: ${e.message}")
+            null to null
         }
+    }
+
+    private suspend fun fetchPatternImage(patternId: String): String? {
+        patternImageCache[patternId]?.let { return it }
+        return loadImageUrlFromStorage(patternId)?.also { patternImageCache[patternId] = it }
     }
 
     private fun normalizeName(s: String?): String? {
         if (s.isNullOrBlank()) return null
-        return s.trim().replace("\\s+".toRegex(), " ")
+        return s.trim().replace(WHITESPACE, " ")
+    }
+
+    private fun resolveDisplayShortName(asset: AssetItem, fetched: String?): String {
+        val candidate = fetched
+            ?: asset.shortName.takeIf { it.isNotBlank() }
+            ?: asset.name.takeIf { it.isNotBlank() }
+            ?: asset.longName.takeIf { it.isNotBlank() }
+            ?: ""
+        return candidate.trim().replace(WHITESPACE, " ")
     }
 
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
@@ -144,23 +132,11 @@ class ScreeningViewModel(
         _shouldRefresh.value = true
     }
 
-    fun setAllPatternsChecked(value: Boolean) {
-        _allPatternsChecked.value = value
-    }
-
-    fun setAllAssetsChecked(value: Boolean) {
-        _allAssetsChecked.value = value
-    }
-
-    fun setAllTimeframesChecked(value: Boolean) {
-        _allTimeframesChecked.value = value
-    }
+    fun setAllPatternsChecked(value: Boolean) { _allPatternsChecked.value = value }
+    fun setAllAssetsChecked(value: Boolean) { _allAssetsChecked.value = value }
+    fun setAllTimeframesChecked(value: Boolean) { _allTimeframesChecked.value = value }
 
     fun startScreening() {
-        Log.d("ScreeningViewModel", "Iniciando startScreening")
-        Log.d("ScreeningViewModel", "Padrões selecionados: ${_selectedPatterns.value.map { it.id to it.name }}")
-        Log.d("ScreeningViewModel", "Ativos selecionados: ${_selectedAssets.value.map { it.ticker }}")
-        Log.d("ScreeningViewModel", "Timeframes selecionados: ${_selectedTimeframes.value.map { it.value }}")
         screeningJob?.cancel()
         screeningJob = viewModelScope.launch {
             _isScreening.value = true
@@ -168,62 +144,53 @@ class ScreeningViewModel(
             val results = mutableListOf<ScreeningResult>()
             try {
                 for (pattern in _selectedPatterns.value) {
-                    Log.d("ScreeningViewModel", "Processando padrão ${pattern.id}")
                     for (asset in _selectedAssets.value) {
                         for (timeframe in _selectedTimeframes.value) {
                             try {
-                                Log.d("ScreeningViewModel", "Chamando fetchData para ticker=${asset.ticker}, timeframe=${timeframe.value}")
-                                val patternsDetected = withTimeoutOrNull(15000L) {
-                                    chartViewModel.fetchData(asset.ticker, "3mo", timeframe.value, true, listOf(pattern.id))
-                                    chartViewModel.isLoading.first { !it }
-                                    chartViewModel.patternsData.first()
-                                }
-                                if (patternsDetected == null) {
-                                    Log.e("ScreeningViewModel", "Timeout ao processar ${asset.ticker}-${timeframe.value}")
-                                    continue
-                                }
-                                if (chartViewModel.error.value != null) {
-                                    Log.e(
-                                        "ScreeningViewModel",
-                                        "Erro retornado pelo ChartViewModel para ${asset.ticker}-${timeframe.value}: ${chartViewModel.error.value}"
+                                val detected = withTimeoutOrNull(SCREENING_TIMEOUT_MS) {
+                                    chartViewModel.runScreening(
+                                        ticker = asset.ticker,
+                                        range = SCREENING_RANGE,
+                                        interval = timeframe.value,
+                                        patternIds = listOf(pattern.id)
                                     )
+                                }
+                                if (detected == null) {
+                                    Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
                                     continue
                                 }
-                                val occurrences = patternsDetected[pattern.id].orEmpty()
-                                Log.d(
-                                    "ScreeningViewModel",
-                                    "Detectados ${occurrences.size} padrões ${pattern.id} para ${asset.ticker}-${timeframe.value}"
+                                val occurrences = detected[pattern.id].orEmpty()
+                                if (occurrences.isEmpty()) continue
+
+                                val (sn, ln) = fetchAssetInfo(asset.ticker)
+                                val enrichedAsset = asset.copy(
+                                    shortName = sn ?: asset.shortName,
+                                    longName = ln ?: asset.longName
                                 )
-                                if (occurrences.isNotEmpty()) {
-                                    val reliabilityText = pattern.getLocalized("reliability")
-                                    val reliabilityStars = convertReliabilityToStars(reliabilityText)
-                                    val indicationText = pattern.getLocalized("indication")
-                                    val indicationIconRes = convertIndicationToIcon(indicationText)
-                                    // Enriquecer AssetItem com shortName/longName reais do /quote/{ticker}
-                                    val (sn, ln) = fetchAssetInfo(asset.ticker)
-                                    val enrichedAsset = asset.copy(
-                                        shortName = sn ?: asset.shortName,
-                                        longName = ln ?: asset.longName
+                                val displayShortName = resolveDisplayShortName(enrichedAsset, sn)
+                                val patternImage = fetchPatternImage(pattern.id)
+
+                                val reliabilityText = pattern.getLocalized("reliability")
+                                val indicationText = pattern.getLocalized("indication")
+                                results.add(
+                                    ScreeningResult(
+                                        pattern = pattern,
+                                        asset = enrichedAsset,
+                                        timeframe = timeframe,
+                                        reliability = convertReliabilityToStars(reliabilityText),
+                                        indication = indicationText,
+                                        indicationIcon = convertIndicationToIcon(indicationText),
+                                        displayShortName = displayShortName,
+                                        patternImageUrl = patternImage
                                     )
-                                    results.add(
-                                        ScreeningResult(
-                                            pattern = pattern,
-                                            asset = enrichedAsset,
-                                            timeframe = timeframe,
-                                            reliability = reliabilityStars,
-                                            indication = indicationText,
-                                            indicationIcon = indicationIconRes
-                                        )
-                                    )
-                                    _screeningResults.value = results.toList()
-                                }
+                                )
+                                _screeningResults.value = results.toList()
                             } catch (e: Exception) {
-                                Log.e("ScreeningViewModel", "Erro ao processar ${asset.ticker}-${timeframe.value}: ${e.message}", e)
+                                Log.e(TAG, "Erro em ${asset.ticker}-${timeframe.value}: ${e.message}", e)
                             }
                         }
                     }
                 }
-                Log.d("ScreeningViewModel", "startScreening concluído com ${results.size} resultados")
             } finally {
                 _shouldRefresh.value = false
                 _isScreening.value = false
@@ -247,15 +214,18 @@ class ScreeningViewModel(
 
     private fun convertIndicationToIcon(indication: String): Int {
         return when (indication.lowercase()) {
-            "reversão baixista", "bearish reversal", "reversión bajista" ->
-                br.com.rodorush.chartpatterntracker.R.drawable.reversao_baixista
-            "reversão altista", "bullish reversal", "reversión alcista" ->
-                br.com.rodorush.chartpatterntracker.R.drawable.reversao_altista
-            "continuação de baixa", "bearish continuation", "continuación bajista" ->
-                br.com.rodorush.chartpatterntracker.R.drawable.continuacao_baixa
-            "continuação de alta", "bullish continuation", "continuación alcista" ->
-                br.com.rodorush.chartpatterntracker.R.drawable.continuacao_alta
-            else -> br.com.rodorush.chartpatterntracker.R.drawable.ic_up_arrow
+            "reversão baixista", "bearish reversal", "reversión bajista" -> R.drawable.reversao_baixista
+            "reversão altista", "bullish reversal", "reversión alcista" -> R.drawable.reversao_altista
+            "continuação de baixa", "bearish continuation", "continuación bajista" -> R.drawable.continuacao_baixa
+            "continuação de alta", "bullish continuation", "continuación alcista" -> R.drawable.continuacao_alta
+            else -> R.drawable.ic_up_arrow
         }
+    }
+
+    private companion object {
+        const val TAG = "ScreeningViewModel"
+        const val SCREENING_TIMEOUT_MS = 15_000L
+        const val SCREENING_RANGE = "3mo"
+        val WHITESPACE = "\\s+".toRegex()
     }
 }

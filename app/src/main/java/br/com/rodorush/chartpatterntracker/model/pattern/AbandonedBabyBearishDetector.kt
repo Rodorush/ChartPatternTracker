@@ -4,6 +4,14 @@ import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import kotlin.math.abs
 
+/**
+ * Abandoned Baby Bearish — reversão de baixa rara (Nison). Variante mais estrita do Evening
+ * Doji Star: exige gaps **completos** (sombras isoladas) dos dois lados do doji.
+ *   1. 1ª vela bullish.
+ *   2. 2ª vela é um doji cujo low fica acima do high da 1ª (gap completo no topo).
+ *   3. 3ª vela bearish cujo high fica abaixo do low do doji (gap completo na descida)
+ *      e que fecha abaixo do meio do corpo da 1ª.
+ */
 class AbandonedBabyBearishDetector : PatternDetector {
     override fun detect(candlesticks: List<Candlestick>): List<PatternOccurrence> {
         val occurrences = mutableListOf<PatternOccurrence>()
@@ -13,19 +21,27 @@ class AbandonedBabyBearishDetector : PatternDetector {
             val second = candlesticks[i - 1]
             val third = candlesticks[i]
 
-            //TODO Confirmar regras do padrão
+            val secondRange = second.high - second.low
+            if (secondRange <= 0f) continue
+            val secondBody = abs(second.close - second.open)
+            val secondIsDoji = secondBody <= secondRange * MAX_DOJI_BODY_RATIO
+
             val firstBullish = first.close > first.open
-            val secondDoji = abs(second.close - second.open) <= (second.high - second.low) * 0.1f
             val thirdBearish = third.close < third.open
 
-            val gapUp = second.low > first.high
-            val gapDown = third.open < second.low
-            val closeBelowFirst = third.close < (first.open + first.close) / 2f
+            val gapUpIsland = second.low > first.high
+            val gapDownIsland = third.high < second.low
+            val closeBelowFirstMid = third.close < (first.open + first.close) / 2f
 
-            if (firstBullish && secondDoji && thirdBearish && gapUp && gapDown && closeBelowFirst) {
+            if (firstBullish && secondIsDoji && thirdBearish && gapUpIsland &&
+                gapDownIsland && closeBelowFirstMid) {
                 occurrences.add(PatternOccurrence(listOf(first, second, third)))
             }
         }
         return occurrences
+    }
+
+    private companion object {
+        const val MAX_DOJI_BODY_RATIO = 0.1f
     }
 }

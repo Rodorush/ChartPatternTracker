@@ -3,7 +3,10 @@
     "allow": [
       "Read(//mnt/**)",
       "Bash(mount)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(export JAVA_HOME=\"/mnt/c/Program Files/Android/Android Studio/jbr\")",
+      "Bash('/mnt/c/Program Files/Android/Android Studio/jbr/bin/java' -version)"
     ]
   }
 }

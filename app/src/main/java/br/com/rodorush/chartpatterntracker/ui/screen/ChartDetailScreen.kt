@@ -124,11 +124,9 @@ fun ChartDetailScreen(
                 }
 
                 val jsonData = candlestickData.toChartPayload(highlightRanges)
-                Log.d("ChartDetailScreen", "JSON Data: $jsonData")
                 Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles and ${highlightRanges.size} highlights")
                 coroutineScope.launch {
-                    // Pequeno atraso para garantir que o layout do WebView concluiu
-                    try { kotlinx.coroutines.delay(50) } catch (_: Exception) {}
+                    delay(50)
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
                 }
             }

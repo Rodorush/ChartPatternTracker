@@ -4,9 +4,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestoreSettings
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class FirestoreService(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -68,11 +65,5 @@ class FirestoreService(
             ))
         }
         batch.commit().await()
-    }
-
-    fun timestampToDateString(timestamp: Long): String {
-        val date = Date(timestamp)
-        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        return formatter.format(date)
     }
 }

@@ -2,7 +2,7 @@
 
 Este documento consolida **bugs conhecidos**, **pendências técnicas**, **melhorias de UX/UI** e **novas funcionalidades** planejadas para o ChartPatternTracker. Os itens vêm das anotações de desenvolvimento (`Artefatos/Bugs e roteiro.txt` do TCC), de `TODO` no código-fonte e do trabalho futuro descrito na monografia.
 
-**Status atual:** v1.0 — primeira versão funcional, lançamento na Google Play Beta planejado.
+**Status atual:** v1.0 — saída do TCC; em transição para v1.1 (Beta comercial), lançamento na Google Play Beta planejado.
 
 **Como usar:**
 
@@ -26,6 +26,7 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 8. [Qualidade e testes](#8-qualidade-e-testes)
 9. [Análises pendentes](#9-analises-pendentes)
 10. [Como contribuir com o roadmap](#10-como-contribuir-com-o-roadmap)
+11. [Refatoração arquitetural — próximos ciclos](#11-refatoracao-arquitetural--proximos-ciclos)
 
 ---
 
@@ -43,21 +44,20 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 
 ## 2. Pendências de detecção de padrões
 
-Todos os 9 detectores abaixo contêm o comentário `//TODO Confirmar regras do padrão`. As regras precisam ser validadas contra a literatura técnica clássica (Steve Nison, Thomas Bulkowski) e contra a referência adotada (ex.: Investing.com).
-
 | ID | Detector | Arquivo |
 |----|----------|---------|
-| PAT-01 | `[ ]` Abandoned Baby Bearish | `model/pattern/AbandonedBabyBearishDetector.kt:16` |
-| PAT-02 | `[ ]` Bearish Engulfing | `model/pattern/BearishEngulfingDetector.kt:17` |
-| PAT-03 | `[ ]` Bullish Doji Star | `model/pattern/BullishDojiStarDetector.kt:16` |
-| PAT-04 | `[ ]` Bullish Hammer | `model/pattern/BullishHammerDetector.kt:14` |
-| PAT-05 | `[ ]` Evening Doji Star | `model/pattern/EveningDojiStarDetector.kt:16` |
-| PAT-06 | `[ ]` Evening Star | `model/pattern/EveningStarDetector.kt:16` |
-| PAT-07 | `[ ]` Harami Bullish | `model/pattern/HaramiBullishDetector.kt:14` |
-| PAT-08 | `[ ]` Three Outside Down | `model/pattern/ThreeOutsideDownDetector.kt:15` |
-| PAT-09 | `[ ]` Three Outside Up | `model/pattern/ThreeOutsideUpDetector.kt:15` |
+| PAT-01 | `[x]` Abandoned Baby Bearish | `model/pattern/AbandonedBabyBearishDetector.kt` |
+| PAT-02 | `[x]` Bearish Engulfing | `model/pattern/BearishEngulfingDetector.kt` |
+| PAT-03 | `[x]` Bullish Doji Star | `model/pattern/BullishDojiStarDetector.kt` |
+| PAT-04 | `[x]` Bullish Hammer | `model/pattern/BullishHammerDetector.kt` |
+| PAT-05 | `[x]` Evening Doji Star | `model/pattern/EveningDojiStarDetector.kt` |
+| PAT-06 | `[x]` Evening Star | `model/pattern/EveningStarDetector.kt` |
+| PAT-07 | `[x]` Harami Bullish | `model/pattern/HaramiBullishDetector.kt` |
+| PAT-08 | `[x]` Three Outside Down | `model/pattern/ThreeOutsideDownDetector.kt` |
+| PAT-09 | `[x]` Three Outside Up | `model/pattern/ThreeOutsideUpDetector.kt` |
+| PAT-10 | `[x]` Harami Cross | `model/pattern/HaramiCrossDetector.kt` |
 
-> Para cada item, deve-se: (a) confirmar a regra com fonte canônica; (b) escrever testes unitários cobrindo casos positivos e negativos; (c) atualizar a descrição do padrão no Firestore.
+> Concluído no ciclo de qualidade de v1.1: regras validadas contra Nison/Bulkowski (com referência citada em comentário no topo de cada detector), constantes nomeadas em `companion object` e testes positivo/negativo/boundary para todos. Atualizações nas descrições dos padrões no Firestore continuam pendentes — serão tratadas em conjunto com `NF-02`.
 
 ---
 
@@ -136,7 +136,7 @@ Todos os 9 detectores abaixo contêm o comentário `//TODO Confirmar regras do p
 
 | ID | Item |
 |----|------|
-| QA-01 | `[ ]` **Testes unitários para os 10 detectores** (atualmente 5 cobertos). |
+| QA-01 | `[x]` **Testes unitários para os 10 detectores** (positivo, negativo limítrofe e boundary; 10/10 cobertos). |
 | QA-02 | `[ ]` **Testes de UI com `ComposeTestRule`** para fluxos críticos (login, screening, gráfico). |
 | QA-03 | `[ ]` **Testes de integração** Firestore + Room. |
 | QA-04 | `[ ]` **Resiliência de API** — retry com backoff exponencial em `BrapiDataSource`. |
@@ -167,3 +167,20 @@ Itens de investigação levantados em `Bugs e roteiro.txt` que não são bugs cl
 5. Itens concluídos podem ser movidos para uma seção `## Histórico` com a data.
 
 > A ordenação dentro de cada seção reflete uma sugestão de prioridade, mas é flexível — discuta no canal apropriado antes de pular itens críticos.
+
+---
+
+## 11. Refatoração arquitetural — próximos ciclos
+
+Itens documentados durante a auditoria de qualidade de v1.0 → v1.1. **Não foram executados naquele ciclo** (escopo era saneamento mínimo); ficam aqui para os próximos sprints, com prioridade para os que destravam testabilidade e isolam o backend.
+
+| ID | Item | Motivação |
+|----|------|-----------|
+| REFACT-01 | `[ ]` **Camada de domínio com Use Cases.** Extrair `StartScreeningUseCase`, `EnrichAssetUseCase`, `DetectPatternsUseCase` a partir do que hoje está em `ScreeningViewModel.startScreening` e em `ChartViewModel.fetchData`/`runScreening`. ViewModels passam a coordenar e expor estado. | Hoje os ViewModels concentram orquestração + I/O + formatação, dificultando testes e violando SRP. |
+| REFACT-02 | `[ ]` **Singleton `Retrofit` via Koin.** Hoje `Retrofit.Builder()` aparece em `ScreeningViewModel`, `BrapiDataSource` e `BrapiAssetsProvider`. Criar `single { retrofitBrapi() }` em `AppModule` e injetar. | Reduz alocações duplicadas, alinha com o restante da DI e prepara o terreno para interceptors (logging, retry, App Check). |
+| REFACT-03 | `[ ]` **`sealed class` para UiState.** Substituir os múltiplos `StateFlow` paralelos (`isLoading`, `error`, `data`) em `ScreeningViewModel` e `ChartViewModel` por estados consolidados (Loading/Success/Error). | Remove combinações inválidas (loading=true com error≠null) e simplifica os Composables. |
+| REFACT-04 | `[ ]` **Abstrair Firebase atrás de interfaces de repositório.** Hoje `FirebaseFirestore.getInstance()` aparece direto em `ScreeningViewModel`, `SelectAssetScreen`, `FirestoreService`, `FirebasePatternProvider`. Introduzir `AssetRepository`, `PatternRepository` etc. e fazer Firebase virar detalhe de implementação. | Pré-requisito para testar ViewModels sem rede e para trocar de backend no futuro. |
+| REFACT-05 | `[ ]` **Unificar Providers em Koin.** `AuthProvider`, `PatternProvider`, `AssetsProvider` hoje vivem como `CompositionLocal` paralelo ao Koin. Migrar para Koin com qualifier `mock` vs `real`. | Elimina dois sistemas de DI concorrentes; troca de implementação em testes/dev fica padronizada. |
+| REFACT-06 | `[ ]` **Mappers explícitos entre camadas (Entity → Domain → UI).** Hoje `Candlestick`, `PatternItem`, `AssetItem` são reusados em data/domain/UI. | Evita vazamento de modelos e permite evoluir camadas independentemente (renomear, anotar Room sem afetar UI etc.). |
+| REFACT-07 | `[ ]` **`PatternDetector.status` (enum `VALIDATED/EXPERIMENTAL`).** Substituir o antigo `//TODO Confirmar regras` (já removido) por um marcador formal por detector, permitindo filtrar experimentais em produção. | Quando o catálogo crescer (alvo: 70+ padrões), nem todos terão sido validados ao mesmo tempo — precisamos de um gate sem comentar código. |
+| REFACT-08 | `[ ]` **Logging utilitário com nível por build.** Hoje `Log.d` é compilado em release. Adicionar wrapper que respeite `BuildConfig.DEBUG` e/ou nível configurável, evitando logs verbosos em produção. | Preparação para release comercial; também complementa a regra "nunca logar tokens" do `CLAUDE.md`. |

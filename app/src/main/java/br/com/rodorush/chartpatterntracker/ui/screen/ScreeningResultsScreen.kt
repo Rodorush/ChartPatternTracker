@@ -1,6 +1,7 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,18 +12,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,11 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.DisposableEffect
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,23 +46,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import br.com.rodorush.chartpatterntracker.api.BrapiApiService
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import kotlinx.coroutines.tasks.await
-import br.com.rodorush.chartpatterntracker.BuildConfig
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
-import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,22 +65,16 @@ fun ScreeningResultsScreen(
     onCardClick: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     Log.d("ScreeningResultsScreen", "Tela ScreeningResultsScreen carregada")
-    // Coleta os resultados do ViewModel
     val screeningResults by viewModel.screeningResults.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
-    // Inicia a busca automaticamente
     LaunchedEffect(shouldRefresh) {
         if (shouldRefresh || screeningResults.isEmpty()) {
-            Log.d("ScreeningResultsScreen", "Iniciando busca com startScreening")
             viewModel.startScreening()
-        } else {
-            Log.d("ScreeningResultsScreen", "Resultados em cache, evitando nova busca")
         }
     }
 
-    // Estado para o campo de busca
     var searchText by remember { mutableStateOf("") }
 
     BackHandler(enabled = true) {
@@ -198,6 +184,7 @@ fun ScreeningResultsScreen(
                         result.asset.shortName.contains(q, ignoreCase = true) ||
                         result.asset.longName.contains(q, ignoreCase = true) ||
                         result.asset.name.contains(q, ignoreCase = true) ||
+                        result.displayShortName.contains(q, ignoreCase = true) ||
                         result.pattern.getLocalized("name").contains(q, ignoreCase = true)
                     }
                 }
@@ -217,23 +204,20 @@ fun ScreeningResultsScreen(
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Miniatura do padrão
-                                var imageUrl by remember { mutableStateOf<String?>(null) }
-                                LaunchedEffect(result.pattern.id) {
-                                    imageUrl = loadImageUrlFromStorage(result.pattern.id)
-                                }
                                 AsyncImage(
                                     model = ImageRequest.Builder(LocalContext.current)
-                                        .data(imageUrl)
+                                        .data(result.patternImageUrl)
                                         .crossfade(true)
                                         .build(),
                                     placeholder = painterResource(id = R.drawable.castical_64px),
                                     contentDescription = stringResource(R.string.pattern_description),
                                     modifier = Modifier.size(60.dp)
                                 )
-                                Column(modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 8.dp)) {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(start = 8.dp)
+                                ) {
                                     Text(
                                         text = stringResource(result.timeframe.nameRes),
                                         style = MaterialTheme.typography.bodyMedium
@@ -243,55 +227,9 @@ fun ScreeningResultsScreen(
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    // shortName preferencial; enriquece com /quote/{ticker} se necessário
-                                    fun normalizeName(s: String): String = s.trim().replace("\\s+".toRegex(), " ")
-                                    var displayShortName by remember(result.asset.ticker) {
-                                        val base = when {
-                                            result.asset.shortName.isNotBlank() -> result.asset.shortName
-                                            result.asset.name.isNotBlank() -> result.asset.name
-                                            result.asset.longName.isNotBlank() -> result.asset.longName
-                                            else -> ""
-                                        }
-                                        mutableStateOf(normalizeName(base))
-                                    }
-                                    LaunchedEffect(result.asset.ticker) {
-                                        if (displayShortName.isBlank()) {
-                                            try {
-                                                val retrofit = Retrofit.Builder()
-                                                    .baseUrl("https://brapi.dev/")
-                                                    .addConverterFactory(GsonConverterFactory.create())
-                                                    .build()
-                                                val service = retrofit.create(BrapiApiService::class.java)
-                                                val resp = service.getQuoteInfo(result.asset.ticker, BuildConfig.BRAPI_TOKEN)
-                                                val info = resp.results.firstOrNull()
-                                                val sn = info?.shortName ?: info?.longName
-                                                if (!sn.isNullOrBlank()) displayShortName = normalizeName(sn)
-                                            } catch (_: Exception) {
-                                                // silencioso: mantém fallback
-                                            }
-                                        }
-                                    }
-                                    var cachedToFirestore by remember(result.asset.ticker) { mutableStateOf(false) }
-                                    LaunchedEffect(result.asset.ticker, displayShortName) {
-                                        if (!cachedToFirestore && displayShortName.isNotBlank()) {
-                                            try {
-                                                val db = FirebaseFirestore.getInstance()
-                                                val docRef = db.collection("assets").document(result.asset.ticker)
-                                                val doc = docRef.get().await()
-                                                val existing = doc.getString("shortName")
-                                                if (existing.isNullOrBlank()) {
-                                                    docRef.set(mapOf("shortName" to displayShortName), SetOptions.merge()).await()
-                                                    Log.d("ScreeningResultsScreen", "shortName salvo no Firestore para ${result.asset.ticker}")
-                                                }
-                                                cachedToFirestore = true
-                                            } catch (_: Exception) {
-                                                // silencioso: regras ainda podem bloquear; sem travar UI
-                                            }
-                                        }
-                                    }
-                                    if (displayShortName.isNotBlank()) {
+                                    if (result.displayShortName.isNotBlank()) {
                                         Text(
-                                            text = displayShortName,
+                                            text = result.displayShortName,
                                             style = MaterialTheme.typography.bodySmall,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
@@ -303,7 +241,6 @@ fun ScreeningResultsScreen(
                                     )
                                 }
 
-                                // Indicação com ícone em coluna
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
                                         text = "Confiabilidade: ${result.reliability}",
