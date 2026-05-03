@@ -1,7 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -41,6 +40,7 @@ import br.com.rodorush.chartpatterntracker.viewmodel.ChartViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
+import br.com.rodorush.customlogs.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,6 +48,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
+
+private const val TAG = "ChartDetailScreen"
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +75,7 @@ fun ChartDetailScreen(
 
     // Gerenciar o botão Back do Android
     BackHandler(enabled = true) {
-        Log.d("ChartDetailScreen", "Android Back button pressed, calling onNavigateBack")
+        Log.d(TAG, "Android Back button pressed, calling onNavigateBack")
         onNavigateBack()
     }
 
@@ -124,7 +126,7 @@ fun ChartDetailScreen(
                 }
 
                 val jsonData = candlestickData.toChartPayload(highlightRanges)
-                Log.d("ChartDetailScreen", "Updating chart with ${candlestickData.size} candles and ${highlightRanges.size} highlights")
+                Log.d(TAG, "Updating chart with ${candlestickData.size} candles and ${highlightRanges.size} highlights")
                 coroutineScope.launch {
                     delay(50)
                     webView.evaluateJavascript("updateChart('$jsonData')", null)
@@ -160,7 +162,7 @@ fun ChartDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = {
-                        Log.d("ChartDetailScreen", "UI Back button clicked")
+                        Log.d(TAG, "UI Back button clicked")
                         onNavigateBack()
                     }) {
                         Icon(
@@ -209,12 +211,12 @@ fun ChartDetailScreen(
                                 webViewClient = object : WebViewClient() {
                                     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                                         val url = request.url.toString()
-                                        Log.d("ChartDetailScreen", "WebView loading URL: $url")
+                                        Log.d(TAG, "WebView loading URL: $url")
                                         return !url.startsWith("file:///android_asset/")
                                     }
 
                                     override fun onPageFinished(view: WebView, url: String) {
-                                        Log.d("ChartDetailScreen", "WebView page finished: $url")
+                                        Log.d(TAG, "WebView page finished: $url")
                                         // Força a inicialização do gráfico caso o onload não dispare
                                         view.evaluateJavascript(
                                             (
@@ -243,7 +245,7 @@ fun ChartDetailScreen(
                                     }
                                 }
                                 loadUrl("file:///android_asset/chart.html")
-                                Log.d("ChartDetailScreen", "WebView created and loading chart.html")
+                                Log.d(TAG, "WebView created and loading chart.html")
                             }
                         },
                         update = { /* Evitar recarga */ }
@@ -258,7 +260,7 @@ fun ChartDetailScreen(
             webViewRef?.let { webView ->
                 coroutineScope.launch(Dispatchers.Main) {
                     try {
-                        Log.d("ChartDetailScreen", "Starting WebView cleanup")
+                        Log.d(TAG, "Starting WebView cleanup")
                         webView.stopLoading()
                         webView.pauseTimers()
                         webView.onPause()
@@ -266,12 +268,12 @@ fun ChartDetailScreen(
                         webView.clearCache(true)
                         webView.clearHistory()
                         webView.removeAllViews()
-                        Log.d("ChartDetailScreen", "WebView cleanup completed, delaying destroy")
+                        Log.d(TAG, "WebView cleanup completed, delaying destroy")
                         delay(100)
                         webView.destroy()
-                        Log.d("ChartDetailScreen", "WebView destroyed successfully")
+                        Log.d(TAG, "WebView destroyed successfully")
                     } catch (e: Exception) {
-                        Log.e("ChartDetailScreen", "Error during WebView cleanup: $e")
+                        Log.e(TAG, "Error during WebView cleanup: $e")
                     } finally {
                         webViewRef = null
                     }
@@ -290,17 +292,17 @@ class WebAppInterface(
     @JavascriptInterface
     fun chartInitialized() {
         if (!isDestroyed) {
-            Log.d("ChartDetailScreen", "JavaScript: chartInitialized called")
+            Log.d(TAG, "JavaScript: chartInitialized called")
             onChartInitialized()
         } else {
-            Log.w("ChartDetailScreen", "JavaScript: chartInitialized ignored, WebView destroyed")
+            Log.w(TAG, "JavaScript: chartInitialized ignored, WebView destroyed")
         }
     }
 
     @JavascriptInterface
     fun updateChart(jsonData: String) {
         if (!isDestroyed) {
-            Log.d("ChartDetailScreen", "JavaScript: updateChart called")
+            Log.d(TAG, "JavaScript: updateChart called")
             webView.post {
                 if (!isDestroyed) {
                     webView.evaluateJavascript(
@@ -317,11 +319,11 @@ class WebAppInterface(
                         """.trimIndent(), null
                     )
                 } else {
-                    Log.w("ChartDetailScreen", "JavaScript: updateChart ignored, WebView destroyed")
+                    Log.w(TAG, "JavaScript: updateChart ignored, WebView destroyed")
                 }
             }
         } else {
-            Log.w("ChartDetailScreen", "JavaScript: updateChart ignored, WebView destroyed")
+            Log.w(TAG, "JavaScript: updateChart ignored, WebView destroyed")
         }
     }
 }

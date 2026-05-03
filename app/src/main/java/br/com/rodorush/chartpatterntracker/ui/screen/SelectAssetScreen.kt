@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,11 +50,14 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import br.com.rodorush.customlogs.Log
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+
+private const val TAG = "SelectAssetsScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +77,7 @@ fun SelectAssetsScreen(
             val filtered = loadedAssets.filterNot { it.ticker.endsWith("F", ignoreCase = true) }
             assets = filtered.sortedBy { it.ticker }
             Log.d(
-                "SelectAssetsScreen",
+                TAG,
                 "Ativos carregados: ${assets.map { it.ticker }}"
             )
         }
@@ -143,7 +145,7 @@ fun SelectAssetsScreen(
                         viewModel.updateSelectedAssets(selected)
                         viewModel.setAllAssetsChecked(allChecked)
                         Log.d(
-                            "SelectAssetsScreen",
+                            TAG,
                             "Botão Voltar clicado, ativos selecionados: ${selected.map { it.ticker }}"
                         )
                         onNavigateBack()
@@ -157,7 +159,7 @@ fun SelectAssetsScreen(
                     IconButton(onClick = {
                         viewModel.updateSelectedAssets(selected)
                         Log.d(
-                            "SelectAssetsScreen",
+                            TAG,
                             "Botão Home clicado, ativos selecionados: ${selected.map { it.ticker }}"
                         )
                         onNavigateHome()
@@ -173,7 +175,7 @@ fun SelectAssetsScreen(
                             viewModel.updateSelectedAssets(selected)
                             viewModel.setAllAssetsChecked(allChecked)
                             Log.d(
-                                "SelectAssetsScreen",
+                                TAG,
                                 "Botão Avançar clicado, ativos selecionados: ${selected.map { it.ticker }}"
                             )
                             onNextClick()
@@ -250,7 +252,7 @@ fun SelectAssetsScreen(
                                     viewModel.setAllAssetsChecked(false)
                                 }
                                 Log.d(
-                                    "SelectAssetsScreen",
+                                    TAG,
                                     "Checkbox alterado: ${asset.ticker} = $isChecked"
                                 )
                             }
@@ -298,7 +300,7 @@ fun SelectAssetsScreen(
                             checkStates[i] = toggled
                         }
                         Log.d(
-                            "SelectAssetsScreen",
+                            TAG,
                             "Switch allChecked alterado: $toggled"
                         )
                     }

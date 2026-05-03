@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,6 +49,9 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import br.com.rodorush.customlogs.Log
+
+private const val TAG = "SelectTimeframesScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,7 +141,7 @@ fun SelectTimeframesScreen(
                     IconButton(onClick = {
                         viewModel.updateSelectedTimeframes(selected)
                         Log.d(
-                            "SelectTimeframesScreen",
+                            TAG,
                             "Botão Home clicado, timeframes selecionados: ${selected.map { it.value }}"
                         )
                         onNavigateHome()
@@ -155,7 +157,7 @@ fun SelectTimeframesScreen(
                             viewModel.updateSelectedTimeframes(selected)
                             viewModel.setAllTimeframesChecked(allChecked)
                             Log.d(
-                                "SelectTimeframesScreen",
+                                TAG,
                                 "Botão Buscar clicado, timeframes selecionados: ${selected.map { it.value }}"
                             )
                             onNextClick()

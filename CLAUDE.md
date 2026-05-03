@@ -32,7 +32,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 - **Strings de UI** sempre via `stringResource(R.string.*)` — três locales obrigatórios (pt-BR, en-US, es-ES).
 - **Detectores**: 1 classe por padrão, sem herança; constantes de limite como `companion object` interno; comentário no topo da classe citando a fonte da regra (Nison, Bulkowski, etc.).
 - **Test runner**: JUnit 4. Não introduzir Mockito, Turbine ou MockK sem decisão prévia.
-- **Logs**: usar `Log.d/Log.w/Log.e` com `TAG` em `companion object`. Nunca usar `println`.
+- **Logs**: usar `br.com.rodorush.customlogs.Log` (`Log.d/w/e/i/v`) com `TAG` em `companion object` (em classes) ou `private const val TAG` no topo do arquivo (Composables/funções top-level). Nunca usar `android.util.Log` direto nem `kotlin.io.println` direto. Para debug rápido sem TAG, importar `br.com.rodorush.customlogs.println` (drop-in com TAG inferido do caller). Em release, `DEBUG`/`VERBOSE` são silenciados (incluindo o `println` da CustomLogs); `WARN`/`ERROR` com `Throwable` viram `recordException` no Crashlytics. Pares chave/valor passados ao final viram `setCustomKey` no Crashlytics — usar pra enriquecer contexto de erro (ticker, timeframe, etc.).
 
 ## Como rodar
 
@@ -54,7 +54,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 
 ## Não faça (regras endurecidas após auditoria de qualidade v1.0 → v1.1)
 
-- **Nunca logar `BuildConfig.BRAPI_TOKEN`** ou maps/objetos que contenham o token. Já houve vazamento via `Log.d` em `CandlestickRepository`; a regra existe para não acontecer de novo.
+- **Nunca logar `BuildConfig.BRAPI_TOKEN`** ou maps/objetos que contenham o token. Já houve vazamento via `Log.d` em `CandlestickRepository`; a regra existe para não acontecer de novo. A CustomLogs em release silencia `DEBUG`/`VERBOSE` no logcat, mas isso é defesa em profundidade — `WARN`/`ERROR` continuam indo pro Crashlytics, então o token nunca pode aparecer em log de qualquer nível.
 - **Nunca instanciar `Retrofit.Builder()` ou `FirebaseFirestore.getInstance()` dentro de Composables.** I/O fica no ViewModel/Repository. `REFACT-02` e `REFACT-04` ainda em aberto, mas a regra **já vale para código novo**.
 - **Nunca usar `as` sem `?`** em payload de rede ou Firestore. Use `as?` + `filterIsInstance` ou desserialize com cuidado.
 - **Nunca usar `!!`** quando `?.let { }`, `as?` ou `requireNotNull(...)` resolvem. `!!` em UI Compose é especialmente arriscado por causa de recomposição.

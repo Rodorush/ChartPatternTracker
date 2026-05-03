@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -53,8 +52,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import br.com.rodorush.customlogs.Log
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+
+private const val TAG = "ScreeningResultsScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +66,7 @@ fun ScreeningResultsScreen(
     onNavigateHome: () -> Unit = {},
     onCardClick: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
-    Log.d("ScreeningResultsScreen", "Tela ScreeningResultsScreen carregada")
+    Log.d(TAG, "Tela ScreeningResultsScreen carregada")
     val screeningResults by viewModel.screeningResults.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()

@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -56,8 +55,11 @@ import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockPatternListProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
+import br.com.rodorush.customlogs.Log
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+
+private const val TAG = "SelectChartPatternScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +77,7 @@ fun SelectChartPatternScreen(
         patternProvider.fetchPatterns { loadedPatterns ->
             patterns = loadedPatterns.sortedBy { it.getLocalized("name") }
             Log.d(
-                "SelectChartPatternScreen",
+                TAG,
                 "Padrões carregados: ${patterns.map { it.id to it.getLocalized("name") }}"
             )
         }
@@ -141,7 +143,7 @@ fun SelectChartPatternScreen(
                         viewModel.updateSelectedPatterns(selected)
                         viewModel.setAllPatternsChecked(allChecked)
                         Log.d(
-                            "SelectChartPatternScreen",
+                            TAG,
                             "Botão Voltar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}"
                         )
                         onNavigateBack()
@@ -156,7 +158,7 @@ fun SelectChartPatternScreen(
                         viewModel.updateSelectedPatterns(selected)
                         viewModel.setAllPatternsChecked(allChecked)
                         Log.d(
-                            "SelectChartPatternScreen",
+                            TAG,
                             "Botão Home clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}"
                         )
                         onNavigateBack()
@@ -172,7 +174,7 @@ fun SelectChartPatternScreen(
                         viewModel.updateSelectedPatterns(selected)
                         viewModel.setAllPatternsChecked(allChecked)
                         Log.d(
-                            "SelectChartPatternScreen",
+                            TAG,
                             "Botão Avançar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}"
                         )
                         onNextClick()
@@ -223,7 +225,7 @@ fun SelectChartPatternScreen(
                                 } else if (checkStates.none { it }) {
                                     viewModel.setAllPatternsChecked(false)
                                 }
-                                Log.d("SelectChartPatternScreen", "Checkbox alterado: ${pattern.id} - ${pattern.getLocalized("name")} = $isChecked")
+                                Log.d(TAG, "Checkbox alterado: ${pattern.id} - ${pattern.getLocalized("name")} = $isChecked")
                             }
                         )
                         Text(
@@ -267,7 +269,7 @@ fun SelectChartPatternScreen(
                             checkStates[i] = toggled
                         }
                         Log.d(
-                            "SelectChartPatternScreen",
+                            TAG,
                             "Switch allChecked alterado: $toggled"
                         )
                     }

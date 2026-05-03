@@ -1,6 +1,6 @@
 package br.com.rodorush.chartpatterntracker.model
 
-import android.util.Log
+import br.com.rodorush.customlogs.Log
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +46,13 @@ class CandlestickRepository(
                     finalCandlesticks
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Erro em fetchCandlesticks($ticker,$timeframe): ${e.message}", e)
+                Log.e(
+                    TAG,
+                    "Erro em fetchCandlesticks",
+                    e,
+                    "ticker" to ticker,
+                    "timeframe" to timeframe
+                )
                 throw e
             }
         }
@@ -82,7 +88,13 @@ class CandlestickRepository(
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao chamar updateCandlesticks($ticker,$timeframe): ${e.message}", e)
+            Log.e(
+                TAG,
+                "Erro ao chamar updateCandlesticks",
+                e,
+                "ticker" to ticker,
+                "timeframe" to timeframe
+            )
             throw e
         }
     }

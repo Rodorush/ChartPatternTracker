@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ChartPatternTracker"
 include(":app")
+includeBuild("../CustomLogs")

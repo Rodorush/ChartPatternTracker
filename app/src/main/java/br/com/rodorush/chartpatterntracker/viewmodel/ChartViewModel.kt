@@ -1,8 +1,8 @@
 package br.com.rodorush.chartpatterntracker.viewmodel
 
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.core.content.edit
+import br.com.rodorush.customlogs.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.rodorush.chartpatterntracker.BuildConfig
@@ -25,6 +25,7 @@ class ChartViewModel(
     private val repository: CandlestickRepository
 ) : ViewModel() {
     companion object {
+        private const val TAG = "ChartViewModel"
         private const val PREF_PATTERN_DISPLAY_MODE = "pattern_display_mode"
     }
 
@@ -67,7 +68,7 @@ class ChartViewModel(
                 val newMode = runCatching { PatternDisplayMode.valueOf(stored) }
                     .getOrDefault(PatternDisplayMode.ALL)
                 if (newMode != _patternDisplayMode.value) {
-                    Log.d("ChartViewModel", "pattern_display_mode alterado via SharedPreferences para $newMode")
+                    Log.d(TAG, "pattern_display_mode alterado via SharedPreferences para $newMode")
                     _patternDisplayMode.value = newMode
                     _patternsData.value = applyDisplayMode(lastDetectedPatterns, _candlestickData.value)
                 }
@@ -79,7 +80,7 @@ class ChartViewModel(
         val savedSource = preferences.getString("data_source", "Brapi") ?: "Brapi"
         setDataSource(savedSource)
         if (BuildConfig.BRAPI_TOKEN.isBlank()) {
-            Log.w("ChartViewModel", "BRAPI_TOKEN está vazio. Verifique BuildConfig.")
+            Log.w(TAG, "BRAPI_TOKEN está vazio. Verifique BuildConfig.")
             _error.value = "Chave da API inválida"
         } else {
             _currentSource.value.setApiKey(BuildConfig.BRAPI_TOKEN)
@@ -119,17 +120,17 @@ class ChartViewModel(
         val newSource = sources[sourceName] ?: return
         _currentSource.value = newSource
         preferences.edit { putString("data_source", sourceName) }
-        Log.d("ChartViewModel", "Fonte de dados alterada para: $sourceName")
+        Log.d(TAG, "Fonte de dados alterada para: $sourceName")
     }
 
     fun setApiKey(apiKey: String) {
         if (apiKey.isBlank()) {
-            Log.w("ChartViewModel", "Tentativa de definir API key vazia")
+            Log.w(TAG, "Tentativa de definir API key vazia")
             _error.value = "Chave da API não pode ser vazia"
             return
         }
         _currentSource.value.setApiKey(apiKey)
-        Log.d("ChartViewModel", "API key definida com sucesso")
+        Log.d(TAG, "API key definida com sucesso")
     }
 
     fun fetchData(
@@ -140,7 +141,7 @@ class ChartViewModel(
         patternIds: List<String> = emptyList()
     ) {
         if (ticker.isBlank() || interval.isBlank()) {
-            Log.e("ChartViewModel", "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
+            Log.e(TAG, "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
             _error.value = "Parâmetros inválidos"
             _isLoading.value = false
             return
@@ -148,7 +149,7 @@ class ChartViewModel(
 
         _isLoading.value = true
         viewModelScope.launch {
-            Log.d("ChartViewModel", "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
+            Log.d(TAG, "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
                 var finalCandlesticks: List<Candlestick>? = null
 
@@ -157,19 +158,19 @@ class ChartViewModel(
                         if (cached.isNotEmpty()) {
                             finalCandlesticks = cached
                             Log.d(
-                                "ChartViewModel",
+                                TAG,
                                 "Candlesticks obtidos via Room/Firestore: ${cached.size}"
                             )
                         } else {
                             Log.d(
-                                "ChartViewModel",
+                                TAG,
                                 "Cache local vazio para $ticker-$interval; tentando fonte remota"
                             )
                         }
                     }
                     .onFailure { e ->
                         Log.w(
-                            "ChartViewModel",
+                            TAG,
                             "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
                             e
                         )
@@ -177,30 +178,33 @@ class ChartViewModel(
 
                 if (finalCandlesticks == null) {
                     Log.d(
-                        "ChartViewModel",
+                        TAG,
                         "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}"
                     )
                     val remoteCandlesticks =
                         _currentSource.value.getHistoricalData(ticker, range, interval)
                     remoteCandlesticks.onSuccess { remoteData ->
                         Log.d(
-                            "ChartViewModel",
+                            TAG,
                             "Fonte remota retornou ${remoteData.size} candlesticks"
                         )
                         if (remoteData.isNotEmpty()) {
                             finalCandlesticks = remoteData
                         } else {
                             Log.w(
-                                "ChartViewModel",
+                                TAG,
                                 "Nenhum dado remoto retornado para $ticker"
                             )
                             _error.value = "Nenhum dado disponível"
                         }
                     }.onFailure { e ->
                         Log.e(
-                            "ChartViewModel",
-                            "Erro ao obter dados remotos: ${e.message}",
-                            e
+                            TAG,
+                            "Erro ao obter dados remotos",
+                            e,
+                            "ticker" to ticker,
+                            "interval" to interval,
+                            "range" to range
                         )
                         _error.value = e.message ?: "Falha ao buscar dados iniciais"
                     }
@@ -217,7 +221,7 @@ class ChartViewModel(
                         lastDetectedPatterns = detected
                         _patternsData.value = applyDisplayMode(detected, candlesticks)
                         Log.d(
-                            "ChartViewModel",
+                            TAG,
                             "Padrões detectados: " + detected.map { it.key to it.value.size }
                         )
                     } else {
@@ -225,13 +229,20 @@ class ChartViewModel(
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ChartViewModel", "Erro inesperado em fetchData: ${e.message}", e)
+                Log.e(
+                    TAG,
+                    "Erro inesperado em fetchData",
+                    e,
+                    "ticker" to ticker,
+                    "interval" to interval,
+                    "range" to range
+                )
                 _candlestickData.value = emptyList()
                 _patternsData.value = emptyMap()
                 _error.value = e.message ?: "Erro inesperado"
             } finally {
                 _isLoading.value = false
-                Log.d("ChartViewModel", "fetchData concluído")
+                Log.d(TAG, "fetchData concluído")
             }
         }
     }

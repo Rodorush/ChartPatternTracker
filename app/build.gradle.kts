@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
 }
@@ -122,4 +123,6 @@ dependencies {
     implementation(libs.firebase.analytics.ktx)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
+    implementation(libs.firebase.crashlytics.ktx)
+    implementation("br.com.rodorush:customlogs")
 }

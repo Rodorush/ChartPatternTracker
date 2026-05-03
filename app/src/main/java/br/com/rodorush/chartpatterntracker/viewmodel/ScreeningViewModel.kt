@@ -1,7 +1,7 @@
 package br.com.rodorush.chartpatterntracker.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
+import br.com.rodorush.customlogs.Log
 import androidx.lifecycle.viewModelScope
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
@@ -186,7 +186,14 @@ class ScreeningViewModel(
                                 )
                                 _screeningResults.value = results.toList()
                             } catch (e: Exception) {
-                                Log.e(TAG, "Erro em ${asset.ticker}-${timeframe.value}: ${e.message}", e)
+                                Log.e(
+                                    TAG,
+                                    "Erro durante screening",
+                                    e,
+                                    "ticker" to asset.ticker,
+                                    "timeframe" to timeframe.value,
+                                    "patternId" to pattern.id
+                                )
                             }
                         }
                     }

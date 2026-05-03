@@ -1,10 +1,10 @@
 package br.com.rodorush.chartpatterntracker.util.provider
 
-import android.util.Log
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
+import br.com.rodorush.customlogs.Log
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -21,7 +21,7 @@ class BrapiAssetsProvider : AssetsProvider {
         try {
             val response = service.getQuoteList("Bearer $token")
             val stocks = response.stocks
-            Log.d("BrapiAssetsProvider", "Carregados ${stocks.size} ativos do /quote/list")
+            Log.d(TAG, "Carregados ${stocks.size} ativos do /quote/list")
             val assets = stocks.map { stock ->
                 val norm = normalizeName(stock.name)
                 AssetItem(
@@ -36,7 +36,7 @@ class BrapiAssetsProvider : AssetsProvider {
             }
             onResult(assets)
         } catch (e: Exception) {
-            Log.e("BrapiAssetsProvider", "Erro ao carregar lista de ativos: ${e.message}", e)
+            Log.e(TAG, "Erro ao carregar lista de ativos", e)
             onResult(emptyList())
         }
     }
@@ -44,5 +44,9 @@ class BrapiAssetsProvider : AssetsProvider {
     private fun normalizeName(s: String?): String {
         if (s.isNullOrBlank()) return ""
         return s.trim().replace("\\s+".toRegex(), " ")
+    }
+
+    private companion object {
+        const val TAG = "BrapiAssetsProvider"
     }
 }
