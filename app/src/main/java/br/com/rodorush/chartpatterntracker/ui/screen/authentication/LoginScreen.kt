@@ -47,7 +47,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 
 @Composable
-fun LoginScreen(onNavigateToRegister: () -> Unit) {
+fun LoginScreen(
+    onNavigateToRegister: () -> Unit,
+    onNavigateToVerifyEmail: () -> Unit = {}
+) {
     val context = LocalContext.current
     val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
 
@@ -156,7 +159,11 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
             onClick = {
                 authProvider.signInWithEmailAndPassword(email, password) { success, error ->
                     if (success) {
-                        context.startActivity(Intent(context, MainActivity::class.java))
+                        if (authProvider.isEmailVerified()) {
+                            context.startActivity(Intent(context, MainActivity::class.java))
+                        } else {
+                            onNavigateToVerifyEmail()
+                        }
                     } else {
                         val errorMessage = when {
                             error?.contains("The supplied auth credential is incorrect") == true -> context.getString(

@@ -1,6 +1,7 @@
 package br.com.rodorush.chartpatterntracker.util.provider
 
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
+import br.com.rodorush.customlogs.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
@@ -30,7 +31,22 @@ class FirebaseAuthProvider : AuthProvider {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    onResult(true, null)
+                    val user = task.result?.user
+                    if (user != null) {
+                        user.sendEmailVerification()
+                            .addOnCompleteListener { verifyTask ->
+                                if (!verifyTask.isSuccessful) {
+                                    Log.w(
+                                        TAG,
+                                        "createUser: falha ao enviar e-mail de verificação",
+                                        verifyTask.exception
+                                    )
+                                }
+                                onResult(true, null)
+                            }
+                    } else {
+                        onResult(true, null)
+                    }
                 } else {
                     onResult(false, task.exception?.message)
                 }
@@ -57,5 +73,52 @@ class FirebaseAuthProvider : AuthProvider {
     override fun logout(onResult: () -> Unit) {
         auth.signOut()
         onResult()
+    }
+
+    override fun sendEmailVerification(onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        user.sendEmailVerification()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    Log.w(TAG, "sendEmailVerification: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun reloadCurrentUser(onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        user.reload()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    Log.w(TAG, "reloadCurrentUser: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun isEmailVerified(): Boolean = auth.currentUser?.isEmailVerified == true
+
+    override fun currentUserEmail(): String? = auth.currentUser?.email
+
+    override fun currentUserProviderId(): String? =
+        auth.currentUser?.providerData
+            ?.firstOrNull { it.providerId != "firebase" }
+            ?.providerId
+
+    private companion object {
+        const val TAG = "FirebaseAuthProvider"
     }
 }

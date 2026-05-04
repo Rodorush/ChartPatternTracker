@@ -40,15 +40,19 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
 
 @Composable
 fun RegisterScreen(
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToVerifyEmail: () -> Unit = {},
+    viewModel: AuthenticationViewModel = viewModel()
 ) {
     val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
 
@@ -180,8 +184,8 @@ fun RegisterScreen(
                 onClick = {
                     authProvider.createUserWithEmailAndPassword(email, password) { success, error ->
                         if (success) {
-                            Toast.makeText(context, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
-                            onNavigateToLogin()
+                            viewModel.armResendCooldown()
+                            onNavigateToVerifyEmail()
                         } else {
                             val errorMessage = when (error) {
                                 "The email address is already in use by another account." ->

@@ -6,9 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import br.com.rodorush.chartpatterntracker.navigation.AuthenticationNavHost
+import br.com.rodorush.chartpatterntracker.navigation.ROUTE_LOGIN
+import br.com.rodorush.chartpatterntracker.navigation.ROUTE_VERIFY_EMAIL
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
 
 class AuthenticationActivity : ComponentActivity() {
 
@@ -23,10 +27,24 @@ class AuthenticationActivity : ComponentActivity() {
 
         FirebaseApp.initializeApp(this)
 
+        val startDestination = resolveStartDestination()
+
         setContent {
             ChartPatternTrackerTheme {
-                AuthenticationNavHost()
+                AuthenticationNavHost(startDestination = startDestination)
             }
+        }
+    }
+
+    private fun resolveStartDestination(): String {
+        val user = FirebaseAuth.getInstance().currentUser ?: return ROUTE_LOGIN
+        val isPasswordProvider = user.providerData.any {
+            it.providerId == EmailAuthProvider.PROVIDER_ID
+        }
+        return if (isPasswordProvider && !user.isEmailVerified) {
+            ROUTE_VERIFY_EMAIL
+        } else {
+            ROUTE_LOGIN
         }
     }
 }

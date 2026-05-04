@@ -27,6 +27,7 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 9. [Análises pendentes](#9-analises-pendentes)
 10. [Como contribuir com o roadmap](#10-como-contribuir-com-o-roadmap)
 11. [Refatoração arquitetural — próximos ciclos](#11-refatoracao-arquitetural--proximos-ciclos)
+12. [NF-03 — esboço de implementação](#12-nf-03--esboco-de-implementacao)
 
 ---
 
@@ -82,8 +83,8 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 |----|------|--------|
 | NF-01 | `[ ]` **Acrescentar mais padrões de candlestick.** Catálogo conceitual prevê 70+; hoje há 10 implementados. | `Bugs e roteiro.txt` |
 | NF-02 | `[ ]` **Validar nomes dos padrões em inglês e espanhol.** A localização atual prioriza pt-BR. | `Bugs e roteiro.txt` |
-| NF-03 | `[ ]` **Lembrar senha / alterar senha / alterar dados de conta.** Hoje só existe `createUser` / `signIn` em `FirebaseAuthProvider`. Falta `sendPasswordResetEmail`, troca de senha autenticada (`updatePassword`) e edição de displayName/email. Verificação de email vive em `NF-21`/`NF-22`. | `Bugs e roteiro.txt` |
-| NF-21 | `[ ]` **Verificação de email no cadastro — fase 1 (Firebase Auth nativo).** Após `createUserWithEmailAndPassword`, chamar `user.sendEmailVerification()` em `FirebaseAuthProvider`. Tela "Confirme seu email" com botão **Reenviar** (cooldown local de 60 s). Gate na `AuthenticationActivity`/nav: se `auth.currentUser?.isEmailVerified == false`, redireciona para tela de verificação em vez de `MainActivity`. Customizar template de verificação no Firebase Console nos três locales (pt-BR, en-US, es-ES) — alinhado com `NF-02`. Action URL via **Android App Link** (não Firebase Dynamic Links — descontinuado em 2025-08). Habilitar **email enumeration protection** no Firebase Auth Console. Strings novas i18n (`verify_email_title`, `email_sent_check_inbox`, `resend_email`, `resend_cooldown`). | Beta comercial — pré-requisito de qualidade/segurança no onboarding. |
+| NF-03 | `[ ]` **Lembrar senha / alterar senha / alterar e-mail / alterar dados de conta.** Confirmado em 2026-05-04 que nenhum desses fluxos existe (zero referências a `sendPasswordResetEmail`, `updatePassword`, `verifyBeforeUpdateEmail`, `reauthenticate` no código). Plano de implementação detalhado em **§12 (NF-03 — esboço de implementação)**. | `Bugs e roteiro.txt` |
+| NF-21 | `[~]` **Verificação de email no cadastro — fase 1 (Firebase Auth nativo).** Código entregue: `FirebaseAuthProvider.sendEmailVerification` disparado após `createUserWithEmailAndPassword`, `VerifyEmailScreen` com botão **Reenviar** (cooldown local de 60 s) e botão "Já verifiquei", gate em `AuthenticationActivity` que redireciona usuários `password` não verificados para a tela de verificação, auto-recheck via `LifecycleEventObserver` no `ON_RESUME`, isenção do Google Sign-In (provider já garante o e-mail), strings i18n nos 3 locales, testes unitários do ViewModel (6/6). Action URL fica como **handler padrão do Firebase** (browser → "E-mail verificado" → usuário volta ao app); **Android App Link** com deep link adiado para fase 1.5. **Pendente (passos manuais no Firebase Console)**: customizar template de verificação nos três locales (pt-BR, en-US, es-ES) — alinhado com `NF-02`; habilitar **email enumeration protection**. | Beta comercial — pré-requisito de qualidade/segurança no onboarding. |
 | NF-22 | `[ ]` **Verificação de email — fase 2 (Cloud Function + template próprio).** **Só executar se** branding total do email ou métricas de entrega/bounce virarem requisito. Migrar para `auth().generateEmailVerificationLink()` + envio via SendGrid/Resend; Firestore guardando `lastVerificationEmailSentAt` e contador de tentativas para rate limit server-side. | Diferimento explícito: enquanto o template do Console atender, evita custo de SendGrid e código a manter. |
 | NF-04 | `[ ]` **Token da Brapi via variável de ambiente** com `lateinit`, em vez de `BuildConfig`. Reduz risco de vazamento via APK. | `Bugs e roteiro.txt` |
 | NF-05 | `[ ]` **Tela de Disclaimer** sobre risco de operações no mercado financeiro. | `Bugs e roteiro.txt` |
@@ -180,10 +181,119 @@ Itens documentados durante a auditoria de qualidade de v1.0 → v1.1. **Não for
 |----|------|-----------|
 | REFACT-01 | `[ ]` **Camada de domínio com Use Cases.** Extrair `StartScreeningUseCase`, `EnrichAssetUseCase`, `DetectPatternsUseCase` a partir do que hoje está em `ScreeningViewModel.startScreening` e em `ChartViewModel.fetchData`/`runScreening`. ViewModels passam a coordenar e expor estado. | Hoje os ViewModels concentram orquestração + I/O + formatação, dificultando testes e violando SRP. |
 | REFACT-02 | `[ ]` **Singleton `Retrofit` via Koin.** Hoje `Retrofit.Builder()` aparece em `ScreeningViewModel`, `BrapiDataSource` e `BrapiAssetsProvider`. Criar `single { retrofitBrapi() }` em `AppModule` e injetar. | Reduz alocações duplicadas, alinha com o restante da DI e prepara o terreno para interceptors (logging, retry, App Check). |
-| REFACT-03 | `[ ]` **`sealed class` para UiState.** Substituir os múltiplos `StateFlow` paralelos (`isLoading`, `error`, `data`) em `ScreeningViewModel` e `ChartViewModel` por estados consolidados (Loading/Success/Error). | Remove combinações inválidas (loading=true com error≠null) e simplifica os Composables. |
+| REFACT-03 | `[ ]` **`sealed class` para UiState.** Substituir os múltiplos `StateFlow` paralelos (`isLoading`, `error`, `data`) em `ScreeningViewModel` e `ChartViewModel` por estados consolidados (Loading/Success/Error). `AuthenticationViewModel` já tem `VerificationStatus` como sealed class após NF-21 — usar como modelo. | Remove combinações inválidas (loading=true com error≠null) e simplifica os Composables. |
 | REFACT-04 | `[ ]` **Abstrair Firebase atrás de interfaces de repositório.** Hoje `FirebaseFirestore.getInstance()` aparece direto em `ScreeningViewModel`, `SelectAssetScreen`, `FirestoreService`, `FirebasePatternProvider`. Introduzir `AssetRepository`, `PatternRepository` etc. e fazer Firebase virar detalhe de implementação. | Pré-requisito para testar ViewModels sem rede e para trocar de backend no futuro. |
 | REFACT-05 | `[ ]` **Unificar Providers em Koin.** `AuthProvider`, `PatternProvider`, `AssetsProvider` hoje vivem como `CompositionLocal` paralelo ao Koin. Migrar para Koin com qualifier `mock` vs `real`. | Elimina dois sistemas de DI concorrentes; troca de implementação em testes/dev fica padronizada. |
 | REFACT-06 | `[ ]` **Mappers explícitos entre camadas (Entity → Domain → UI).** Hoje `Candlestick`, `PatternItem`, `AssetItem` são reusados em data/domain/UI. | Evita vazamento de modelos e permite evoluir camadas independentemente (renomear, anotar Room sem afetar UI etc.). |
 | REFACT-07 | `[ ]` **`PatternDetector.status` (enum `VALIDATED/EXPERIMENTAL`).** Substituir o antigo `//TODO Confirmar regras` (já removido) por um marcador formal por detector, permitindo filtrar experimentais em produção. | Quando o catálogo crescer (alvo: 70+ padrões), nem todos terão sido validados ao mesmo tempo — precisamos de um gate sem comentar código. |
 | REFACT-08 | `[x]` **Logging utilitário com nível por build.** Substituído `android.util.Log` por `br.com.rodorush.customlogs.Log` (library local em `C:\Users\rodol\StudioProjects\CustomLogs`, consumida via `includeBuild`). Em debug planta `DebugTree` (logcat); em release planta `CrashlyticsTree` (silencia DEBUG/VERBOSE; WARN/ERROR + Throwable viram `recordException` e pares chave/valor viram `setCustomKey`). Crashlytics integrado ao app no mesmo PR. | Preparação para release comercial; também complementa a regra "nunca logar tokens" do `CLAUDE.md`. |
 | REFACT-09 | `[ ]` **Publicar CustomLogs em GitHub Packages privado.** Hoje vive como composite build em `C:\Users\rodol\StudioProjects\CustomLogs`; quando a API estabilizar, publicar como artefato versionado e trocar `includeBuild` por `implementation("br.com.rodorush:customlogs:x.y.z")`. | Desacopla o app da pasta sibling; permite consumir a mesma library em outros projetos sem duplicar fonte. |
+
+---
+
+## 12. NF-03 — esboço de implementação
+
+Plano detalhado para quando NF-03 entrar em prioridade. Sub-itens são independentes — podem ir em PRs separados.
+
+### 12.1 Sub-escopos
+
+| Sub-ID | Fluxo | Endpoint Firebase | Onde mora |
+|--------|-------|-------------------|-----------|
+| NF-03a | **Esqueci minha senha** (não autenticado) | `auth.sendPasswordResetEmail(email)` | Link em `LoginScreen` → nova `ForgotPasswordScreen` |
+| NF-03b | **Alterar senha** (autenticado, e-mail/senha) | `user.updatePassword(newPassword)` (com reauth) | Nova `ChangePasswordScreen` em Settings/Profile |
+| NF-03c | **Alterar e-mail** (autenticado) | `user.verifyBeforeUpdateEmail(newEmail)` (com reauth) | Nova `ChangeEmailScreen` em Settings/Profile |
+| NF-03d | **Alterar `displayName`** (autenticado) | `user.updateProfile(UserProfileChangeRequest)` | Mesma tela de edição de perfil |
+| NF-03e | **Excluir conta** (LGPD) | `user.delete()` (com reauth) | Settings/Profile, escondido atrás de confirmação |
+
+`updateEmail` foi **descontinuado** em 2024 — sempre usar `verifyBeforeUpdateEmail`, que envia link para o novo endereço e só efetiva a troca após clique. Mesmo modelo do NF-21.
+
+### 12.2 Reautenticação recente
+
+`updatePassword`, `verifyBeforeUpdateEmail` e `delete` exigem **sessão recente** (`requires-recent-login`). Se a sessão expirou, é preciso reautenticar antes:
+
+- **E-mail/senha**: `EmailAuthProvider.getCredential(email, password)` → `user.reauthenticate(credential)`.
+- **Google**: relançar `GoogleSignInClient` para obter `idToken` novo → `GoogleAuthProvider.getCredential(idToken, null)` → `user.reauthenticate(credential)`.
+
+Centralizar como helpers no `AuthProvider`:
+
+```kotlin
+fun reauthenticateWithPassword(password: String, onResult: (Boolean, String?) -> Unit)
+fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit)
+```
+
+Cada tela "destrutiva" tenta a operação direto e, ao receber `FirebaseAuthRecentLoginRequiredException`, abre um diálogo pedindo a senha (ou reabrindo o Google Sign-In) antes de retentar.
+
+### 12.3 AuthProvider — métodos a adicionar
+
+```kotlin
+// Não autenticado
+fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit)
+
+// Autenticado — exigem sessão recente
+fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit)
+fun verifyBeforeUpdateEmail(newEmail: String, onResult: (Boolean, String?) -> Unit)
+fun updateDisplayName(displayName: String, onResult: (Boolean, String?) -> Unit)
+fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit)
+
+// Helpers de reautenticação
+fun reauthenticateWithPassword(password: String, onResult: (Boolean, String?) -> Unit)
+fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit)
+```
+
+`MockAuthProvider` ganha implementações controláveis (mesmo padrão do NF-21).
+
+### 12.4 Telas e navegação
+
+- **`LoginScreen`**: link "Esqueci minha senha" abaixo do campo Senha → navega para `ForgotPasswordScreen`.
+- **`ForgotPasswordScreen`** (novo): input de e-mail + botão Enviar. Sempre mostra mensagem genérica de sucesso (a *email enumeration protection* já está habilitada — não vazar se a conta existe).
+- **`ProfileScreen`** (novo, em Settings): exibe e-mail, displayName, provedor; botões para alterar senha (só se provedor = `password`), alterar e-mail, alterar nome, excluir conta.
+- **`ChangePasswordScreen`**: senha atual + nova + confirmar. Tenta `updatePassword`; em `requires-recent-login`, dispara reauth.
+- **`ChangeEmailScreen`**: novo e-mail. Após sucesso, mostra "Verifique sua caixa de entrada no novo endereço" (a troca só efetiva após o clique no link).
+- **Rotas novas no `AppNavHost`**: `forgot_password`, `profile`, `change_password`, `change_email`. (`forgot_password` precisa estar acessível de dentro do `AuthenticationNavHost` também.)
+
+### 12.5 Strings i18n (4 locales)
+
+```
+forgot_password, forgot_password_title, forgot_password_send,
+forgot_password_sent_generic
+change_password_title, current_password, new_password, password_updated
+change_email_title, new_email, email_change_pending,
+verify_new_email_check_inbox
+change_display_name_title, display_name
+delete_account_title, delete_account_warning, delete_account_confirm
+reauth_required, reauth_password_prompt, reauth_with_google
+```
+
+Reaproveitar `verify_email_send_error`, `network_error`, `logout`.
+
+### 12.6 Templates no Firebase Console
+
+Action URL fica como **handler padrão do Firebase** (mesmo do NF-21). Templates a customizar nos 3 locales:
+
+- **Redefinição de senha** (já existe no Console, padrão Firebase).
+- **Alteração de endereço de e-mail** (gerado pelo `verifyBeforeUpdateEmail`).
+
+### 12.7 Provedores Google: o que esconder
+
+Usuários Google (provider `google.com`) **não têm senha local** — `updatePassword` e `sendPasswordResetEmail` falham silenciosamente para eles. Em `ProfileScreen`:
+
+- Esconder "Alterar senha".
+- Para alterar e-mail/nome, recomendar via conta Google (link externo). Tecnicamente é possível chamar `verifyBeforeUpdateEmail` mesmo em conta Google, mas vira um e-mail/senha manual — comportamento confuso. Adiar até decidirmos UX.
+- "Excluir conta" continua disponível (com reauth via Google).
+
+### 12.8 LGPD / "Excluir conta"
+
+`PROD-06` (Privacy Policy) lista que o usuário pode pedir exclusão via console. Implementar `deleteCurrentUser` formaliza isso no app — exigência crescente para Play Store (Data deletion section). **Vale subir esse sub-item de prioridade quando preparar o lançamento Beta.**
+
+### 12.9 Testes
+
+- `AuthenticationViewModelTest`: estender com cenários de reset/update password/update email (sucesso, falha de rede, `requires-recent-login`).
+- Cobertura mínima: cooldown do reset (não inundar o serviço), tratamento de `requires-recent-login` virando estado `RequiresReauth`.
+
+### 12.10 Edge cases relevantes
+
+- Após `verifyBeforeUpdateEmail`, o e-mail antigo continua sendo o "atual" até o clique no link. UI tem que deixar claro.
+- `sendPasswordResetEmail` com *enumeration protection* ativa: o Firebase pode retornar sucesso mesmo para e-mail inexistente. Mensagem ao usuário deve ser sempre genérica ("Se a conta existir, enviaremos um e-mail").
+- Reauth com Google pode falhar se o token expirou — relançar Sign-In intent.
+- Após `updatePassword`/`verifyBeforeUpdateEmail`/`delete`, considerar se faz sentido deslogar o usuário (sim para `delete`; recomendado para `updatePassword` para revogar outras sessões; opcional para o resto).
+

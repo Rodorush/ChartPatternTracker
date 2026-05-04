@@ -80,4 +80,12 @@
     <string name="view_chart">Ver gráfico</string>
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total de resultados: %1$d</string>
+    <string name="verify_email_title">Confirma tu correo</string>
+    <string name="email_sent_check_inbox">Enviamos un enlace de confirmación a %1$s. Revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace para finalizar el registro.</string>
+    <string name="resend_email">Reenviar correo</string>
+    <string name="resend_cooldown">Reenviar en %1$ds</string>
+    <string name="verify_email_check_again">Ya verifiqué</string>
+    <string name="verify_email_send_error">No pudimos enviar el correo. Inténtalo de nuevo en unos instantes.</string>
+    <string name="verify_email_not_yet">Aún no detectamos la confirmación. Haz clic en el enlace del correo e inténtalo de nuevo.</string>
+    <string name="verify_email_sent">Correo reenviado.</string>
 </resources>
