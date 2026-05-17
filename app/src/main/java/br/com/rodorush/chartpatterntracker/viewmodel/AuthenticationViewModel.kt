@@ -26,6 +26,13 @@ class AuthenticationViewModel(
         data object NotYetVerified : VerificationStatus()
     }
 
+    sealed class ResetPasswordStatus {
+        data object Idle : ResetPasswordStatus()
+        data object Sending : ResetPasswordStatus()
+        data object Sent : ResetPasswordStatus()
+        data class Error(val message: String?) : ResetPasswordStatus()
+    }
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
@@ -37,6 +44,9 @@ class AuthenticationViewModel(
 
     private val _isCheckingVerification = MutableStateFlow(false)
     val isCheckingVerification = _isCheckingVerification.asStateFlow()
+
+    private val _resetPasswordStatus = MutableStateFlow<ResetPasswordStatus>(ResetPasswordStatus.Idle)
+    val resetPasswordStatus = _resetPasswordStatus.asStateFlow()
 
     private var cooldownJob: Job? = null
 
@@ -95,6 +105,24 @@ class AuthenticationViewModel(
 
     fun resetVerificationStatus() {
         _verificationStatus.value = VerificationStatus.Idle
+    }
+
+    fun sendPasswordReset(email: String, authProvider: AuthProvider) {
+        if (_resendCooldownSeconds.value > 0) return
+        _resetPasswordStatus.value = ResetPasswordStatus.Sending
+        authProvider.sendPasswordResetEmail(email) { success, error ->
+            if (success) {
+                _resetPasswordStatus.value = ResetPasswordStatus.Sent
+                armResendCooldown()
+            } else {
+                Log.w(TAG, "sendPasswordReset falhou: $error")
+                _resetPasswordStatus.value = ResetPasswordStatus.Error(error)
+            }
+        }
+    }
+
+    fun resetPasswordResetStatus() {
+        _resetPasswordStatus.value = ResetPasswordStatus.Idle
     }
 
     override fun onCleared() {

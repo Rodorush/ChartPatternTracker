@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,7 +50,8 @@ import com.google.android.gms.common.api.ApiException
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
-    onNavigateToVerifyEmail: () -> Unit = {}
+    onNavigateToVerifyEmail: () -> Unit = {},
+    onNavigateToForgotPassword: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val authProvider = LocalAuthProvider.current // Obtemos o AuthProvider do CompositionLocal
@@ -153,7 +155,14 @@ fun LoginScreen(
             isPassword = true
         )
 
-        Spacer(modifier = Modifier.padding(16.dp))
+        TextButton(
+            onClick = onNavigateToForgotPassword,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text(text = stringResource(R.string.forgot_password_link))
+        }
+
+        Spacer(modifier = Modifier.padding(8.dp))
 
         Button(
             onClick = {

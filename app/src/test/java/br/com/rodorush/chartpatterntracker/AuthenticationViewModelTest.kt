@@ -2,6 +2,7 @@ package br.com.rodorush.chartpatterntracker
 
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.ResetPasswordStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.VerificationStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -117,5 +118,47 @@ class AuthenticationViewModelTest {
         vm.checkVerified(provider)
 
         assertEquals(VerificationStatus.NotYetVerified, vm.verificationStatus.value)
+    }
+
+    @Test
+    fun `sendPasswordReset success arms cooldown and emits Sent`() = runTest(dispatcher) {
+        val provider = MockAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendPasswordReset("user@example.com", provider)
+
+        assertEquals(ResetPasswordStatus.Sent, vm.resetPasswordStatus.value)
+        assertEquals(60, vm.resendCooldownSeconds.value)
+        assertEquals(1, provider.sendPasswordResetEmailCalls)
+        assertEquals("user@example.com", provider.lastPasswordResetEmail)
+    }
+
+    @Test
+    fun `sendPasswordReset failure emits Error and does not arm cooldown`() = runTest(dispatcher) {
+        val provider = MockAuthProvider().apply {
+            setSendPasswordResetSucceeds(false)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendPasswordReset("user@example.com", provider)
+
+        assertTrue(vm.resetPasswordStatus.value is ResetPasswordStatus.Error)
+        assertEquals(0, vm.resendCooldownSeconds.value)
+    }
+
+    @Test
+    fun `sendPasswordReset is no-op while cooldown active`() = runTest(dispatcher) {
+        val provider = MockAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendPasswordReset("user@example.com", provider)
+        val callsAfterFirst = provider.sendPasswordResetEmailCalls
+
+        vm.sendPasswordReset("user@example.com", provider)
+
+        assertEquals(callsAfterFirst, provider.sendPasswordResetEmailCalls)
     }
 }

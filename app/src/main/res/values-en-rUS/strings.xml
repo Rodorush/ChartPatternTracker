@@ -88,4 +88,12 @@
     <string name="verify_email_send_error">We couldn\'t send the email. Please try again in a moment.</string>
     <string name="verify_email_not_yet">We haven\'t detected the confirmation yet. Click the link in the email and try again.</string>
     <string name="verify_email_sent">Email resent.</string>
+    <string name="forgot_password_link">Forgot my password</string>
+    <string name="forgot_password_title">Reset password</string>
+    <string name="forgot_password_instructions">Enter your account email. We\'ll send you a link to set a new password.</string>
+    <string name="forgot_password_email_label">Email</string>
+    <string name="forgot_password_send">Send reset link</string>
+    <string name="forgot_password_sent_generic">If there is an account with that email, we\'ll send a link to reset the password.</string>
+    <string name="forgot_password_send_error">We couldn\'t send the email. Please try again in a moment.</string>
+    <string name="forgot_password_back_to_login">Back to sign in</string>
 </resources>

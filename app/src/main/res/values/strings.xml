@@ -91,4 +91,12 @@
     <string name="verify_email_send_error">Não foi possível enviar o e-mail. Tente novamente em alguns instantes.</string>
     <string name="verify_email_not_yet">Ainda não detectamos a confirmação. Clique no link do e-mail e tente de novo.</string>
     <string name="verify_email_sent">E-mail reenviado.</string>
+    <string name="forgot_password_link">Esqueci minha senha</string>
+    <string name="forgot_password_title">Recuperar senha</string>
+    <string name="forgot_password_instructions">Informe o e-mail da sua conta. Enviaremos um link para você definir uma nova senha.</string>
+    <string name="forgot_password_email_label">E-mail</string>
+    <string name="forgot_password_send">Enviar link de recuperação</string>
+    <string name="forgot_password_sent_generic">Se houver uma conta com esse e-mail, enviaremos um link para redefinir a senha.</string>
+    <string name="forgot_password_send_error">Não foi possível enviar o e-mail. Tente novamente em alguns instantes.</string>
+    <string name="forgot_password_back_to_login">Voltar para o login</string>
 </resources>

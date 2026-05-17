@@ -7,10 +7,16 @@ class MockAuthProvider(
     private var email: String? = null,
     private var providerId: String? = "password",
     private var sendVerificationSucceeds: Boolean = true,
-    private var reloadFlipsToVerified: Boolean = true
+    private var reloadFlipsToVerified: Boolean = true,
+    private var sendPasswordResetSucceeds: Boolean = true
 ) : AuthProvider {
 
     var sendEmailVerificationCalls: Int = 0
+        private set
+
+    var sendPasswordResetEmailCalls: Int = 0
+        private set
+    var lastPasswordResetEmail: String? = null
         private set
 
     override fun signInWithEmailAndPassword(
@@ -66,6 +72,12 @@ class MockAuthProvider(
         onResult(true, null)
     }
 
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        sendPasswordResetEmailCalls++
+        lastPasswordResetEmail = email
+        if (sendPasswordResetSucceeds) onResult(true, null) else onResult(false, "send_failed")
+    }
+
     override fun isEmailVerified(): Boolean = verified
 
     override fun currentUserEmail(): String? = email
@@ -82,5 +94,9 @@ class MockAuthProvider(
 
     fun setSendVerificationSucceeds(value: Boolean) {
         sendVerificationSucceeds = value
+    }
+
+    fun setSendPasswordResetSucceeds(value: Boolean) {
+        sendPasswordResetSucceeds = value
     }
 }

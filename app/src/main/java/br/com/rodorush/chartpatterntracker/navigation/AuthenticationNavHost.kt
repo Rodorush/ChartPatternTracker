@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.activity.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.screen.authentication.ForgotPasswordScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.authentication.LoginScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.authentication.RegisterScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.authentication.VerifyEmailScreen
@@ -18,6 +19,7 @@ import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 const val ROUTE_LOGIN = "login"
 const val ROUTE_REGISTER = "register"
 const val ROUTE_VERIFY_EMAIL = "verify_email"
+const val ROUTE_FORGOT_PASSWORD = "forgot_password"
 
 @Composable
 fun AuthenticationNavHost(
@@ -35,7 +37,8 @@ fun AuthenticationNavHost(
                         navController.navigate(ROUTE_VERIFY_EMAIL) {
                             popUpTo(ROUTE_LOGIN) { inclusive = true }
                         }
-                    }
+                    },
+                    onNavigateToForgotPassword = { navController.navigate(ROUTE_FORGOT_PASSWORD) }
                 )
             }
             composable(ROUTE_REGISTER) {
@@ -46,6 +49,11 @@ fun AuthenticationNavHost(
                             popUpTo(ROUTE_LOGIN) { inclusive = true }
                         }
                     }
+                )
+            }
+            composable(ROUTE_FORGOT_PASSWORD) {
+                ForgotPasswordScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
             composable(ROUTE_VERIFY_EMAIL) {

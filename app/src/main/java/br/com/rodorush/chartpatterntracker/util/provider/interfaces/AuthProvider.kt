@@ -9,6 +9,7 @@ interface AuthProvider {
 
     fun sendEmailVerification(onResult: (Boolean, String?) -> Unit)
     fun reloadCurrentUser(onResult: (Boolean, String?) -> Unit)
+    fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit)
     fun isEmailVerified(): Boolean
     fun currentUserEmail(): String?
     fun currentUserProviderId(): String?

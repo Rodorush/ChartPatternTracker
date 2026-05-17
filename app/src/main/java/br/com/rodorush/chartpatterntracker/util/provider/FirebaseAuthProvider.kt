@@ -109,6 +109,18 @@ class FirebaseAuthProvider : AuthProvider {
             }
     }
 
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    Log.w(TAG, "sendPasswordResetEmail: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
     override fun isEmailVerified(): Boolean = auth.currentUser?.isEmailVerified == true
 
     override fun currentUserEmail(): String? = auth.currentUser?.email

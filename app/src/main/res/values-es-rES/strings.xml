@@ -88,4 +88,12 @@
     <string name="verify_email_send_error">No pudimos enviar el correo. Inténtalo de nuevo en unos instantes.</string>
     <string name="verify_email_not_yet">Aún no detectamos la confirmación. Haz clic en el enlace del correo e inténtalo de nuevo.</string>
     <string name="verify_email_sent">Correo reenviado.</string>
+    <string name="forgot_password_link">Olvidé mi contraseña</string>
+    <string name="forgot_password_title">Recuperar contraseña</string>
+    <string name="forgot_password_instructions">Ingresa el correo de tu cuenta. Te enviaremos un enlace para definir una nueva contraseña.</string>
+    <string name="forgot_password_email_label">Correo</string>
+    <string name="forgot_password_send">Enviar enlace de recuperación</string>
+    <string name="forgot_password_sent_generic">Si existe una cuenta con ese correo, enviaremos un enlace para restablecer la contraseña.</string>
+    <string name="forgot_password_send_error">No pudimos enviar el correo. Inténtalo de nuevo en unos instantes.</string>
+    <string name="forgot_password_back_to_login">Volver al inicio de sesión</string>
 </resources>
