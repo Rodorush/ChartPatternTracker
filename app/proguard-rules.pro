@@ -19,3 +19,17 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Preserva número de linha nos stack traces do Crashlytics (release).
+-keepattributes SourceFile,LineNumberTable
+# Assinaturas genéricas e anotações — exigidas por Gson/Retrofit (ex.: List<HistoricalData>).
+-keepattributes Signature,*Annotation*,EnclosingMethod,InnerClasses
+
+# --- DTOs Gson da Brapi (Retrofit) — desserializados por reflexão (@SerializedName) ---
+-keep class br.com.rodorush.chartpatterntracker.api.** { *; }
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# --- Modelo mapeado via Firestore toObject() — precisa de campos + construtor sem-arg ---
+-keep class br.com.rodorush.chartpatterntracker.model.PatternItem { *; }

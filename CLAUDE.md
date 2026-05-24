@@ -40,6 +40,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 - `./gradlew installDebug` — instalar no device
 - Requer `local.properties` com `BRAPI_TOKEN`, `WEB_CLIENT_ID`, `FIREBASE_APP_CHECK_DEBUG_TOKEN` (e `sdk.dir`). Sem essas chaves o build falha em `app/build.gradle.kts`.
 - Requer `app/google-services.json` (não versionado).
+- `./gradlew bundleRelease` (ou `assembleRelease`) — build de release com **R8/minify ligado**. Para sair **assinado**, requer `keystore.properties` na raiz (`storeFile`/`storePassword`/`keyAlias`/`keyPassword`, não versionado); sem o arquivo o release sai não assinado (fallback gracioso, build não quebra). App Check usa Play Integrity em release (Debug só em debug). Keep rules de R8 vivem em `app/proguard-rules.pro`.
 
 ## Faça
 

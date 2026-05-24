@@ -502,7 +502,6 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 
 - Algumas velas retornam com valor `0` da Brapi para certos ativos — em investigação.
 - Previews do Compose na IDE falham quando há fontes de dados externas envolvidas.
-- Build de release ainda **sem ofuscamento** (`isMinifyEnabled = false`).
 - Algumas telas (ex.: `SelectAssetScreen`) ainda contêm chamadas Firestore inline — refatoração rastreada em `REFACT-04` no roadmap.
 
 A lista completa, com prioridades e itens planejados, está em [`ROADMAP.md`](ROADMAP.md).

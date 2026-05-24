@@ -125,10 +125,10 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 | ID | Item | Origem |
 |----|------|--------|
 | PROD-01 | `[ ]` **Integrar Firebase Crashlytics** + CustomLog para monitoramento de erros. | `Bugs e roteiro.txt` |
-| PROD-02 | `[ ]` **Habilitar ofuscamento (ProGuard/R8).** Atualmente `isMinifyEnabled = false` em `app/build.gradle.kts:57`. | `Bugs e roteiro.txt` |
+| PROD-02 | `[x]` **Ofuscamento (ProGuard/R8) habilitado.** `isMinifyEnabled = true` + `isShrinkResources = true` no `buildTypes.release`; keep rules em `proguard-rules.pro` para DTOs Gson da Brapi (`api.**`), campos `@SerializedName` e `PatternItem` (Firestore `toObject`). `assembleRelease` valida o build (`minifyReleaseWithR8` + `lintVitalRelease` OK). | `Bugs e roteiro.txt` |
 | PROD-03 | `[ ]` **Adicionar propagandas** (AdMob) na tier gratuita. | `Bugs e roteiro.txt` |
-| PROD-04 | `[ ]` **Configurar signing keystore** para release na Play Store. | Padrão Android |
-| PROD-05 | `[ ]` **Configurar Firebase App Check Play Integrity** corretamente em produção. | Código |
+| PROD-04 | `[~]` **Signing config para release.** `build.gradle.kts` lê `keystore.properties` (não versionado) e aplica `signingConfigs.release` com fallback gracioso (sem o arquivo, release sai não assinado e o build não quebra). `.gitignore` cobre `*.jks`/`*.keystore`/`keystore.properties`. **Pendente (manual)**: gerar a upload key (`keytool`), criar `keystore.properties` e habilitar **Play App Signing** no Console. | Padrão Android |
+| PROD-05 | `[x]` **App Check Play Integrity em produção.** `ChartPatternApplication` agora seleciona o provider por `BuildConfig.DEBUG`: Debug em debug, `PlayIntegrityAppCheckProviderFactory` em release (antes instalava o provider Debug incondicionalmente — backend sem proteção real em produção). **Pendente (manual)**: registrar o SHA-256 da release e habilitar/enforçar Play Integrity no App Check do Console. | Código |
 | PROD-06 | `[ ]` **Privacy Policy** e Termos de Uso publicados. | Compliance |
 | PROD-07 | `[ ]` **CI/CD** com GitHub Actions ou Bitrise (build, test, lint, deploy). | DevOps |
 | PROD-08 | `[ ]` **Cloud Scheduler** para pré-popular Firestore com ativos populares (reduz latência inicial). | Sugestão TCC |
