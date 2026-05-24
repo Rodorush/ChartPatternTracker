@@ -7,6 +7,7 @@ import br.com.rodorush.customlogs.DebugTree
 import br.com.rodorush.customlogs.Log
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -17,9 +18,13 @@ class ChartPatternApplication : Application() {
         try {
             Log.d(TAG, "Inicializando Firebase App Check")
             val firebaseAppCheck = FirebaseAppCheck.getInstance()
-            val debugProviderFactory = DebugAppCheckProviderFactory.getInstance()
-            firebaseAppCheck.installAppCheckProviderFactory(debugProviderFactory)
-            Log.d(TAG, "Firebase App Check configurado com provedor Debug")
+            val providerFactory = if (BuildConfig.DEBUG) {
+                DebugAppCheckProviderFactory.getInstance()
+            } else {
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            }
+            firebaseAppCheck.installAppCheckProviderFactory(providerFactory)
+            Log.d(TAG, "Firebase App Check configurado com provedor ${if (BuildConfig.DEBUG) "Debug" else "Play Integrity"}")
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao configurar Firebase App Check: ${e.message}", e)
         }
