@@ -37,6 +37,15 @@
     <string name="search">Search</string>
     <string name="search_patterns">Search Patterns</string>
     <string name="profile">Profile</string>
+    <string name="account_section_title">Account</string>
+    <string name="delete_account_button">Delete account</string>
+    <string name="delete_account_title">Delete account?</string>
+    <string name="delete_account_warning">This action is permanent. Your account and sign-in data will be removed and cannot be recovered.</string>
+    <string name="delete_account_confirm">Delete</string>
+    <string name="delete_account_cancel">Cancel</string>
+    <string name="reauth_required">Confirm your identity</string>
+    <string name="reauth_password_prompt">Current password</string>
+    <string name="reauth_with_google">For your security, sign in again with your Google account to finish deleting it.</string>
     <string name="pattern_description">Pattern Description</string>
     <string name="chart_pattern_description">Chart Pattern Description</string>
     <string name="logout_success">Session successfully ended</string>

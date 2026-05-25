@@ -33,6 +33,14 @@ class AuthenticationViewModel(
         data class Error(val message: String?) : ResetPasswordStatus()
     }
 
+    sealed class DeleteAccountStatus {
+        data object Idle : DeleteAccountStatus()
+        data object Deleting : DeleteAccountStatus()
+        data object Deleted : DeleteAccountStatus()
+        data object RequiresReauth : DeleteAccountStatus()
+        data class Error(val message: String?) : DeleteAccountStatus()
+    }
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
@@ -47,6 +55,9 @@ class AuthenticationViewModel(
 
     private val _resetPasswordStatus = MutableStateFlow<ResetPasswordStatus>(ResetPasswordStatus.Idle)
     val resetPasswordStatus = _resetPasswordStatus.asStateFlow()
+
+    private val _deleteAccountStatus = MutableStateFlow<DeleteAccountStatus>(DeleteAccountStatus.Idle)
+    val deleteAccountStatus = _deleteAccountStatus.asStateFlow()
 
     private var cooldownJob: Job? = null
 
@@ -123,6 +134,55 @@ class AuthenticationViewModel(
 
     fun resetPasswordResetStatus() {
         _resetPasswordStatus.value = ResetPasswordStatus.Idle
+    }
+
+    fun deleteAccount(authProvider: AuthProvider) {
+        _deleteAccountStatus.value = DeleteAccountStatus.Deleting
+        authProvider.deleteCurrentUser { success, error ->
+            when {
+                success -> _deleteAccountStatus.value = DeleteAccountStatus.Deleted
+                requiresRecentLogin(error) ->
+                    _deleteAccountStatus.value = DeleteAccountStatus.RequiresReauth
+                else -> {
+                    Log.w(TAG, "deleteAccount falhou: $error")
+                    _deleteAccountStatus.value = DeleteAccountStatus.Error(error)
+                }
+            }
+        }
+    }
+
+    fun reauthenticateAndDeleteWithPassword(password: String, authProvider: AuthProvider) {
+        _deleteAccountStatus.value = DeleteAccountStatus.Deleting
+        authProvider.reauthenticateWithPassword(password) { success, error ->
+            if (success) {
+                deleteAccount(authProvider)
+            } else {
+                Log.w(TAG, "reauthenticateWithPassword falhou: $error")
+                _deleteAccountStatus.value = DeleteAccountStatus.Error(error)
+            }
+        }
+    }
+
+    fun reauthenticateAndDeleteWithGoogle(idToken: String?, authProvider: AuthProvider) {
+        _deleteAccountStatus.value = DeleteAccountStatus.Deleting
+        authProvider.reauthenticateWithGoogle(idToken) { success, error ->
+            if (success) {
+                deleteAccount(authProvider)
+            } else {
+                Log.w(TAG, "reauthenticateWithGoogle falhou: $error")
+                _deleteAccountStatus.value = DeleteAccountStatus.Error(error)
+            }
+        }
+    }
+
+    fun resetDeleteAccountStatus() {
+        _deleteAccountStatus.value = DeleteAccountStatus.Idle
+    }
+
+    private fun requiresRecentLogin(error: String?): Boolean {
+        val message = error ?: return false
+        return message.contains("requires-recent-login", ignoreCase = true) ||
+            message.contains("RECENT_LOGIN", ignoreCase = true)
     }
 
     override fun onCleared() {

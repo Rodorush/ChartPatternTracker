@@ -160,7 +160,8 @@ fun AppNavHost(
 
         composable(Screen.Settings.route) {
             SettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onAccountDeleted = onLogout
             )
         }
     }

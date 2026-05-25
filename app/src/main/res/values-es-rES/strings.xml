@@ -37,6 +37,15 @@
     <string name="search">Buscar</string>
     <string name="search_patterns">Buscar Patrones</string>
     <string name="profile">Perfil</string>
+    <string name="account_section_title">Cuenta</string>
+    <string name="delete_account_button">Eliminar cuenta</string>
+    <string name="delete_account_title">¿Eliminar cuenta?</string>
+    <string name="delete_account_warning">Esta acción es permanente. Tu cuenta y tus datos de acceso se eliminarán y no podrán recuperarse.</string>
+    <string name="delete_account_confirm">Eliminar</string>
+    <string name="delete_account_cancel">Cancelar</string>
+    <string name="reauth_required">Confirma tu identidad</string>
+    <string name="reauth_password_prompt">Contraseña actual</string>
+    <string name="reauth_with_google">Por seguridad, vuelve a iniciar sesión con tu cuenta de Google para completar la eliminación.</string>
     <string name="pattern_description">Descripción del Patrón</string>
     <string name="chart_pattern_description">Descripción del Patrón de Gráfico</string>
     <string name="logout_success">Sesión cerrada con éxito</string>

@@ -8,7 +8,10 @@ class MockAuthProvider(
     private var providerId: String? = "password",
     private var sendVerificationSucceeds: Boolean = true,
     private var reloadFlipsToVerified: Boolean = true,
-    private var sendPasswordResetSucceeds: Boolean = true
+    private var sendPasswordResetSucceeds: Boolean = true,
+    private var deleteSucceeds: Boolean = true,
+    private var deleteRequiresRecentLogin: Boolean = false,
+    private var reauthSucceeds: Boolean = true
 ) : AuthProvider {
 
     var sendEmailVerificationCalls: Int = 0
@@ -17,6 +20,11 @@ class MockAuthProvider(
     var sendPasswordResetEmailCalls: Int = 0
         private set
     var lastPasswordResetEmail: String? = null
+        private set
+
+    var deleteCalls: Int = 0
+        private set
+    var reauthCalls: Int = 0
         private set
 
     override fun signInWithEmailAndPassword(
@@ -78,6 +86,43 @@ class MockAuthProvider(
         if (sendPasswordResetSucceeds) onResult(true, null) else onResult(false, "send_failed")
     }
 
+    override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
+        deleteCalls++
+        when {
+            deleteRequiresRecentLogin -> onResult(false, "requires-recent-login")
+            deleteSucceeds -> {
+                email = null
+                verified = false
+                onResult(true, null)
+            }
+            else -> onResult(false, "delete_failed")
+        }
+    }
+
+    override fun reauthenticateWithPassword(
+        password: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        reauthCalls++
+        if (reauthSucceeds) {
+            // Sessão renovada: o próximo delete não exige mais login recente.
+            deleteRequiresRecentLogin = false
+            onResult(true, null)
+        } else {
+            onResult(false, "reauth_failed")
+        }
+    }
+
+    override fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
+        reauthCalls++
+        if (reauthSucceeds && idToken != null) {
+            deleteRequiresRecentLogin = false
+            onResult(true, null)
+        } else {
+            onResult(false, "reauth_failed")
+        }
+    }
+
     override fun isEmailVerified(): Boolean = verified
 
     override fun currentUserEmail(): String? = email
@@ -98,5 +143,17 @@ class MockAuthProvider(
 
     fun setSendPasswordResetSucceeds(value: Boolean) {
         sendPasswordResetSucceeds = value
+    }
+
+    fun setDeleteSucceeds(value: Boolean) {
+        deleteSucceeds = value
+    }
+
+    fun setDeleteRequiresRecentLogin(value: Boolean) {
+        deleteRequiresRecentLogin = value
+    }
+
+    fun setReauthSucceeds(value: Boolean) {
+        reauthSucceeds = value
     }
 }
