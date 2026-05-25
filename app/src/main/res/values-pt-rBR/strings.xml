@@ -37,6 +37,15 @@
     <string name="search">Buscar</string>
     <string name="search_patterns">Pesquisar Padrões</string>
     <string name="profile">Perfil</string>
+    <string name="account_section_title">Conta</string>
+    <string name="delete_account_button">Excluir conta</string>
+    <string name="delete_account_title">Excluir conta?</string>
+    <string name="delete_account_warning">Esta ação é permanente. Sua conta e seus dados de acesso serão removidos e não poderão ser recuperados.</string>
+    <string name="delete_account_confirm">Excluir</string>
+    <string name="delete_account_cancel">Cancelar</string>
+    <string name="reauth_required">Confirme sua identidade</string>
+    <string name="reauth_password_prompt">Senha atual</string>
+    <string name="reauth_with_google">Por segurança, entre novamente com sua conta Google para concluir a exclusão.</string>
     <string name="pattern_description">Descrição do Padrão</string>
     <string name="chart_pattern_description">Descrição do Padrão Gráfico</string>
     <string name="logout_success">Sessão encerrada com sucesso</string>

@@ -2,6 +2,7 @@ package br.com.rodorush.chartpatterntracker
 
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.DeleteAccountStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.ResetPasswordStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.VerificationStatus
 import kotlinx.coroutines.Dispatchers
@@ -160,5 +161,73 @@ class AuthenticationViewModelTest {
         vm.sendPasswordReset("user@example.com", provider)
 
         assertEquals(callsAfterFirst, provider.sendPasswordResetEmailCalls)
+    }
+
+    @Test
+    fun `deleteAccount success emits Deleted`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com")
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+
+        assertEquals(DeleteAccountStatus.Deleted, vm.deleteAccountStatus.value)
+        assertEquals(1, provider.deleteCalls)
+    }
+
+    @Test
+    fun `deleteAccount with requires-recent-login emits RequiresReauth`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setDeleteRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+
+        assertEquals(DeleteAccountStatus.RequiresReauth, vm.deleteAccountStatus.value)
+    }
+
+    @Test
+    fun `reauthenticate with password then delete succeeds`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setDeleteRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+        assertEquals(DeleteAccountStatus.RequiresReauth, vm.deleteAccountStatus.value)
+
+        vm.reauthenticateAndDeleteWithPassword("password", provider)
+
+        assertEquals(DeleteAccountStatus.Deleted, vm.deleteAccountStatus.value)
+        assertEquals(1, provider.reauthCalls)
+        assertEquals(2, provider.deleteCalls)
+    }
+
+    @Test
+    fun `reauthenticate failure emits Error`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReauthSucceeds(false)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.reauthenticateAndDeleteWithPassword("wrong", provider)
+
+        assertTrue(vm.deleteAccountStatus.value is DeleteAccountStatus.Error)
+    }
+
+    @Test
+    fun `resetDeleteAccountStatus returns to Idle`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com")
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+        vm.resetDeleteAccountStatus()
+
+        assertEquals(DeleteAccountStatus.Idle, vm.deleteAccountStatus.value)
     }
 }

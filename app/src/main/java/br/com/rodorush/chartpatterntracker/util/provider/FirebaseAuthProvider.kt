@@ -2,6 +2,7 @@ package br.com.rodorush.chartpatterntracker.util.provider
 
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.customlogs.Log
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
@@ -116,6 +117,68 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "sendPasswordResetEmail: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        user.delete()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    // Mensagem propagada crua: a ViewModel detecta requires-recent-login.
+                    Log.w(TAG, "deleteCurrentUser: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun reauthenticateWithPassword(
+        password: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        val user = auth.currentUser
+        val email = user?.email
+        if (user == null || email == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        val credential = EmailAuthProvider.getCredential(email, password)
+        user.reauthenticate(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    Log.w(TAG, "reauthenticateWithPassword: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
+        if (idToken == null) {
+            onResult(false, "ID Token nulo ou inválido.")
+            return
+        }
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        user.reauthenticate(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    Log.w(TAG, "reauthenticateWithGoogle: falha", task.exception)
                     onResult(false, task.exception?.message)
                 }
             }
