@@ -3,8 +3,9 @@ package br.com.rodorush.chartpatterntracker.ui.screen.authentication
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -78,11 +79,13 @@ fun RegisterScreen(
                 acceptTerms
     }
 
-    // Layout principal
-    Box(
+    // Layout principal — Column rolável para não cortar conteúdo em telas menores
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Ícones de navegação e logo no topo
         Row(
@@ -111,7 +114,6 @@ fun RegisterScreen(
         // Coluna central com conteúdo
         Column(
             modifier = Modifier
-                .align(Alignment.Center)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -250,10 +252,11 @@ fun RegisterScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(24.dp))
+
         // Texto no rodapé para já ter conta
         Row(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
