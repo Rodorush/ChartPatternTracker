@@ -22,4 +22,5 @@ sealed class Screen(val route: String) {
     }
     object RealTimeQuotes : Screen("real_time_quotes")
     object Settings : Screen("settings") // Nova rota para Settings
+    object Profile : Screen("profile") // Gestão de conta (NF-03b/c/d/e)
 }

@@ -5,13 +5,19 @@ import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 class MockAuthProvider(
     private var verified: Boolean = false,
     private var email: String? = null,
+    private var displayName: String? = null,
     private var providerId: String? = "password",
     private var sendVerificationSucceeds: Boolean = true,
     private var reloadFlipsToVerified: Boolean = true,
     private var sendPasswordResetSucceeds: Boolean = true,
     private var deleteSucceeds: Boolean = true,
     private var deleteRequiresRecentLogin: Boolean = false,
-    private var reauthSucceeds: Boolean = true
+    private var reauthSucceeds: Boolean = true,
+    private var updatePasswordSucceeds: Boolean = true,
+    private var updatePasswordRequiresRecentLogin: Boolean = false,
+    private var updateEmailSucceeds: Boolean = true,
+    private var updateEmailRequiresRecentLogin: Boolean = false,
+    private var updateNameSucceeds: Boolean = true
 ) : AuthProvider {
 
     var sendEmailVerificationCalls: Int = 0
@@ -25,6 +31,15 @@ class MockAuthProvider(
     var deleteCalls: Int = 0
         private set
     var reauthCalls: Int = 0
+        private set
+
+    var updatePasswordCalls: Int = 0
+        private set
+    var verifyBeforeUpdateEmailCalls: Int = 0
+        private set
+    var lastNewEmail: String? = null
+        private set
+    var updateDisplayNameCalls: Int = 0
         private set
 
     override fun signInWithEmailAndPassword(
@@ -105,8 +120,8 @@ class MockAuthProvider(
     ) {
         reauthCalls++
         if (reauthSucceeds) {
-            // Sessão renovada: o próximo delete não exige mais login recente.
-            deleteRequiresRecentLogin = false
+            // Sessão renovada: as operações sensíveis não exigem mais login recente.
+            clearRecentLoginFlags()
             onResult(true, null)
         } else {
             onResult(false, "reauth_failed")
@@ -116,16 +131,53 @@ class MockAuthProvider(
     override fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
         reauthCalls++
         if (reauthSucceeds && idToken != null) {
-            deleteRequiresRecentLogin = false
+            clearRecentLoginFlags()
             onResult(true, null)
         } else {
             onResult(false, "reauth_failed")
         }
     }
 
+    override fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        updatePasswordCalls++
+        when {
+            updatePasswordRequiresRecentLogin -> onResult(false, "requires-recent-login")
+            updatePasswordSucceeds -> onResult(true, null)
+            else -> onResult(false, "update_failed")
+        }
+    }
+
+    override fun verifyBeforeUpdateEmail(newEmail: String, onResult: (Boolean, String?) -> Unit) {
+        verifyBeforeUpdateEmailCalls++
+        lastNewEmail = newEmail
+        when {
+            updateEmailRequiresRecentLogin -> onResult(false, "requires-recent-login")
+            updateEmailSucceeds -> onResult(true, null)
+            else -> onResult(false, "update_failed")
+        }
+    }
+
+    override fun updateDisplayName(displayName: String, onResult: (Boolean, String?) -> Unit) {
+        updateDisplayNameCalls++
+        if (updateNameSucceeds) {
+            this.displayName = displayName
+            onResult(true, null)
+        } else {
+            onResult(false, "update_failed")
+        }
+    }
+
+    private fun clearRecentLoginFlags() {
+        deleteRequiresRecentLogin = false
+        updatePasswordRequiresRecentLogin = false
+        updateEmailRequiresRecentLogin = false
+    }
+
     override fun isEmailVerified(): Boolean = verified
 
     override fun currentUserEmail(): String? = email
+
+    override fun currentUserDisplayName(): String? = displayName
 
     override fun currentUserProviderId(): String? = providerId
 
@@ -155,5 +207,25 @@ class MockAuthProvider(
 
     fun setReauthSucceeds(value: Boolean) {
         reauthSucceeds = value
+    }
+
+    fun setUpdatePasswordSucceeds(value: Boolean) {
+        updatePasswordSucceeds = value
+    }
+
+    fun setUpdatePasswordRequiresRecentLogin(value: Boolean) {
+        updatePasswordRequiresRecentLogin = value
+    }
+
+    fun setUpdateEmailSucceeds(value: Boolean) {
+        updateEmailSucceeds = value
+    }
+
+    fun setUpdateEmailRequiresRecentLogin(value: Boolean) {
+        updateEmailRequiresRecentLogin = value
+    }
+
+    fun setUpdateNameSucceeds(value: Boolean) {
+        updateNameSucceeds = value
     }
 }

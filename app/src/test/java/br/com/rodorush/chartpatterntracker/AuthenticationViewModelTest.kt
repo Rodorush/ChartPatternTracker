@@ -4,6 +4,9 @@ import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.DeleteAccountStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.ResetPasswordStatus
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdateEmailStatus
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdateNameStatus
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdatePasswordStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.VerificationStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -229,5 +232,149 @@ class AuthenticationViewModelTest {
         vm.resetDeleteAccountStatus()
 
         assertEquals(DeleteAccountStatus.Idle, vm.deleteAccountStatus.value)
+    }
+
+    // --- NF-03d: alterar nome ---
+
+    @Test
+    fun `updateDisplayName success emits Updated`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com")
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateDisplayName("Rodolfo", provider)
+
+        assertEquals(UpdateNameStatus.Updated, vm.updateNameStatus.value)
+        assertEquals(1, provider.updateDisplayNameCalls)
+    }
+
+    @Test
+    fun `updateDisplayName failure emits Error`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setUpdateNameSucceeds(false)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateDisplayName("Rodolfo", provider)
+
+        assertTrue(vm.updateNameStatus.value is UpdateNameStatus.Error)
+    }
+
+    // --- NF-03b: alterar senha ---
+
+    @Test
+    fun `updatePassword success emits Updated`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com")
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updatePassword("newPassword", provider)
+
+        assertEquals(UpdatePasswordStatus.Updated, vm.updatePasswordStatus.value)
+        assertEquals(1, provider.updatePasswordCalls)
+    }
+
+    @Test
+    fun `updatePassword with requires-recent-login emits RequiresReauth`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setUpdatePasswordRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updatePassword("newPassword", provider)
+
+        assertEquals(UpdatePasswordStatus.RequiresReauth, vm.updatePasswordStatus.value)
+    }
+
+    @Test
+    fun `reauthenticate with password then updatePassword succeeds`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setUpdatePasswordRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updatePassword("newPassword", provider)
+        assertEquals(UpdatePasswordStatus.RequiresReauth, vm.updatePasswordStatus.value)
+
+        vm.reauthAndUpdatePasswordWithPassword("password", "newPassword", provider)
+
+        assertEquals(UpdatePasswordStatus.Updated, vm.updatePasswordStatus.value)
+        assertEquals(1, provider.reauthCalls)
+        assertEquals(2, provider.updatePasswordCalls)
+    }
+
+    @Test
+    fun `reauthenticate failure on updatePassword emits Error`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReauthSucceeds(false)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.reauthAndUpdatePasswordWithPassword("wrong", "newPassword", provider)
+
+        assertTrue(vm.updatePasswordStatus.value is UpdatePasswordStatus.Error)
+    }
+
+    // --- NF-03c: alterar e-mail ---
+
+    @Test
+    fun `updateEmail success emits VerificationSent`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com")
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateEmail("new@example.com", provider)
+
+        assertEquals(UpdateEmailStatus.VerificationSent, vm.updateEmailStatus.value)
+        assertEquals(1, provider.verifyBeforeUpdateEmailCalls)
+        assertEquals("new@example.com", provider.lastNewEmail)
+    }
+
+    @Test
+    fun `updateEmail with requires-recent-login emits RequiresReauth`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setUpdateEmailRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateEmail("new@example.com", provider)
+
+        assertEquals(UpdateEmailStatus.RequiresReauth, vm.updateEmailStatus.value)
+    }
+
+    @Test
+    fun `reauthenticate with password then updateEmail succeeds`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setUpdateEmailRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateEmail("new@example.com", provider)
+        assertEquals(UpdateEmailStatus.RequiresReauth, vm.updateEmailStatus.value)
+
+        vm.reauthAndUpdateEmailWithPassword("password", "new@example.com", provider)
+
+        assertEquals(UpdateEmailStatus.VerificationSent, vm.updateEmailStatus.value)
+        assertEquals(1, provider.reauthCalls)
+        assertEquals(2, provider.verifyBeforeUpdateEmailCalls)
+    }
+
+    @Test
+    fun `reauthenticate failure on updateEmail emits Error`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReauthSucceeds(false)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.reauthAndUpdateEmailWithPassword("wrong", "new@example.com", provider)
+
+        assertTrue(vm.updateEmailStatus.value is UpdateEmailStatus.Error)
     }
 }
