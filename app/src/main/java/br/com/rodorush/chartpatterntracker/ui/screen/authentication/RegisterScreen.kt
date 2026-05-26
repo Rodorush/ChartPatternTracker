@@ -184,7 +184,7 @@ fun RegisterScreen(
             // Botão SIGN UP
             Button(
                 onClick = {
-                    authProvider.createUserWithEmailAndPassword(email, password) { success, error ->
+                    authProvider.createUserWithEmailAndPassword(email, password, name.trim()) { success, error ->
                         if (success) {
                             viewModel.armResendCooldown()
                             onNavigateToVerifyEmail()

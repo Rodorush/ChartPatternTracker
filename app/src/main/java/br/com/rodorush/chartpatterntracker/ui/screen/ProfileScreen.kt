@@ -74,6 +74,7 @@ fun ProfileScreen(
     val passwordStatus by authViewModel.updatePasswordStatus.collectAsState()
     val emailStatus by authViewModel.updateEmailStatus.collectAsState()
     val deleteStatus by authViewModel.deleteAccountStatus.collectAsState()
+    val resetStatus by authViewModel.resetPasswordStatus.collectAsState()
 
     var showNameDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
@@ -82,6 +83,7 @@ fun ProfileScreen(
     var showReauthDialog by remember { mutableStateOf(false) }
 
     var nameInput by remember { mutableStateOf(displayName.orEmpty()) }
+    var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var newEmail by remember { mutableStateOf("") }
@@ -148,6 +150,7 @@ fun ProfileScreen(
         when (val s = passwordStatus) {
             is UpdatePasswordStatus.Updated -> {
                 toast(R.string.password_updated)
+                currentPassword = ""
                 newPassword = ""
                 confirmPassword = ""
                 authViewModel.resetUpdatePasswordStatus()
@@ -159,6 +162,22 @@ fun ProfileScreen(
             is UpdatePasswordStatus.Error -> {
                 toastError(s.message)
                 authViewModel.resetUpdatePasswordStatus()
+            }
+            else -> Unit
+        }
+    }
+
+    // E-mail de redefinição disparado de dentro do diálogo "Alterar senha"
+    // (caso o usuário não lembre a senha atual).
+    LaunchedEffect(resetStatus) {
+        when (resetStatus) {
+            AuthenticationViewModel.ResetPasswordStatus.Sent -> {
+                toast(R.string.forgot_password_sent_generic)
+                authViewModel.resetPasswordResetStatus()
+            }
+            is AuthenticationViewModel.ResetPasswordStatus.Error -> {
+                toast(R.string.forgot_password_send_error)
+                authViewModel.resetPasswordResetStatus()
             }
             else -> Unit
         }
@@ -331,16 +350,32 @@ fun ProfileScreen(
     if (showPasswordDialog) {
         val tooShort = newPassword.isNotEmpty() && newPassword.length < MIN_PASSWORD_LENGTH
         val mismatch = confirmPassword.isNotEmpty() && newPassword != confirmPassword
-        val canSubmit = newPassword.length >= MIN_PASSWORD_LENGTH && newPassword == confirmPassword
+        // Exige a senha atual sempre: a troca reautentica antes de atualizar,
+        // então só quem sabe a senha vigente consegue alterá-la.
+        val canSubmit = currentPassword.isNotBlank() &&
+            newPassword.length >= MIN_PASSWORD_LENGTH && newPassword == confirmPassword
+        fun clearPasswordFields() {
+            currentPassword = ""
+            newPassword = ""
+            confirmPassword = ""
+        }
         AlertDialog(
             onDismissRequest = {
                 showPasswordDialog = false
-                newPassword = ""
-                confirmPassword = ""
+                clearPasswordFields()
             },
             title = { Text(stringResource(R.string.change_password_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = currentPassword,
+                        onValueChange = { currentPassword = it },
+                        label = { Text(stringResource(R.string.reauth_password_prompt)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     OutlinedTextField(
                         value = newPassword,
                         onValueChange = { newPassword = it },
@@ -367,6 +402,15 @@ fun ProfileScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier.fillMaxWidth()
                     )
+                    if (email != null) {
+                        TextButton(onClick = {
+                            showPasswordDialog = false
+                            clearPasswordFields()
+                            authViewModel.sendPasswordReset(email, authProvider)
+                        }) {
+                            Text(stringResource(R.string.forgot_password_link))
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -374,15 +418,16 @@ fun ProfileScreen(
                     enabled = canSubmit,
                     onClick = {
                         showPasswordDialog = false
-                        authViewModel.updatePassword(newPassword, authProvider)
+                        authViewModel.reauthAndUpdatePasswordWithPassword(
+                            currentPassword, newPassword, authProvider
+                        )
                     }
                 ) { Text(stringResource(R.string.save)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showPasswordDialog = false
-                    newPassword = ""
-                    confirmPassword = ""
+                    clearPasswordFields()
                 }) { Text(stringResource(R.string.cancel)) }
             }
         )

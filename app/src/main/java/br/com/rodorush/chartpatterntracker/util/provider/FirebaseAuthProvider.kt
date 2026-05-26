@@ -28,6 +28,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun createUserWithEmailAndPassword(
         email: String,
         password: String,
+        displayName: String,
         onResult: (Boolean, String?) -> Unit
     ) {
         auth.createUserWithEmailAndPassword(email, password)
@@ -35,16 +36,29 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     val user = task.result?.user
                     if (user != null) {
-                        user.sendEmailVerification()
-                            .addOnCompleteListener { verifyTask ->
-                                if (!verifyTask.isSuccessful) {
+                        // Grava o nome no cadastro para que apareça no perfil
+                        // sem depender de uma alteração posterior.
+                        val profileUpdate = userProfileChangeRequest { this.displayName = displayName }
+                        user.updateProfile(profileUpdate)
+                            .addOnCompleteListener { profileTask ->
+                                if (!profileTask.isSuccessful) {
                                     Log.w(
                                         TAG,
-                                        "createUser: falha ao enviar e-mail de verificação",
-                                        verifyTask.exception
+                                        "createUser: falha ao definir displayName",
+                                        profileTask.exception
                                     )
                                 }
-                                onResult(true, null)
+                                user.sendEmailVerification()
+                                    .addOnCompleteListener { verifyTask ->
+                                        if (!verifyTask.isSuccessful) {
+                                            Log.w(
+                                                TAG,
+                                                "createUser: falha ao enviar e-mail de verificação",
+                                                verifyTask.exception
+                                            )
+                                        }
+                                        onResult(true, null)
+                                    }
                             }
                     } else {
                         onResult(true, null)
