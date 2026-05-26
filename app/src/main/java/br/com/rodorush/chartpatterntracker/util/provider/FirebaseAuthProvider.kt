@@ -5,6 +5,7 @@ import br.com.rodorush.customlogs.Log
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.userProfileChangeRequest
 
 class FirebaseAuthProvider : AuthProvider {
     private val auth = FirebaseAuth.getInstance()
@@ -184,9 +185,65 @@ class FirebaseAuthProvider : AuthProvider {
             }
     }
 
+    override fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        user.updatePassword(newPassword)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    // Mensagem crua: a ViewModel detecta requires-recent-login.
+                    Log.w(TAG, "updatePassword: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun verifyBeforeUpdateEmail(newEmail: String, onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        user.verifyBeforeUpdateEmail(newEmail)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    // Mensagem crua: a ViewModel detecta requires-recent-login.
+                    Log.w(TAG, "verifyBeforeUpdateEmail: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    override fun updateDisplayName(displayName: String, onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(false, "no_current_user")
+            return
+        }
+        val request = userProfileChangeRequest { this.displayName = displayName }
+        user.updateProfile(request)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    Log.w(TAG, "updateDisplayName: falha", task.exception)
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
     override fun isEmailVerified(): Boolean = auth.currentUser?.isEmailVerified == true
 
     override fun currentUserEmail(): String? = auth.currentUser?.email
+
+    override fun currentUserDisplayName(): String? = auth.currentUser?.displayName
 
     override fun currentUserProviderId(): String? =
         auth.currentUser?.providerData

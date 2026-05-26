@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.ProfileScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ScreeningResultsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectAssetsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectChartPatternScreen
@@ -160,6 +161,13 @@ fun AppNavHost(
 
         composable(Screen.Settings.route) {
             SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onAccountDeleted = onLogout
             )

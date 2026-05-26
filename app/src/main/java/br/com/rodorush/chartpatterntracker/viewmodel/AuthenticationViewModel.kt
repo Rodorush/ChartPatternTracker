@@ -41,6 +41,31 @@ class AuthenticationViewModel(
         data class Error(val message: String?) : DeleteAccountStatus()
     }
 
+    sealed class UpdateNameStatus {
+        data object Idle : UpdateNameStatus()
+        data object Updating : UpdateNameStatus()
+        data object Updated : UpdateNameStatus()
+        data class Error(val message: String?) : UpdateNameStatus()
+    }
+
+    sealed class UpdatePasswordStatus {
+        data object Idle : UpdatePasswordStatus()
+        data object Updating : UpdatePasswordStatus()
+        data object Updated : UpdatePasswordStatus()
+        data object RequiresReauth : UpdatePasswordStatus()
+        data class Error(val message: String?) : UpdatePasswordStatus()
+    }
+
+    sealed class UpdateEmailStatus {
+        data object Idle : UpdateEmailStatus()
+        data object Updating : UpdateEmailStatus()
+        // Sucesso = link de verificação enviado ao novo e-mail; a troca só
+        // efetiva após o clique. O e-mail atual permanece até lá.
+        data object VerificationSent : UpdateEmailStatus()
+        data object RequiresReauth : UpdateEmailStatus()
+        data class Error(val message: String?) : UpdateEmailStatus()
+    }
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
@@ -58,6 +83,15 @@ class AuthenticationViewModel(
 
     private val _deleteAccountStatus = MutableStateFlow<DeleteAccountStatus>(DeleteAccountStatus.Idle)
     val deleteAccountStatus = _deleteAccountStatus.asStateFlow()
+
+    private val _updateNameStatus = MutableStateFlow<UpdateNameStatus>(UpdateNameStatus.Idle)
+    val updateNameStatus = _updateNameStatus.asStateFlow()
+
+    private val _updatePasswordStatus = MutableStateFlow<UpdatePasswordStatus>(UpdatePasswordStatus.Idle)
+    val updatePasswordStatus = _updatePasswordStatus.asStateFlow()
+
+    private val _updateEmailStatus = MutableStateFlow<UpdateEmailStatus>(UpdateEmailStatus.Idle)
+    val updateEmailStatus = _updateEmailStatus.asStateFlow()
 
     private var cooldownJob: Job? = null
 
@@ -177,6 +211,130 @@ class AuthenticationViewModel(
 
     fun resetDeleteAccountStatus() {
         _deleteAccountStatus.value = DeleteAccountStatus.Idle
+    }
+
+    // --- NF-03d: alterar nome de exibição (não exige sessão recente) ---
+
+    fun updateDisplayName(displayName: String, authProvider: AuthProvider) {
+        _updateNameStatus.value = UpdateNameStatus.Updating
+        authProvider.updateDisplayName(displayName) { success, error ->
+            if (success) {
+                _updateNameStatus.value = UpdateNameStatus.Updated
+            } else {
+                Log.w(TAG, "updateDisplayName falhou: $error")
+                _updateNameStatus.value = UpdateNameStatus.Error(error)
+            }
+        }
+    }
+
+    fun resetUpdateNameStatus() {
+        _updateNameStatus.value = UpdateNameStatus.Idle
+    }
+
+    // --- NF-03b: alterar senha (exige sessão recente) ---
+
+    fun updatePassword(newPassword: String, authProvider: AuthProvider) {
+        _updatePasswordStatus.value = UpdatePasswordStatus.Updating
+        authProvider.updatePassword(newPassword) { success, error ->
+            when {
+                success -> _updatePasswordStatus.value = UpdatePasswordStatus.Updated
+                requiresRecentLogin(error) ->
+                    _updatePasswordStatus.value = UpdatePasswordStatus.RequiresReauth
+                else -> {
+                    Log.w(TAG, "updatePassword falhou: $error")
+                    _updatePasswordStatus.value = UpdatePasswordStatus.Error(error)
+                }
+            }
+        }
+    }
+
+    fun reauthAndUpdatePasswordWithPassword(
+        currentPassword: String,
+        newPassword: String,
+        authProvider: AuthProvider
+    ) {
+        _updatePasswordStatus.value = UpdatePasswordStatus.Updating
+        authProvider.reauthenticateWithPassword(currentPassword) { success, error ->
+            if (success) {
+                updatePassword(newPassword, authProvider)
+            } else {
+                Log.w(TAG, "reauthenticateWithPassword (updatePassword) falhou: $error")
+                _updatePasswordStatus.value = UpdatePasswordStatus.Error(error)
+            }
+        }
+    }
+
+    fun reauthAndUpdatePasswordWithGoogle(
+        idToken: String?,
+        newPassword: String,
+        authProvider: AuthProvider
+    ) {
+        _updatePasswordStatus.value = UpdatePasswordStatus.Updating
+        authProvider.reauthenticateWithGoogle(idToken) { success, error ->
+            if (success) {
+                updatePassword(newPassword, authProvider)
+            } else {
+                Log.w(TAG, "reauthenticateWithGoogle (updatePassword) falhou: $error")
+                _updatePasswordStatus.value = UpdatePasswordStatus.Error(error)
+            }
+        }
+    }
+
+    fun resetUpdatePasswordStatus() {
+        _updatePasswordStatus.value = UpdatePasswordStatus.Idle
+    }
+
+    // --- NF-03c: alterar e-mail via verifyBeforeUpdateEmail (exige sessão recente) ---
+
+    fun updateEmail(newEmail: String, authProvider: AuthProvider) {
+        _updateEmailStatus.value = UpdateEmailStatus.Updating
+        authProvider.verifyBeforeUpdateEmail(newEmail) { success, error ->
+            when {
+                success -> _updateEmailStatus.value = UpdateEmailStatus.VerificationSent
+                requiresRecentLogin(error) ->
+                    _updateEmailStatus.value = UpdateEmailStatus.RequiresReauth
+                else -> {
+                    Log.w(TAG, "updateEmail falhou: $error")
+                    _updateEmailStatus.value = UpdateEmailStatus.Error(error)
+                }
+            }
+        }
+    }
+
+    fun reauthAndUpdateEmailWithPassword(
+        currentPassword: String,
+        newEmail: String,
+        authProvider: AuthProvider
+    ) {
+        _updateEmailStatus.value = UpdateEmailStatus.Updating
+        authProvider.reauthenticateWithPassword(currentPassword) { success, error ->
+            if (success) {
+                updateEmail(newEmail, authProvider)
+            } else {
+                Log.w(TAG, "reauthenticateWithPassword (updateEmail) falhou: $error")
+                _updateEmailStatus.value = UpdateEmailStatus.Error(error)
+            }
+        }
+    }
+
+    fun reauthAndUpdateEmailWithGoogle(
+        idToken: String?,
+        newEmail: String,
+        authProvider: AuthProvider
+    ) {
+        _updateEmailStatus.value = UpdateEmailStatus.Updating
+        authProvider.reauthenticateWithGoogle(idToken) { success, error ->
+            if (success) {
+                updateEmail(newEmail, authProvider)
+            } else {
+                Log.w(TAG, "reauthenticateWithGoogle (updateEmail) falhou: $error")
+                _updateEmailStatus.value = UpdateEmailStatus.Error(error)
+            }
+        }
+    }
+
+    fun resetUpdateEmailStatus() {
+        _updateEmailStatus.value = UpdateEmailStatus.Idle
     }
 
     private fun requiresRecentLogin(error: String?): Boolean {

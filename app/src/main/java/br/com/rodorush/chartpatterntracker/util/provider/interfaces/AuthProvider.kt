@@ -17,7 +17,16 @@ interface AuthProvider {
     fun reauthenticateWithPassword(password: String, onResult: (Boolean, String?) -> Unit)
     fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit)
 
+    // Gestão de conta (NF-03b/c/d) — autenticado.
+    // updatePassword e verifyBeforeUpdateEmail exigem sessão recente (igual a delete);
+    // updateDisplayName não exige. updateEmail foi descontinuado — usar
+    // verifyBeforeUpdateEmail, que envia link ao novo endereço e só efetiva após o clique.
+    fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit)
+    fun verifyBeforeUpdateEmail(newEmail: String, onResult: (Boolean, String?) -> Unit)
+    fun updateDisplayName(displayName: String, onResult: (Boolean, String?) -> Unit)
+
     fun isEmailVerified(): Boolean
     fun currentUserEmail(): String?
+    fun currentUserDisplayName(): String?
     fun currentUserProviderId(): String?
 }
