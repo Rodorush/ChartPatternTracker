@@ -58,10 +58,12 @@ class MockAuthProvider(
     override fun createUserWithEmailAndPassword(
         email: String,
         password: String,
+        displayName: String,
         onResult: (Boolean, String?) -> Unit
     ) {
         if (email.contains("@")) {
             this.email = email
+            this.displayName = displayName
             sendEmailVerificationCalls++
             onResult(true, null)
         } else {
