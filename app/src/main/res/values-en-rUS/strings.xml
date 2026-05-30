@@ -122,4 +122,8 @@
     <string name="forgot_password_sent_generic">If there is an account with that email, we\'ll send a link to reset the password.</string>
     <string name="forgot_password_send_error">We couldn\'t send the email. Please try again in a moment.</string>
     <string name="forgot_password_back_to_login">Back to sign in</string>
+    <string name="disclaimer_title">Risk disclaimer</string>
+    <string name="disclaimer_body">Chart Pattern Tracker is an educational and technical-analysis support tool. The information and detected patterns do not constitute a recommendation to buy or sell any asset. Candlestick patterns are probabilistic indicators and do not guarantee future results. Trading in financial markets involves the risk of loss, including the invested capital. Investment decisions are your sole responsibility; consult a certified professional before trading.</string>
+    <string name="disclaimer_accept">I have read and agree</string>
+    <string name="disclaimer_settings_entry">View risk disclaimer</string>
 </resources>

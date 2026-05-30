@@ -122,4 +122,8 @@
     <string name="forgot_password_sent_generic">Si existe una cuenta con ese correo, enviaremos un enlace para restablecer la contraseña.</string>
     <string name="forgot_password_send_error">No pudimos enviar el correo. Inténtalo de nuevo en unos instantes.</string>
     <string name="forgot_password_back_to_login">Volver al inicio de sesión</string>
+    <string name="disclaimer_title">Aviso de riesgo</string>
+    <string name="disclaimer_body">Chart Pattern Tracker es una herramienta educativa y de apoyo al análisis técnico. La información y los patrones detectados no constituyen una recomendación de compra o venta de activos. Los patrones de velas son indicadores probabilísticos y no garantizan resultados futuros. Operar en los mercados financieros implica riesgo de pérdida, incluido el capital invertido. Las decisiones de inversión son de tu exclusiva responsabilidad; consulta a un profesional certificado antes de operar.</string>
+    <string name="disclaimer_accept">He leído y acepto</string>
+    <string name="disclaimer_settings_entry">Ver aviso de riesgo</string>
 </resources>

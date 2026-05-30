@@ -44,7 +44,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToDisclaimer: () -> Unit = {}
 ) {
     val viewModel: ChartViewModel = koinViewModel()
     val currentSource by viewModel.currentSource.collectAsState()
@@ -172,6 +173,31 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.profile))
+                }
+            }
+        }
+
+        // Card: Aviso de risco — abre o disclaimer em modo leitura (NF-05)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.disclaimer_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Divider()
+                Button(
+                    onClick = onNavigateToDisclaimer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.disclaimer_settings_entry))
                 }
             }
         }
