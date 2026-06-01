@@ -125,5 +125,6 @@
     <string name="disclaimer_title">Risk disclaimer</string>
     <string name="disclaimer_body">Chart Pattern Tracker is an educational and technical-analysis support tool. The information and detected patterns do not constitute a recommendation to buy or sell any asset. Candlestick patterns are probabilistic indicators and do not guarantee future results. Trading in financial markets involves the risk of loss, including the invested capital. Investment decisions are your sole responsibility; consult a certified professional before trading.</string>
     <string name="disclaimer_accept">I have read and agree</string>
+    <string name="disclaimer_decline">I do not agree</string>
     <string name="disclaimer_settings_entry">View risk disclaimer</string>
 </resources>

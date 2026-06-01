@@ -28,13 +28,15 @@ import br.com.rodorush.chartpatterntracker.R
 /**
  * Aviso de risco financeiro (NF-05).
  *
- * - [readOnly] = false: gate de primeiro uso, com botão "Li e concordo" que dispara [onAccept].
+ * - [readOnly] = false: gate de primeiro uso, com botão "Li e concordo" que dispara [onAccept]
+ *   e botão "Não aceito" que dispara [onDecline] (recusa o aviso e aborta a sessão via logout).
  * - [readOnly] = true: modo leitura (acessível por Configurações), só com "Voltar" ([onNavigateBack]).
  */
 @Composable
 fun DisclaimerScreen(
     readOnly: Boolean,
     onAccept: () -> Unit = {},
+    onDecline: () -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     Column(
@@ -81,6 +83,15 @@ fun DisclaimerScreen(
                     .height(50.dp)
             ) {
                 Text(text = stringResource(R.string.disclaimer_accept))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(
+                onClick = onDecline,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = stringResource(R.string.disclaimer_decline))
             }
         }
     }

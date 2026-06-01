@@ -125,5 +125,6 @@
     <string name="disclaimer_title">Aviso de risco</string>
     <string name="disclaimer_body">O Rastreador de Padrões Gráficos é uma ferramenta educacional e de apoio à análise técnica. As informações e os padrões detectados não constituem recomendação de compra ou venda de ativos. Padrões de candlestick são indicadores probabilísticos e não garantem resultados futuros. Operar no mercado financeiro envolve risco de perda, inclusive do capital investido. As decisões de investimento são de sua exclusiva responsabilidade; consulte um profissional certificado antes de operar.</string>
     <string name="disclaimer_accept">Li e concordo</string>
+    <string name="disclaimer_decline">Não aceito</string>
     <string name="disclaimer_settings_entry">Ver aviso de risco</string>
 </resources>

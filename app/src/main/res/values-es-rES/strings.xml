@@ -125,5 +125,6 @@
     <string name="disclaimer_title">Aviso de riesgo</string>
     <string name="disclaimer_body">Chart Pattern Tracker es una herramienta educativa y de apoyo al análisis técnico. La información y los patrones detectados no constituyen una recomendación de compra o venta de activos. Los patrones de velas son indicadores probabilísticos y no garantizan resultados futuros. Operar en los mercados financieros implica riesgo de pérdida, incluido el capital invertido. Las decisiones de inversión son de tu exclusiva responsabilidad; consulta a un profesional certificado antes de operar.</string>
     <string name="disclaimer_accept">He leído y acepto</string>
+    <string name="disclaimer_decline">No acepto</string>
     <string name="disclaimer_settings_entry">Ver aviso de riesgo</string>
 </resources>

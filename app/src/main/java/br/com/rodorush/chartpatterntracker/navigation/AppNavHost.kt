@@ -198,6 +198,7 @@ fun AppNavHost(
                         popUpTo(Screen.Disclaimer.route) { inclusive = true }
                     }
                 },
+                onDecline = onLogout,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -205,7 +206,11 @@ fun AppNavHost(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onAccountDeleted = onLogout
+                onAccountDeleted = {
+                    // Reseta o aviso de risco: novo cadastro no mesmo dispositivo deve reapresentá-lo (NF-05).
+                    appPreferences.disclaimerAccepted = false
+                    onLogout()
+                }
             )
         }
     }
