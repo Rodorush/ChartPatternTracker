@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartDetailScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ChartPatternDetailScreen
+import br.com.rodorush.chartpatterntracker.ui.screen.DisclaimerScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.MainScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ProfileScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.ScreeningResultsScreen
@@ -19,10 +20,12 @@ import br.com.rodorush.chartpatterntracker.ui.screen.SelectChartPatternScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SelectTimeframesScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.RealTimeQuotesScreen
+import br.com.rodorush.chartpatterntracker.util.AppPreferences
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
 import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun AppNavHost(
@@ -34,9 +37,17 @@ fun AppNavHost(
     val viewModelStoreOwner = LocalViewModelStoreOwner.current
         ?: throw IllegalStateException("No ViewModelStoreOwner available")
 
+    // NF-05: gate do aviso de risco no primeiro uso (aceite persistido em AppPreferences).
+    val appPreferences = koinInject<AppPreferences>()
+    val startDestination = if (appPreferences.disclaimerAccepted) {
+        Screen.Main.route
+    } else {
+        Screen.Disclaimer.createRoute(readOnly = false)
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Main.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable(Screen.Main.route) {
@@ -162,14 +173,44 @@ fun AppNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToDisclaimer = {
+                    navController.navigate(Screen.Disclaimer.createRoute(readOnly = true))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.Disclaimer.route,
+            arguments = listOf(
+                navArgument("readOnly") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val readOnly = backStackEntry.arguments?.getBoolean("readOnly") ?: false
+            DisclaimerScreen(
+                readOnly = readOnly,
+                onAccept = {
+                    appPreferences.disclaimerAccepted = true
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(Screen.Disclaimer.route) { inclusive = true }
+                    }
+                },
+                onDecline = onLogout,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onAccountDeleted = onLogout
+                onAccountDeleted = {
+                    // Reseta o aviso de risco: novo cadastro no mesmo dispositivo deve reapresentá-lo (NF-05).
+                    appPreferences.disclaimerAccepted = false
+                    onLogout()
+                }
             )
         }
     }
