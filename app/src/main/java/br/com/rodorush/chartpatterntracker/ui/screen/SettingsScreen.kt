@@ -30,12 +30,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.model.PatternDisplayMode
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.util.LegalUrls
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ChartViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -53,6 +55,7 @@ fun SettingsScreen(
     var apiKeyInput by remember { mutableStateOf("") }
     var selectedSource by remember { mutableStateOf(currentSource.javaClass.simpleName.removeSuffix("DataSource")) }
     var expanded by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = Modifier
@@ -198,6 +201,37 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.disclaimer_settings_entry))
+                }
+            }
+        }
+
+        // Card: Documentos legais — Política de Privacidade e Termos de Uso (PROD-06)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.legal_documents_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Divider()
+                Button(
+                    onClick = { uriHandler.openUri(LegalUrls.PRIVACY) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.privacy_policy))
+                }
+                Button(
+                    onClick = { uriHandler.openUri(LegalUrls.TERMS) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.terms_of_use))
                 }
             }
         }

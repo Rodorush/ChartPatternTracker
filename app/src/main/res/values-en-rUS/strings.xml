@@ -23,7 +23,6 @@
     <string name="create_your_account">Create your account</string>
     <string name="name">Name</string>
     <string name="confirm_the_password">Confirm the password</string>
-    <string name="i_understood_the_terms_policy"><![CDATA[I understood the terms & policy.]]></string>
     <string name="or_sign_up_with">or sign up with</string>
     <string name="have_an_account">Have an account?</string>
     <string name="back">Back</string>
@@ -127,4 +126,9 @@
     <string name="disclaimer_accept">I have read and agree</string>
     <string name="disclaimer_decline">I do not agree</string>
     <string name="disclaimer_settings_entry">View risk disclaimer</string>
+    <!-- PROD-06: Privacy Policy and Terms of Use -->
+    <string name="terms_of_use">Terms of Use</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_policy_agreement">I have read and agree to the %1$s and the %2$s.</string>
+    <string name="legal_documents_title">Legal documents</string>
 </resources>

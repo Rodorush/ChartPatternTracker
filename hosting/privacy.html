@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<!--
+  PROD-06 — Política de Privacidade do Chart Pattern Tracker.
+  RASCUNHO TÉCNICO baseado nos dados que o app efetivamente coleta.
+  REQUER revisão jurídica antes da publicação do Beta.
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidade — Chart Pattern Tracker</title>
+  <style>
+    :root { --fg: #1a1a1a; --muted: #555; --accent: #1565c0; --bg: #fff; --line: #e0e0e0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+           color: var(--fg); background: var(--bg); line-height: 1.6; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 24px 20px 80px; }
+    header { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 8px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    h2 { font-size: 1.25rem; margin: 36px 0 8px; border-top: 1px solid var(--line); padding-top: 24px; }
+    h3 { font-size: 1.05rem; margin: 20px 0 6px; }
+    .meta { color: var(--muted); font-size: 0.9rem; }
+    nav.lang { position: sticky; top: 0; background: var(--bg); padding: 10px 0;
+               border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+    nav.lang a { color: var(--accent); text-decoration: none; margin-right: 16px; font-weight: 600; }
+    a { color: var(--accent); }
+    ul { padding-left: 20px; }
+    .callout { background: #f4f8fd; border: 1px solid #d6e4f5; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    footer { margin-top: 48px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 16px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Política de Privacidade</h1>
+    <p class="meta">Chart Pattern Tracker · Última atualização: 9 de junho de 2026</p>
+  </header>
+
+  <nav class="lang">
+    <a href="#pt">Português</a><a href="#en">English</a><a href="#es">Español</a>
+    <a href="#data-deletion">Exclusão de dados / Data deletion</a>
+  </nav>
+
+  <!-- ============================ PORTUGUÊS ============================ -->
+  <section id="pt">
+    <h2>1. Quem somos</h2>
+    <p>O Chart Pattern Tracker ("aplicativo", "nós") é um aplicativo Android que detecta
+       padrões de candlestick em ativos negociados na B3, com finalidade educacional e de
+       apoio à análise técnica. O responsável pelo tratamento dos dados é o desenvolvedor do
+       aplicativo, que pode ser contatado pelo e-mail indicado ao final desta política.</p>
+
+    <h2>2. Dados que coletamos</h2>
+    <ul>
+      <li><strong>Dados de conta:</strong> e-mail e nome de exibição, fornecidos no cadastro
+          ou obtidos do provedor de login (Google). A autenticação é gerida pelo Firebase
+          Authentication; nós não temos acesso à sua senha.</li>
+      <li><strong>Provedor de login:</strong> indicação de qual método você usou (e-mail/senha
+          ou Google).</li>
+      <li><strong>Diagnóstico de falhas:</strong> relatórios de erro e travamento coletados
+          pelo Firebase Crashlytics (modelo do dispositivo, versão do sistema, rastreamento de
+          pilha do erro).</li>
+      <li><strong>Métricas de uso:</strong> eventos e estatísticas agregadas de uso coletados
+          pelo Firebase Analytics e identificadores de proteção de integridade (App Check /
+          Play Integrity).</li>
+      <li><strong>Dados de mercado em cache:</strong> cotações e candles são armazenados
+          localmente no seu dispositivo (banco local Room) para reduzir tráfego de rede; esses
+          dados não são pessoais e não saem do dispositivo.</li>
+    </ul>
+
+    <h2>3. Dados que NÃO coletamos</h2>
+    <p>Não armazenamos em nossos servidores carteira, posições, ordens, dados financeiros ou
+       qualquer informação de operações por usuário. O aplicativo não solicita dados de cartão
+       de crédito nem credenciais de corretoras.</p>
+
+    <h2>4. Como usamos os dados</h2>
+    <ul>
+      <li>Autenticar você e manter sua conta.</li>
+      <li>Operar e melhorar a estabilidade e a experiência do aplicativo.</li>
+      <li>Diagnosticar e corrigir falhas.</li>
+      <li>Proteger o serviço contra abuso e acesso não autorizado (App Check).</li>
+    </ul>
+
+    <h2>5. Compartilhamento com terceiros</h2>
+    <ul>
+      <li><strong>Google Firebase</strong> (Authentication, Analytics, Crashlytics, App Check):
+          provê a infraestrutura de conta, diagnóstico e segurança. Consulte a
+          <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Política de Privacidade do Firebase</a>.</li>
+      <li><strong>Brapi</strong> (provedor de dados de mercado da B3): o aplicativo consulta
+          cotações públicas. <em>Nenhum dado pessoal seu é enviado à Brapi</em> — apenas o
+          identificador do ativo consultado.</li>
+    </ul>
+    <p>Não vendemos seus dados pessoais.</p>
+
+    <h2>6. Base legal e retenção (LGPD)</h2>
+    <p>Tratamos seus dados com base na execução do serviço solicitado e no legítimo interesse
+       de operar e proteger o aplicativo, conforme a Lei nº 13.709/2018 (LGPD). Os dados de
+       conta são mantidos enquanto sua conta existir; ao excluí-la, são removidos conforme a
+       seção de <a href="#data-deletion">Exclusão de dados</a>.</p>
+
+    <h2>7. Seus direitos</h2>
+    <p>Você pode, a qualquer momento, acessar e corrigir seu nome e e-mail diretamente no
+       aplicativo (tela de Perfil) e <strong>excluir sua conta</strong> (ver seção abaixo).
+       Para outras solicitações previstas na LGPD, use o e-mail de contato.</p>
+
+    <h2>8. Segurança</h2>
+    <p>A autenticação e o armazenamento de credenciais são geridos pelo Firebase com criptografia
+       em trânsito e em repouso. Nenhum método de transmissão é 100% seguro, mas adotamos medidas
+       técnicas e organizacionais razoáveis para proteger seus dados.</p>
+
+    <h2>9. Crianças</h2>
+    <p>O aplicativo não se destina a menores de 18 anos e não coleta intencionalmente dados de
+       crianças.</p>
+
+    <h2>10. Alterações</h2>
+    <p>Podemos atualizar esta política. Alterações relevantes serão indicadas pela data de
+       atualização no topo desta página.</p>
+  </section>
+
+  <!-- ============================ ENGLISH ============================ -->
+  <section id="en">
+    <h2>1. Who we are</h2>
+    <p>Chart Pattern Tracker ("the app", "we") is an Android application that detects candlestick
+       patterns in assets traded on the B3 exchange, for educational and technical-analysis
+       support purposes. The data controller is the app's developer, reachable at the e-mail
+       address listed at the end of this policy.</p>
+
+    <h2>2. Data we collect</h2>
+    <ul>
+      <li><strong>Account data:</strong> e-mail and display name, provided at sign-up or obtained
+          from the login provider (Google). Authentication is handled by Firebase Authentication;
+          we do not have access to your password.</li>
+      <li><strong>Login provider:</strong> which method you used (e-mail/password or Google).</li>
+      <li><strong>Crash diagnostics:</strong> error and crash reports collected by Firebase
+          Crashlytics (device model, OS version, error stack trace).</li>
+      <li><strong>Usage metrics:</strong> aggregated usage events and statistics collected by
+          Firebase Analytics, and integrity-protection identifiers (App Check / Play Integrity).</li>
+      <li><strong>Cached market data:</strong> quotes and candles are stored locally on your
+          device (Room database) to reduce network traffic; this data is not personal and does
+          not leave the device.</li>
+    </ul>
+
+    <h2>3. Data we do NOT collect</h2>
+    <p>We do not store on our servers any portfolio, positions, orders, financial data or
+       per-user trading information. The app does not request credit-card data or brokerage
+       credentials.</p>
+
+    <h2>4. How we use data</h2>
+    <ul>
+      <li>Authenticate you and maintain your account.</li>
+      <li>Operate and improve the app's stability and experience.</li>
+      <li>Diagnose and fix crashes.</li>
+      <li>Protect the service against abuse and unauthorized access (App Check).</li>
+    </ul>
+
+    <h2>5. Sharing with third parties</h2>
+    <ul>
+      <li><strong>Google Firebase</strong> (Authentication, Analytics, Crashlytics, App Check):
+          provides account, diagnostics and security infrastructure. See the
+          <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy Policy</a>.</li>
+      <li><strong>Brapi</strong> (B3 market-data provider): the app queries public quotes.
+          <em>No personal data is sent to Brapi</em> — only the identifier of the queried asset.</li>
+    </ul>
+    <p>We do not sell your personal data.</p>
+
+    <h2>6. Legal basis and retention</h2>
+    <p>We process your data to deliver the requested service and based on our legitimate interest
+       in operating and protecting the app. Account data is retained while your account exists;
+       upon deletion it is removed as described in the <a href="#data-deletion">Data deletion</a>
+       section.</p>
+
+    <h2>7. Your rights</h2>
+    <p>You can access and correct your name and e-mail directly in the app (Profile screen) and
+       <strong>delete your account</strong> (see section below) at any time. For other requests,
+       use the contact e-mail.</p>
+
+    <h2>8. Security</h2>
+    <p>Authentication and credential storage are handled by Firebase with encryption in transit
+       and at rest. No transmission method is 100% secure, but we apply reasonable technical and
+       organizational measures to protect your data.</p>
+
+    <h2>9. Children</h2>
+    <p>The app is not directed to people under 18 and does not knowingly collect children's data.</p>
+
+    <h2>10. Changes</h2>
+    <p>We may update this policy. Material changes will be reflected by the update date at the top
+       of this page.</p>
+  </section>
+
+  <!-- ============================ ESPAÑOL ============================ -->
+  <section id="es">
+    <h2>1. Quiénes somos</h2>
+    <p>Chart Pattern Tracker ("la aplicación", "nosotros") es una aplicación Android que detecta
+       patrones de velas en activos negociados en la bolsa B3, con fines educativos y de apoyo al
+       análisis técnico. El responsable del tratamiento de los datos es el desarrollador de la
+       aplicación, contactable en el correo indicado al final de esta política.</p>
+
+    <h2>2. Datos que recopilamos</h2>
+    <ul>
+      <li><strong>Datos de cuenta:</strong> correo electrónico y nombre visible, proporcionados
+          al registrarte u obtenidos del proveedor de inicio de sesión (Google). La autenticación
+          la gestiona Firebase Authentication; no tenemos acceso a tu contraseña.</li>
+      <li><strong>Proveedor de inicio de sesión:</strong> qué método usaste (correo/contraseña o
+          Google).</li>
+      <li><strong>Diagnóstico de fallos:</strong> informes de error y bloqueo recopilados por
+          Firebase Crashlytics (modelo del dispositivo, versión del sistema, traza del error).</li>
+      <li><strong>Métricas de uso:</strong> eventos y estadísticas agregadas recopiladas por
+          Firebase Analytics e identificadores de protección de integridad (App Check /
+          Play Integrity).</li>
+      <li><strong>Datos de mercado en caché:</strong> las cotizaciones y velas se almacenan
+          localmente en tu dispositivo (base de datos Room) para reducir el tráfico de red; estos
+          datos no son personales y no salen del dispositivo.</li>
+    </ul>
+
+    <h2>3. Datos que NO recopilamos</h2>
+    <p>No almacenamos en nuestros servidores cartera, posiciones, órdenes, datos financieros ni
+       información de operaciones por usuario. La aplicación no solicita datos de tarjeta de
+       crédito ni credenciales de brókeres.</p>
+
+    <h2>4. Cómo usamos los datos</h2>
+    <ul>
+      <li>Autenticarte y mantener tu cuenta.</li>
+      <li>Operar y mejorar la estabilidad y la experiencia de la aplicación.</li>
+      <li>Diagnosticar y corregir fallos.</li>
+      <li>Proteger el servicio contra abuso y acceso no autorizado (App Check).</li>
+    </ul>
+
+    <h2>5. Compartición con terceros</h2>
+    <ul>
+      <li><strong>Google Firebase</strong> (Authentication, Analytics, Crashlytics, App Check):
+          provee la infraestructura de cuenta, diagnóstico y seguridad. Consulta la
+          <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Política de Privacidad de Firebase</a>.</li>
+      <li><strong>Brapi</strong> (proveedor de datos de mercado de B3): la aplicación consulta
+          cotizaciones públicas. <em>No se envía ningún dato personal a Brapi</em> — solo el
+          identificador del activo consultado.</li>
+    </ul>
+    <p>No vendemos tus datos personales.</p>
+
+    <h2>6. Base legal y conservación</h2>
+    <p>Tratamos tus datos para prestar el servicio solicitado y con base en nuestro interés
+       legítimo de operar y proteger la aplicación. Los datos de cuenta se conservan mientras
+       exista tu cuenta; al eliminarla se borran según la sección de
+       <a href="#data-deletion">Eliminación de datos</a>.</p>
+
+    <h2>7. Tus derechos</h2>
+    <p>Puedes acceder y corregir tu nombre y correo directamente en la aplicación (pantalla de
+       Perfil) y <strong>eliminar tu cuenta</strong> (ver sección siguiente) en cualquier momento.
+       Para otras solicitudes, usa el correo de contacto.</p>
+
+    <h2>8. Seguridad</h2>
+    <p>La autenticación y el almacenamiento de credenciales los gestiona Firebase con cifrado en
+       tránsito y en reposo. Ningún método de transmisión es 100% seguro, pero aplicamos medidas
+       técnicas y organizativas razonables para proteger tus datos.</p>
+
+    <h2>9. Menores</h2>
+    <p>La aplicación no está dirigida a menores de 18 años y no recopila intencionadamente datos
+       de menores.</p>
+
+    <h2>10. Cambios</h2>
+    <p>Podemos actualizar esta política. Los cambios relevantes se reflejarán en la fecha de
+       actualización en la parte superior de esta página.</p>
+  </section>
+
+  <!-- ===================== EXCLUSÃO DE DADOS / DATA DELETION ===================== -->
+  <section id="data-deletion">
+    <h2>Exclusão de dados · Data deletion · Eliminación de datos</h2>
+
+    <div class="callout">
+      <h3>Português</h3>
+      <p>Você pode excluir sua conta e os dados pessoais associados diretamente no aplicativo:
+         abra <strong>Configurações → Perfil → Excluir conta</strong> e confirme. A exclusão
+         remove permanentemente sua conta do Firebase Authentication (e-mail e nome de exibição)
+         e encerra o acesso. Os relatórios de diagnóstico anônimos do Crashlytics/Analytics são
+         retidos por períodos definidos pelo Google e expiram automaticamente. Se não conseguir
+         acessar o aplicativo, envie um pedido para o e-mail de contato abaixo informando o
+         e-mail da conta; concluiremos a exclusão em até 30 dias.</p>
+
+      <h3>English</h3>
+      <p>You can delete your account and associated personal data directly in the app: open
+         <strong>Settings → Profile → Delete account</strong> and confirm. Deletion permanently
+         removes your account from Firebase Authentication (e-mail and display name) and revokes
+         access. Anonymous Crashlytics/Analytics diagnostics are retained for periods defined by
+         Google and expire automatically. If you cannot access the app, send a request to the
+         contact e-mail below stating your account e-mail; we will complete the deletion within
+         30 days.</p>
+
+      <h3>Español</h3>
+      <p>Puedes eliminar tu cuenta y los datos personales asociados directamente en la aplicación:
+         abre <strong>Ajustes → Perfil → Eliminar cuenta</strong> y confirma. La eliminación borra
+         permanentemente tu cuenta de Firebase Authentication (correo y nombre visible) y revoca el
+         acceso. Los diagnósticos anónimos de Crashlytics/Analytics se conservan durante periodos
+         definidos por Google y expiran automáticamente. Si no puedes acceder a la aplicación,
+         envía una solicitud al correo de contacto indicando el correo de tu cuenta; completaremos
+         la eliminación en un plazo de 30 días.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>Contato / Contact / Contacto: <a href="mailto:rodolfop.andrade@gmail.com">rodolfop.andrade@gmail.com</a></p>
+    <p><a href="terms.html">Termos de Uso / Terms of Use / Términos de Uso</a></p>
+  </footer>
+</div>
+</body>
+</html>

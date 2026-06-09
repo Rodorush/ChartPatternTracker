@@ -36,7 +36,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
+import br.com.rodorush.chartpatterntracker.util.LegalUrls
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
@@ -175,8 +181,45 @@ fun RegisterScreen(
                     checked = acceptTerms,
                     onCheckedChange = { acceptTerms = it }
                 )
+                // Frase de aceite com "Termos de Uso" e "Política de Privacidade" clicáveis.
+                // O texto é montado a partir do template i18n (%1$s/%2$s) e os trechos dos
+                // rótulos viram LinkAnnotation.Url — withLink abre via LocalUriHandler.
+                val termsLabel = stringResource(R.string.terms_of_use)
+                val privacyLabel = stringResource(R.string.privacy_policy)
+                val agreementText = stringResource(
+                    R.string.terms_policy_agreement, termsLabel, privacyLabel
+                )
+                val linkStyles = TextLinkStyles(
+                    style = SpanStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline
+                    )
+                )
+                val agreement = buildAnnotatedString {
+                    val links = listOf(
+                        termsLabel to LegalUrls.TERMS,
+                        privacyLabel to LegalUrls.PRIVACY
+                    )
+                    var cursor = 0
+                    while (cursor <= agreementText.length) {
+                        val next = links
+                            .mapNotNull { (label, url) ->
+                                val idx = agreementText.indexOf(label, cursor)
+                                if (idx >= 0) Triple(idx, label, url) else null
+                            }
+                            .minByOrNull { it.first }
+                        if (next == null) {
+                            append(agreementText.substring(cursor))
+                            break
+                        }
+                        val (idx, label, url) = next
+                        if (idx > cursor) append(agreementText.substring(cursor, idx))
+                        withLink(LinkAnnotation.Url(url, linkStyles)) { append(label) }
+                        cursor = idx + label.length
+                    }
+                }
                 Text(
-                    text = stringResource(R.string.i_understood_the_terms_policy),
+                    text = agreement,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
