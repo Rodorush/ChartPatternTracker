@@ -22,7 +22,6 @@
     <string name="create_your_account">Crie sua conta</string>
     <string name="name">Nome</string>
     <string name="confirm_the_password">Confirme a senha</string>
-    <string name="i_understood_the_terms_policy">Eu entendi os termos e a política.</string>
     <string name="or_sign_up_with">ou cadastre-se com</string>
     <string name="have_an_account">Já tem uma conta?</string>
     <string name="back">Voltar</string>
@@ -130,4 +129,10 @@
     <string name="disclaimer_accept">Li e concordo</string>
     <string name="disclaimer_decline">Não aceito</string>
     <string name="disclaimer_settings_entry">Ver aviso de risco</string>
+    <!-- PROD-06: Política de Privacidade e Termos de Uso -->
+    <string name="terms_of_use">Termos de Uso</string>
+    <string name="privacy_policy">Política de Privacidade</string>
+    <string name="terms_policy_agreement">Li e concordo com os %1$s e a %2$s.</string>
+    <string name="legal_documents_title">Documentos legais</string>
+    <string name="feature_not_implemented">Recurso ainda não implementado.</string>
 </resources>

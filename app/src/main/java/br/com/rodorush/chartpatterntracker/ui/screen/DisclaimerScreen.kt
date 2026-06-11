@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.ui.component.LegalAgreementText
 
 /**
  * Aviso de risco financeiro (NF-05).
@@ -67,6 +68,16 @@ fun DisclaimerScreen(
             text = stringResource(R.string.disclaimer_body),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Aceite de Termos/Política embutido no gate universal: cobre também quem entra
+        // via Google (que não passa pelo checkbox do cadastro por e-mail). O "Li e concordo"
+        // abaixo vale para o aviso de risco + Termos/Política; persistido em disclaimerAccepted.
+        LegalAgreementText(
+            modifier = Modifier.padding(horizontal = 8.dp),
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(32.dp))

@@ -37,7 +37,8 @@ fun AppNavHost(
     val viewModelStoreOwner = LocalViewModelStoreOwner.current
         ?: throw IllegalStateException("No ViewModelStoreOwner available")
 
-    // NF-05: gate do aviso de risco no primeiro uso (aceite persistido em AppPreferences).
+    // NF-05 + PROD-06: gate universal de primeiro uso — aceite do aviso de risco e dos
+    // Termos/Política (persistido em AppPreferences.disclaimerAccepted; cobre e-mail e Google).
     val appPreferences = koinInject<AppPreferences>()
     val startDestination = if (appPreferences.disclaimerAccepted) {
         Screen.Main.route

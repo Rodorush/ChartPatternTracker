@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen.authentication
 
+import android.content.Intent
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -30,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -43,8 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.activity.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.component.LegalAgreementText
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
+import br.com.rodorush.chartpatterntracker.ui.component.SocialSignInButton
+import br.com.rodorush.chartpatterntracker.ui.component.rememberGoogleSignInLauncher
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
@@ -64,6 +68,9 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var acceptTerms by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val launchGoogleSignIn = rememberGoogleSignInLauncher(
+        onSuccess = { context.startActivity(Intent(context, MainActivity::class.java)) }
+    )
 
     val isButtonEnabled = remember {
         mutableStateOf(false)
@@ -175,10 +182,10 @@ fun RegisterScreen(
                     checked = acceptTerms,
                     onCheckedChange = { acceptTerms = it }
                 )
-                Text(
-                    text = stringResource(R.string.i_understood_the_terms_policy),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                // Links de Termos/Política (mesmo componente do gate de aviso de risco).
+                // Aqui é transparência no ponto de cadastro; o aceite autoritativo e
+                // persistido acontece no gate universal (cobre também login via Google).
+                LegalAgreementText(style = MaterialTheme.typography.bodyMedium)
             }
 
             // Botão SIGN UP
@@ -219,35 +226,37 @@ fun RegisterScreen(
                     .alpha(0.7f)
             )
 
-            // Seção de ícones (Google, Facebook, Twitter)
+            // Seção de ícones sociais (paridade com o Login, via SocialSignInButton)
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                // Substituir pelos ícones adequados
-                Icon(
-                    painter = painterResource(id = R.drawable.google_g_logo),
+                SocialSignInButton(
+                    iconId = R.drawable.google_g_logo,
                     contentDescription = "Google",
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable { /* Ação de login Google */ },
-                    tint = Color.Unspecified // Caso queira manter as cores originais
+                    onClick = launchGoogleSignIn
                 )
-                Icon(
-                    painter = painterResource(id = R.drawable.f_facebook),
+                SocialSignInButton(
+                    iconId = R.drawable.f_facebook,
                     contentDescription = "Facebook",
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable { /* Ação de login Facebook */ },
-                    tint = Color.Unspecified
+                    onClick = {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.feature_not_implemented),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 )
-                Icon(
-                    painter = painterResource(id = R.drawable.x_logo),
+                SocialSignInButton(
+                    iconId = R.drawable.x_logo,
                     contentDescription = "Twitter",
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable { /* Ação de login Twitter */ },
-                    tint = Color.Unspecified
+                    onClick = {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.feature_not_implemented),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 )
             }
         }

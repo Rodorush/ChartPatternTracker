@@ -3,8 +3,6 @@ package br.com.rodorush.chartpatterntracker.ui.screen.authentication
 import android.content.Intent
 import android.util.Patterns
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -37,17 +35,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.activity.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
 import br.com.rodorush.chartpatterntracker.ui.component.SocialSignInButton
+import br.com.rodorush.chartpatterntracker.ui.component.rememberGoogleSignInLauncher
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 
 @Composable
 fun LoginScreen(
@@ -69,46 +64,11 @@ fun LoginScreen(
                 password.isNotBlank()
     }
 
-    // 1. Configurar opções de Sign In com Google (usando ID token do seu projeto Firebase)
-    val googleSignInOptions = remember {
-        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(BuildConfig.WEB_CLIENT_ID)
-            .requestEmail()
-            .build()
-    }
-
-    // 2. Criar GoogleSignInClient a partir das opções
-    val googleSignInClient = remember {
-        GoogleSignIn.getClient(context, googleSignInOptions)
-    }
-
-    // 3. Lançador para iniciar a Activity do Google Sign-In e capturar o resultado
-    val googleSignInLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                val idToken = account?.idToken
-
-                // 4. Chamar o método de login com Google do AuthProvider (FirebaseAuthProvider)
-                authProvider.signInWithGoogle(idToken) { success, error ->
-                    if (success) {
-                        Toast.makeText(context, "Login com Google bem-sucedido!", Toast.LENGTH_SHORT).show()
-                        context.startActivity(Intent(context, MainActivity::class.java))
-                    } else {
-                        Toast.makeText(
-                            context,
-                            error ?: "Erro ao logar com Google",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            } catch (e: ApiException) {
-                Toast.makeText(context, "Erro ao obter conta Google: ${e.message}", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Erro desconhecido: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
+    // Fluxo de Google Sign-In encapsulado (ver rememberGoogleSignInLauncher); a navegação
+    // pós-sucesso fica aqui no caller. Mesma ação reaproveitada no RegisterScreen.
+    val launchGoogleSignIn = rememberGoogleSignInLauncher(
+        onSuccess = { context.startActivity(Intent(context, MainActivity::class.java)) }
+    )
 
     Column(
         modifier = Modifier
@@ -216,10 +176,7 @@ fun LoginScreen(
             SocialSignInButton(
                 iconId = R.drawable.google_g_logo,
                 contentDescription = "Google",
-                onClick = {
-                    val signInIntent = googleSignInClient.signInIntent
-                    googleSignInLauncher.launch(signInIntent)
-                }
+                onClick = launchGoogleSignIn
             )
 
             SocialSignInButton(
