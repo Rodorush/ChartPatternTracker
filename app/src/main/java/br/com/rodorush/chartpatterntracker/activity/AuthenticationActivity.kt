@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import br.com.rodorush.chartpatterntracker.navigation.AuthenticationNavHost
 import br.com.rodorush.chartpatterntracker.navigation.ROUTE_LOGIN
@@ -31,7 +35,11 @@ class AuthenticationActivity : ComponentActivity() {
 
         setContent {
             ChartPatternTrackerTheme {
-                AuthenticationNavHost(startDestination = startDestination)
+                // targetSdk 35 (Android 15) impõe edge-to-edge; safeDrawingPadding mantém o
+                // conteúdo das telas de auth fora das barras de sistema e do teclado.
+                Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                    AuthenticationNavHost(startDestination = startDestination)
+                }
             }
         }
     }
