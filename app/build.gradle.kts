@@ -80,6 +80,11 @@ android {
             }
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                // Símbolos de depuração nativos empacotados no AAB para o Android Vitals
+                // desofuscar stack traces de crashes/ANRs nativos (deps: Firebase, SQLite, etc.).
+                debugSymbolLevel = "FULL"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
