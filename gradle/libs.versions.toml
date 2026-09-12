@@ -3,6 +3,7 @@ agp = "9.2.1"
 appcompat = "1.7.1"
 coilCompose = "2.7.0"
 coilSvg = "2.7.0"
+customlogs = "0.1.0"
 converterGson = "3.0.0"
 firebaseAnalyticsKtx = "22.5.0"
 firebaseAppcheckPlayintegrity = "18.0.0"
@@ -43,6 +44,7 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRunt
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvg" }
+customlogs = { module = "io.github.rodorush:customlogs", version.ref = "customlogs" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx", version.ref = "firebaseAnalyticsKtx" }

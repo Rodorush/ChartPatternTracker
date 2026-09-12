@@ -149,5 +149,5 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.crashlytics.ktx)
-    implementation("io.github.rodorush:customlogs")
+    implementation(libs.customlogs)
 }
