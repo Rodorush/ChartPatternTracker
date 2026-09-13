@@ -16,9 +16,9 @@ android {
     defaultConfig {
         applicationId = "br.com.rodorush.chartpatterntracker"
         minSdk = 28
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 35
+        versionCode = 100
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -80,6 +80,11 @@ android {
             }
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                // Símbolos de depuração nativos empacotados no AAB para o Android Vitals
+                // desofuscar stack traces de crashes/ANRs nativos (deps: Firebase, SQLite, etc.).
+                debugSymbolLevel = "FULL"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
