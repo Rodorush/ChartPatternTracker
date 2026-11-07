@@ -10,7 +10,7 @@ Retrato de 07/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Ciclo atual
 
-**C0, quadro no Trello.** Falta o aceite do último cartão, que é o registro do quadro neste repositório.
+**Nenhum aberto.** O C0, quadro no Trello, está fechado, com registro em [`docs/sprints/ciclo-0.md`](sprints/ciclo-0.md). O C1 abre com um plano curto e o OK do usuário.
 
 ## Próximo passo
 
