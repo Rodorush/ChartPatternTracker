@@ -52,7 +52,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
   4. Criar entrada do padrão no Firestore com nome/descrição/indicação/confiabilidade nos três locales.
   5. Adicionar drawable do ícone do padrão.
 - **Antes de logar dados**: filtrar tokens, payloads completos e PII.
-- **Antes de marcar uma task como concluída**: rodar `./gradlew test`.
+- **Antes de marcar uma task como concluída**: rodar `./gradlew test`. Branch que toca `app/` ou `functions/`, antes de ir para `Em teste`: commitar; `/code-review <nível> main...HEAD` com o nível sempre digitado (sem ele, o comando reaproveita o último usado) — `medium` por padrão, `low` para diff pequeno só de UI; e `/revisao-pre-merge --card <id>`, que revisa em fork, sem o histórico da conversa. Corrigido algo, commitar e rodar `/revisao-pre-merge --rodada 2`, a última. O resumo dos dois vai no comentário do cartão.
 
 ## Não faça (regras endurecidas após auditoria de qualidade v1.0 → v1.1)
 
@@ -62,6 +62,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 - **Nunca usar `!!`** quando `?.let { }`, `as?` ou `requireNotNull(...)` resolvem. `!!` em UI Compose é especialmente arriscado por causa de recomposição.
 - **Não chamar `chartViewModel.fetchData` em loop** (race condition com `_patternsData` global). Para screening em lote use `chartViewModel.runScreening(...)` que é `suspend` e retorna direto.
 - **Não engolir `CancellationException`** com `try { ... } catch (_: Exception) {}` em coroutines — quebra cancelamento estrutural. Se realmente precisa engolir, capture `CancellationException` separadamente e re-lance.
+- **Não enfraquecer teste para fazê-lo passar**: assert removido ou afrouxado, teste apagado ou com `@Ignore`, valor esperado mudado sem justificativa no próprio diff. Se o comportamento mudou de propósito, o motivo vai no commit ou no cartão.
 - **Não criar arquivo de documentação** (READMEs paralelos, NOTES.md etc.) sem o usuário pedir explicitamente.
 
 ## Roadmap vivo
