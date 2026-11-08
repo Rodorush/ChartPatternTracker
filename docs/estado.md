@@ -1,6 +1,6 @@
 # Estado do projeto
 
-Retrato de 07/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](https://trello.com/b/7RGMFlGW), que é privado.
+Retrato de 08/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](https://trello.com/b/7RGMFlGW), que é privado.
 
 ## No ar
 
@@ -10,11 +10,11 @@ Retrato de 07/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Ciclo atual
 
-**Nenhum aberto.** O C0, quadro no Trello, está fechado, com registro em [`docs/sprints/ciclo-0.md`](sprints/ciclo-0.md). O C1 abre com um plano curto e o OK do usuário.
+**C1, bancada e diagnóstico**, aberto, com 7 cartões e 14 pontos (etiqueta `C1 Bancada`). O build fecha nesta máquina: `test` (48 testes) e `assembleDebug` passam com AGP 9.5.1 e Gradle 9.6.0. Ainda falta ver o app rodando num aparelho e ter um retrato real do backend. Os registros dos ciclos fechados estão em [`docs/sprints/`](sprints/).
 
 ## Próximo passo
 
-**C1, bancada e diagnóstico:** baixar o `app/google-services.json`, instalar a Firebase CLI e fazer `test` e `assembleDebug` passarem nesta máquina. Sem o `google-services.json`, o build não fecha.
+Instalar a Firebase CLI, com o login feito pelo usuário (`! firebase login`), e ter um aparelho ou emulador aparecendo no `adb devices`. Em seguida, percorrer o fluxo login → varredura → gráfico e diagnosticar o backend.
 
 ## Para publicar
 
