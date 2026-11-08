@@ -260,10 +260,10 @@ A política de freshness considera o `lastUpdate` da última vela e o intervalo 
 | Tecnologia | Versão | Uso |
 |------------|--------|-----|
 | Kotlin | 2.2.0 | Linguagem |
-| Android Gradle Plugin | 8.11.0 | Build |
+| Android Gradle Plugin | 9.5.1 | Build |
 | compileSdk / targetSdk / minSdk | 35 / 34 / 28 | Plataforma Android |
 | JVM Target | 1.8 | Bytecode |
-| KSP | 2.2.0-2.0.2 | Processamento de anotações |
+| KSP | 2.3.6 | Processamento de anotações |
 
 ### UI
 
@@ -311,7 +311,7 @@ A política de freshness considera o `lastUpdate` da última vela e o intervalo 
 ## Pré-requisitos
 
 - **JDK 17+** (recomendado).
-- **Android Studio Koala (2024.1)** ou superior, compatível com AGP 8.11.
+- **Android Studio 2026.2** ou superior, compatível com AGP 9.5.
 - **Android SDK** com plataforma 35 instalada.
 - **Conta Firebase** com projeto configurado:
   - Authentication (e-mail/senha + Google).

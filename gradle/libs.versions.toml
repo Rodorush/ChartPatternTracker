@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "9.5.1"
 appcompat = "1.7.1"
 coilCompose = "2.7.0"
 coilSvg = "2.7.0"
@@ -33,7 +33,7 @@ roomCompiler = "2.7.2"
 roomRuntime = "2.7.2"
 googleServices = "4.4.3"
 firebaseCrashlyticsPlugin = "3.0.2"
-ksp = "2.3.2"
+ksp = "2.3.6"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }

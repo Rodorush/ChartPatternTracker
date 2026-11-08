@@ -47,6 +47,11 @@ captures/
 .idea/modules.xml
 # Comment next line if keeping position of elements in Navigation Editor is relevant for you
 .idea/navEditor.xml
+# Estado local do Android Studio: aparelho escolhido, filtros e telas de ferramenta
+.idea/deploymentTargetSelector.xml
+.idea/appInsightsSettings.xml
+.idea/deviceManager.xml
+.idea/dbnavigator.xml
 
 # Keystore files (chave de assinatura nunca vai pro versionamento)
 *.jks
