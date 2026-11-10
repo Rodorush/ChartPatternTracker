@@ -1,6 +1,6 @@
 # Estado do projeto
 
-Retrato de 08/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](https://trello.com/b/7RGMFlGW), que é privado.
+Retrato de 10/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](https://trello.com/b/7RGMFlGW), que é privado.
 
 ## No ar
 
@@ -14,7 +14,7 @@ Retrato de 08/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Instalar a Firebase CLI, com o login feito pelo usuário (`! firebase login`), e ter um aparelho ou emulador aparecendo no `adb devices`. Em seguida, percorrer o fluxo login → varredura → gráfico e diagnosticar o backend.
+Ter um aparelho ou emulador aparecendo no `adb devices` e percorrer o fluxo login → varredura → gráfico. O diagnóstico do backend já pode começar, porque a Firebase CLI está instalada e logada na conta dona do `chartpatterntracker`.
 
 ## Para publicar
 
