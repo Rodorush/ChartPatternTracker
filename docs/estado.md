@@ -25,7 +25,7 @@ O caminho tem 9 ciclos, de C0 a C8, cada um com seu cartão na lista `Ciclos` do
 
 - `targetSdk 35`, recusado pela Play.
 - Token da Brapi dentro do APK.
-- Cloud Function sem exigir login e sem validar entrada. Ela também grava o token da Brapi no log, inteiro quando ele tem até 10 caracteres.
+- Cloud Function sem exigir login e sem validar entrada. A reimplantação a partir do repositório ainda não foi testada, e as variáveis de ambiente da função implantada não foram conferidas. Ela também grava o token da Brapi no log a cada chamada, porque registra o payload inteiro que o app envia.
 - App Check sem enforcement no Firestore, no Storage e no Auth.
 - Regras do Firestore que deixam qualquer usuário logado alterar `assets/{ticker}`.
 - Conta pessoal na Play: o teste fechado exige 12 testadores por 14 dias seguidos.

@@ -358,7 +358,7 @@ Na pasta `functions/`:
 
 ```bash
 cd functions
-npm install
+npm ci
 firebase login
 firebase deploy --only functions
 ```
