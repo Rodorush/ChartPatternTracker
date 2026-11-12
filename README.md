@@ -3,7 +3,7 @@
 > Automatizando a busca por padrões gráficos no mercado financeiro.
 
 [![Android](https://img.shields.io/badge/Android-API%2028%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2025.06-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Firebase](https://img.shields.io/badge/Firebase-BoM%2033.16-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Material 3](https://img.shields.io/badge/Material-3-757575?logo=materialdesign&logoColor=white)](https://m3.material.io)
@@ -198,7 +198,7 @@ br.com.rodorush.chartpatterntracker/
 ├── viewmodel/        AuthenticationViewModel, ChartViewModel, ScreeningViewModel
 ├── model/            Candlestick, CandlestickEntity, PatternItem,
 │                     ScreeningResult, TimeFrameItem, FirestoreService,
-│                     CandlestickRepository, AppDatabase
+│                     CandlestickRepository, AppDatabase, DatabaseModule
 │   └── pattern/      PatternDetector, PatternDetectorRegistry,
 │                     <Padrão>Detector.kt (10 implementações)
 ├── data/             AssetDataSource, BrapiDataSource,
@@ -212,7 +212,7 @@ br.com.rodorush.chartpatterntracker/
 ├── util/             CompositionsLocal, LoadPatternImage
 │   └── provider/     FirebaseAuthProvider, FirebasePatternProvider,
 │                     BrapiAssetsProvider, mock/
-├── di/               AppModule, DatabaseModule (Koin)
+├── di/               AppModule (Koin)
 └── ChartPatternApplication.kt
 ```
 
@@ -259,9 +259,9 @@ A política de freshness considera o `lastUpdate` da última vela e o intervalo 
 
 | Tecnologia | Versão | Uso |
 |------------|--------|-----|
-| Kotlin | 2.2.0 | Linguagem |
+| Kotlin | 2.2.10 | Linguagem |
 | Android Gradle Plugin | 9.5.1 | Build |
-| compileSdk / targetSdk / minSdk | 35 / 34 / 28 | Plataforma Android |
+| compileSdk / targetSdk / minSdk | 35 / 35 / 28 | Plataforma Android |
 | JVM Target | 1.8 | Bytecode |
 | KSP | 2.3.6 | Processamento de anotações |
 
@@ -288,6 +288,7 @@ A política de freshness considera o `lastUpdate` da última vela e o intervalo 
 | Cloud Functions | 21.2.1 |
 | Storage | 21.0.2 |
 | Analytics | 22.5.0 |
+| Crashlytics | (via BoM) |
 | App Check (Play Integrity + Debug) | 18.0.0 |
 
 ### Dados e rede
@@ -310,7 +311,7 @@ A política de freshness considera o `lastUpdate` da última vela e o intervalo 
 
 ## Pré-requisitos
 
-- **JDK 17+** (recomendado).
+- **JetBrains Runtime 21** para o daemon do Gradle, exigido por `gradle/gradle-daemon-jvm.properties`. O bytecode do app continua em 1.8.
 - **Android Studio 2026.2** ou superior, compatível com AGP 9.5.
 - **Android SDK** com plataforma 35 instalada.
 - **Conta Firebase** com projeto configurado:
@@ -334,7 +335,7 @@ cd ChartPatternTracker
 
 ### 2. Configurar `local.properties`
 
-Crie um arquivo `local.properties` na **raiz do projeto** (já listado no `.gitignore`) com as seguintes chaves — **obrigatórias** (o build falha sem elas, vide `app/build.gradle.kts:33-48`):
+Crie um arquivo `local.properties` na **raiz do projeto** (já listado no `.gitignore`) com as seguintes chaves — **obrigatórias** (o build falha sem elas, vide o bloco `defaultConfig` de `app/build.gradle.kts`):
 
 ```properties
 sdk.dir=/caminho/para/o/Android/Sdk
@@ -381,7 +382,7 @@ Ou abra o projeto no Android Studio e clique em **Run**.
 ChartPatternTracker/
 ├── app/                          Módulo Android principal
 │   ├── src/main/
-│   │   ├── java/                 Código Kotlin (~77 arquivos)
+│   │   ├── java/                 Código Kotlin
 │   │   ├── res/                  Recursos (strings, drawables, themes)
 │   │   │   ├── values/
 │   │   │   ├── values-pt-rBR/
@@ -414,7 +415,7 @@ ChartPatternTracker/
 
 ## Cloud Function
 
-O backend serverless mora em `functions/updateCandlesticks.js`. É uma função **callable** (`functions.https.onCall`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
+O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** (`functions.https.onCall`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
 
 **Comportamento:**
 
@@ -496,13 +497,13 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 ## Segurança e privacidade
 
 - **Firebase Authentication** gerencia hashing/salt de senhas e tokens de sessão.
-- **Firebase App Check** valida a autenticidade do app antes de aceitar chamadas (Play Integrity em release, Debug Provider em desenvolvimento).
+- **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento). O enforcement ainda não está ativado no backend, então chamadas sem atestado continuam aceitas.
 - **Tokens sensíveis** (Brapi, WebClientId) ficam em `local.properties`, **fora do versionamento**.
 - **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam a escrita pelo cliente, exceto em `assets/{ticker}`.
 - **Transporte HTTPS** automático via Firebase e Retrofit.
-- **Dados coletados** são mínimos: e-mail, nome de exibição (Google), histórico de screenings.
+- **Dados coletados**, conforme a [Política de Privacidade](https://chartpatterntracker.web.app/privacy): e-mail e nome de exibição, provedor de login, relatórios de falha (Crashlytics), métricas de uso (Analytics) e identificadores de integridade (App Check). Cotações e candles em cache ficam só no aparelho (Room).
 
-> **LGPD:** o usuário pode solicitar exclusão dos dados via console do Firebase.
+> **LGPD:** o usuário exclui a própria conta no app, em Configurações → Perfil → Excluir conta. Quem não consegue acessar o app pede a exclusão pelo e-mail de contato. Detalhes em [Exclusão de dados](https://chartpatterntracker.web.app/privacy#data-deletion).
 
 ---
 
