@@ -67,6 +67,9 @@ keystore.properties
 # Firebase CLI — cache local de deploy (Hosting), por-máquina
 .firebase/
 
+# Variáveis de ambiente da Cloud Function: podem guardar segredo
+functions/.env*
+
 # Freeline
 freeline.py
 freeline/
