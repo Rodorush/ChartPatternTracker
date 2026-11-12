@@ -1,6 +1,6 @@
 # Estado do projeto
 
-Retrato de 11/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](https://trello.com/b/7RGMFlGW), que é privado.
+Retrato de 12/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](https://trello.com/b/7RGMFlGW), que é privado.
 
 ## No ar
 
@@ -13,11 +13,11 @@ Retrato de 11/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Ciclo atual
 
-**C1, bancada e diagnóstico**, aberto, com 9 cartões e 16 pontos (etiqueta `C1 Bancada`). O build fecha nesta máquina: `test` (48 testes) e `assembleDebug` passam com AGP 9.5.1 e Gradle 9.6.0. No `local.properties`, `BRAPI_TOKEN`, `WEB_CLIENT_ID` e `FIREBASE_APP_CHECK_DEBUG_TOKEN` ainda estão como `REPLACE_ME`. Isso basta para compilar, mas a Brapi recusa o token. Ainda falta ver o app rodando num aparelho. Os registros dos ciclos fechados estão em [`docs/sprints/`](sprints/).
+**C1, bancada e diagnóstico**, aberto, com 9 cartões e 16 pontos (etiqueta `C1 Bancada`). O build fecha nesta máquina: `test` (48 testes) e `assembleDebug` passam com AGP 9.5.1 e Gradle 9.6.0. No `local.properties`, `BRAPI_TOKEN` e `WEB_CLIENT_ID` estão preenchidos: a Brapi responde 200 para WEGE3, e o `WEB_CLIENT_ID` é o client OAuth do tipo Web do `google-services.json`, ainda sem login com Google testado. O `FIREBASE_APP_CHECK_DEBUG_TOKEN` segue `REPLACE_ME`, porque o App Check está sem enforcement. Há um emulador `Galaxy_S26_FE` (1080x2340, 450 dpi, Android 17, Google Play) com as medidas do aparelho real, e o próprio aparelho aparece no `adb devices` com a depuração USB ligada. Ainda falta ver o app rodando. Os registros dos ciclos fechados estão em [`docs/sprints/`](sprints/).
 
 ## Próximo passo
 
-Gerar um token da Brapi e preencher as chaves do `local.properties`. Ter um aparelho ou emulador aparecendo no `adb devices` e percorrer o fluxo login → varredura → gráfico. Sem um token válido, a Brapi só responde para os tickers que libera, como PETR4 e VALE3.
+Instalar o app no emulador `Galaxy_S26_FE` e percorrer o fluxo login → varredura → gráfico, registrando cada defeito como cartão. O token da Brapi em uso é de bancada: a Cloud Function o grava no log, então ele é revogado no fim do caminho.
 
 ## Para publicar
 
