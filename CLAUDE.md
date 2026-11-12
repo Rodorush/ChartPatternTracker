@@ -8,7 +8,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 
 ## Stack rápida
 
-- Kotlin 2.2 / JDK 17 / Compose BOM 2025.06 / Material 3
+- Kotlin 2.2 / JBR 21 no daemon do Gradle (`gradle/gradle-daemon-jvm.properties`) / Compose BOM 2025.06 / Material 3
 - **Koin 4.1** (DI) — `di/AppModule.kt`
 - **Room 2.7** (cache local) + **Firestore** + **Cloud Functions** + **Brapi API**
 - Firebase Auth / App Check / Storage / Analytics
