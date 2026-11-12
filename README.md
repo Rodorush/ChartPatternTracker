@@ -363,6 +363,8 @@ firebase login
 firebase deploy --only functions
 ```
 
+> O `firebase.json` declara Hosting, função e regras do Firestore e do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
+
 ### 5. Compilar e executar
 
 ```bash
@@ -391,7 +393,13 @@ ChartPatternTracker/
 │   ├── build.gradle.kts
 │   └── google-services.json      (não versionado)
 ├── functions/                    Firebase Cloud Functions (Node.js)
-│   └── updateCandlesticks.js
+│   ├── index.js                  Ponto de entrada, exporta a função
+│   ├── updateCandlesticks.js
+│   ├── package.json
+│   └── package-lock.json
+├── firebase.json                 Hosting, função e regras
+├── firestore.rules               Regras do Firestore
+├── storage.rules                 Regras do Storage
 ├── gradle/
 │   └── libs.versions.toml        Catálogo central de versões
 ├── build.gradle.kts
@@ -490,7 +498,7 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 - **Firebase Authentication** gerencia hashing/salt de senhas e tokens de sessão.
 - **Firebase App Check** valida a autenticidade do app antes de aceitar chamadas (Play Integrity em release, Debug Provider em desenvolvimento).
 - **Tokens sensíveis** (Brapi, WebClientId) ficam em `local.properties`, **fora do versionamento**.
-- **Regras do Firestore** restringem leituras/escritas a usuários autenticados.
+- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam a escrita pelo cliente, exceto em `assets/{ticker}`.
 - **Transporte HTTPS** automático via Firebase e Retrofit.
 - **Dados coletados** são mínimos: e-mail, nome de exibição (Google), histórico de screenings.
 

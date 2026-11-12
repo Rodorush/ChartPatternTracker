@@ -24,7 +24,8 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 - DI: `di/AppModule.kt` + `model/DatabaseModule.kt`
 - Providers (CompositionLocal — em rota para Koin via REFACT-05): `util/provider/`
 - Strings i18n: `app/src/main/res/values{,-pt-rBR,-en-rUS,-es-rES}/strings.xml`
-- Cloud Function: `functions/updateCandlesticks.js`
+- Cloud Function: `functions/updateCandlesticks.js`, exportada por `functions/index.js`
+- Regras do Firestore e do Storage: `firestore.rules` e `storage.rules`, declaradas no `firebase.json`
 
 ## Convenções deste repositório
 
