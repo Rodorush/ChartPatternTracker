@@ -8,11 +8,13 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.model.PatternItem
+import br.com.rodorush.chartpatterntracker.model.ScreeningFailure
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,9 @@ class ScreeningViewModel(
 
     private val _screeningResults = MutableStateFlow<List<ScreeningResult>>(emptyList())
     val screeningResults: StateFlow<List<ScreeningResult>> = _screeningResults
+
+    private val _screeningFailures = MutableStateFlow<List<ScreeningFailure>>(emptyList())
+    val screeningFailures: StateFlow<List<ScreeningFailure>> = _screeningFailures
 
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
@@ -136,31 +141,41 @@ class ScreeningViewModel(
     fun setAllAssetsChecked(value: Boolean) { _allAssetsChecked.value = value }
     fun setAllTimeframesChecked(value: Boolean) { _allTimeframesChecked.value = value }
 
+    /**
+     * Varre cada par (ativo, tempo gráfico) uma única vez, com todos os padrões selecionados,
+     * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
+     * ser obtida, por erro ou por tempo esgotado, vai para [screeningFailures].
+     */
     fun startScreening() {
         screeningJob?.cancel()
         screeningJob = viewModelScope.launch {
             _isScreening.value = true
             _screeningResults.value = emptyList()
+            _screeningFailures.value = emptyList()
             val results = mutableListOf<ScreeningResult>()
+            val failures = mutableListOf<ScreeningFailure>()
+            val patterns = _selectedPatterns.value
+            val patternIds = patterns.map { it.id }
             try {
-                for (pattern in _selectedPatterns.value) {
-                    for (asset in _selectedAssets.value) {
-                        for (timeframe in _selectedTimeframes.value) {
-                            try {
-                                val detected = withTimeoutOrNull(SCREENING_TIMEOUT_MS) {
-                                    chartViewModel.runScreening(
-                                        ticker = asset.ticker,
-                                        range = SCREENING_RANGE,
-                                        interval = timeframe.value,
-                                        patternIds = listOf(pattern.id)
-                                    )
-                                }
-                                if (detected == null) {
-                                    Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
-                                    continue
-                                }
-                                val occurrences = detected[pattern.id].orEmpty()
-                                if (occurrences.isEmpty()) continue
+                for (asset in _selectedAssets.value) {
+                    for (timeframe in _selectedTimeframes.value) {
+                        try {
+                            val detected = withTimeoutOrNull(SCREENING_TIMEOUT_MS) {
+                                chartViewModel.runScreening(
+                                    ticker = asset.ticker,
+                                    range = SCREENING_RANGE,
+                                    interval = timeframe.value,
+                                    patternIds = patternIds
+                                )
+                            }
+                            if (detected == null) {
+                                Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
+                                failures.add(ScreeningFailure(asset.ticker, timeframe))
+                                _screeningFailures.value = failures.toList()
+                                continue
+                            }
+                            for (pattern in patterns) {
+                                if (detected[pattern.id].isNullOrEmpty()) continue
 
                                 val (sn, ln) = fetchAssetInfo(asset.ticker)
                                 val enrichedAsset = asset.copy(
@@ -185,16 +200,19 @@ class ScreeningViewModel(
                                     )
                                 )
                                 _screeningResults.value = results.toList()
-                            } catch (e: Exception) {
-                                Log.e(
-                                    TAG,
-                                    "Erro durante screening",
-                                    e,
-                                    "ticker" to asset.ticker,
-                                    "timeframe" to timeframe.value,
-                                    "patternId" to pattern.id
-                                )
                             }
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Log.e(
+                                TAG,
+                                "Erro durante screening",
+                                e,
+                                "ticker" to asset.ticker,
+                                "timeframe" to timeframe.value
+                            )
+                            failures.add(ScreeningFailure(asset.ticker, timeframe))
+                            _screeningFailures.value = failures.toList()
                         }
                     }
                 }

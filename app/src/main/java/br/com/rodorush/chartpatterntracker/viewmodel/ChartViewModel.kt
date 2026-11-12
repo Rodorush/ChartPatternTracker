@@ -14,6 +14,7 @@ import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
 import br.com.rodorush.chartpatterntracker.model.PatternDisplayMode
 import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -252,6 +253,10 @@ class ChartViewModel(
      * (`_candlestickData`, `_patternsData`, `_isLoading`, `_error`). Usado pelo screening em
      * lote, onde o ChartViewModel é compartilhado e qualquer mutação causaria contaminação
      * cruzada entre iterações ou com a tela de gráfico ativa.
+     *
+     * @return ocorrências por ID de padrão; mapa vazio quando a série existe mas não tem velas.
+     * @throws Exception quando nem o repositório nem a fonte direta entregam a série, para o
+     * chamador distinguir falha de busca de ausência de padrão.
      */
     suspend fun runScreening(
         ticker: String,
@@ -260,11 +265,16 @@ class ChartViewModel(
         patternIds: List<String>
     ): Map<String, List<PatternOccurrence>> {
         if (ticker.isBlank() || interval.isBlank() || patternIds.isEmpty()) return emptyMap()
-        val cached = runCatching { repository.fetchCandlesticks(ticker, interval, range) }
-            .getOrNull()
-            .orEmpty()
+        val cached = try {
+            repository.fetchCandlesticks(ticker, interval, range)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // O repositório já registrou o erro; a fonte direta é a segunda tentativa.
+            emptyList()
+        }
         val candlesticks = if (cached.isNotEmpty()) cached
-        else _currentSource.value.getHistoricalData(ticker, range, interval).getOrNull().orEmpty()
+        else _currentSource.value.getHistoricalData(ticker, range, interval).getOrThrow()
         if (candlesticks.isEmpty()) return emptyMap()
         return repository.detectPatterns(patternIds, candlesticks)
     }

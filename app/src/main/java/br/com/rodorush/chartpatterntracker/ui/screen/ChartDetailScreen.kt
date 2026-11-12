@@ -369,6 +369,7 @@ fun List<Candlestick>.toChartPayload(highlights: List<Map<String, Any?>> = empty
 
 private fun timeframeToMillis(tf: String): Long = when (tf.lowercase(Locale.getDefault())) {
     "1m", "1min", "1minuto" -> 60_000L
+    "2m" -> 2 * 60_000L
     "5m" -> 5 * 60_000L
     "15m" -> 15 * 60_000L
     "30m" -> 30 * 60_000L

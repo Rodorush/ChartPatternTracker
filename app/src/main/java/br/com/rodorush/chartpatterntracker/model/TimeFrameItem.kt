@@ -3,30 +3,28 @@ package br.com.rodorush.chartpatterntracker.model
 import androidx.annotation.StringRes
 import br.com.rodorush.chartpatterntracker.R
 
+/**
+ * Tempo gráfico oferecido na varredura.
+ *
+ * @param value intervalo no formato do parâmetro `interval` da Brapi. Também nomeia a
+ * subcoleção de velas no Firestore e a série no cache local.
+ */
 data class TimeframeItem(@StringRes val nameRes: Int, val value: String) {
     companion object {
+        /**
+         * Só entram intervalos que a Brapi conhece: qualquer outro valor ela recusa com 400.
+         * Quais deles respondem depende do plano do token.
+         */
         val availableTimeframes = listOf(
             TimeframeItem(R.string.timeframe_1m, "1m"),
             TimeframeItem(R.string.timeframe_2m, "2m"),
-            TimeframeItem(R.string.timeframe_3m, "3m"),
-            TimeframeItem(R.string.timeframe_4m, "4m"),
             TimeframeItem(R.string.timeframe_5m, "5m"),
-            TimeframeItem(R.string.timeframe_6m, "6m"),
-            TimeframeItem(R.string.timeframe_10m, "10m"),
-            TimeframeItem(R.string.timeframe_12m, "12m"),
             TimeframeItem(R.string.timeframe_15m, "15m"),
-            TimeframeItem(R.string.timeframe_20m, "20m"),
             TimeframeItem(R.string.timeframe_30m, "30m"),
             TimeframeItem(R.string.timeframe_1h, "1h"),
-            TimeframeItem(R.string.timeframe_2h, "2h"),
-            TimeframeItem(R.string.timeframe_3h, "3h"),
-            TimeframeItem(R.string.timeframe_4h, "4h"),
-            TimeframeItem(R.string.timeframe_6h, "6h"),
-            TimeframeItem(R.string.timeframe_8h, "8h"),
-            TimeframeItem(R.string.timeframe_12h, "12h"),
             TimeframeItem(R.string.timeframe_1d, "1d"),
-            TimeframeItem(R.string.timeframe_1w, "1w"),
-            TimeframeItem(R.string.timeframe_1mo, "1M")
+            TimeframeItem(R.string.timeframe_1w, "1wk"),
+            TimeframeItem(R.string.timeframe_1mo, "1mo")
         )
     }
 }
