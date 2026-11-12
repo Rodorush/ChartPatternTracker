@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -92,11 +93,15 @@ class ScreeningViewModel(
                     if (ln != null) data["longName"] = ln
                     if (data.isNotEmpty()) docRef.set(data, SetOptions.merge()).await()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 // Falha de cache no Firestore não impacta o resultado do screening.
             }
             assetInfoCache[ticker] = pair
             pair
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "Falha ao obter info do ativo $ticker: ${e.message}")
             null to null
@@ -144,7 +149,8 @@ class ScreeningViewModel(
     /**
      * Varre cada par (ativo, tempo gráfico) uma única vez, com todos os padrões selecionados,
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
-     * ser obtida, por erro ou por tempo esgotado, vai para [screeningFailures].
+     * ser obtida, por erro ou por tempo esgotado, vai para [screeningFailures]. Se for
+     * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      */
     fun startScreening() {
         screeningJob?.cancel()
@@ -153,53 +159,21 @@ class ScreeningViewModel(
             _screeningResults.value = emptyList()
             _screeningFailures.value = emptyList()
             val results = mutableListOf<ScreeningResult>()
-            val failures = mutableListOf<ScreeningFailure>()
             val patterns = _selectedPatterns.value
             val patternIds = patterns.map { it.id }
             try {
                 for (asset in _selectedAssets.value) {
                     for (timeframe in _selectedTimeframes.value) {
-                        try {
-                            val detected = withTimeoutOrNull(SCREENING_TIMEOUT_MS) {
+                        val detected = try {
+                            withTimeoutOrNull(SCREENING_TIMEOUT_MS) {
                                 chartViewModel.runScreening(
                                     ticker = asset.ticker,
                                     range = SCREENING_RANGE,
                                     interval = timeframe.value,
                                     patternIds = patternIds
                                 )
-                            }
-                            if (detected == null) {
-                                Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
-                                failures.add(ScreeningFailure(asset.ticker, timeframe))
-                                _screeningFailures.value = failures.toList()
-                                continue
-                            }
-                            for (pattern in patterns) {
-                                if (detected[pattern.id].isNullOrEmpty()) continue
-
-                                val (sn, ln) = fetchAssetInfo(asset.ticker)
-                                val enrichedAsset = asset.copy(
-                                    shortName = sn ?: asset.shortName,
-                                    longName = ln ?: asset.longName
-                                )
-                                val displayShortName = resolveDisplayShortName(enrichedAsset, sn)
-                                val patternImage = fetchPatternImage(pattern.id)
-
-                                val reliabilityText = pattern.getLocalized("reliability")
-                                val indicationText = pattern.getLocalized("indication")
-                                results.add(
-                                    ScreeningResult(
-                                        pattern = pattern,
-                                        asset = enrichedAsset,
-                                        timeframe = timeframe,
-                                        reliability = convertReliabilityToStars(reliabilityText),
-                                        indication = indicationText,
-                                        indicationIcon = convertIndicationToIcon(indicationText),
-                                        displayShortName = displayShortName,
-                                        patternImageUrl = patternImage
-                                    )
-                                )
-                                _screeningResults.value = results.toList()
+                            }.also {
+                                if (it == null) Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
                             }
                         } catch (e: CancellationException) {
                             throw e
@@ -211,13 +185,45 @@ class ScreeningViewModel(
                                 "ticker" to asset.ticker,
                                 "timeframe" to timeframe.value
                             )
-                            failures.add(ScreeningFailure(asset.ticker, timeframe))
-                            _screeningFailures.value = failures.toList()
+                            null
+                        }
+                        if (detected == null) {
+                            _screeningFailures.update { it + ScreeningFailure(asset.ticker, timeframe) }
+                            continue
+                        }
+                        val found = patterns.filter { !detected[it.id].isNullOrEmpty() }
+                        if (found.isEmpty()) continue
+
+                        val (sn, ln) = fetchAssetInfo(asset.ticker)
+                        val enrichedAsset = asset.copy(
+                            shortName = sn ?: asset.shortName,
+                            longName = ln ?: asset.longName
+                        )
+                        val displayShortName = resolveDisplayShortName(enrichedAsset, sn)
+                        for (pattern in found) {
+                            val patternImage = fetchPatternImage(pattern.id)
+
+                            val reliabilityText = pattern.getLocalized("reliability")
+                            val indicationText = pattern.getLocalized("indication")
+                            results.add(
+                                ScreeningResult(
+                                    pattern = pattern,
+                                    asset = enrichedAsset,
+                                    timeframe = timeframe,
+                                    reliability = convertReliabilityToStars(reliabilityText),
+                                    indication = indicationText,
+                                    indicationIcon = convertIndicationToIcon(indicationText),
+                                    displayShortName = displayShortName,
+                                    patternImageUrl = patternImage
+                                )
+                            )
+                            _screeningResults.value = results.toList()
                         }
                     }
                 }
-            } finally {
+                // Só a varredura que chega ao fim dispensa a próxima; a cancelada é refeita.
                 _shouldRefresh.value = false
+            } finally {
                 _isScreening.value = false
             }
         }

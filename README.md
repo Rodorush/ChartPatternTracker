@@ -96,7 +96,7 @@ Traders precisam monitorar dezenas de ativos simultaneamente em diferentes timef
 
 ### Timeframes
 - Lista com os intervalos que a Brapi conhece: 1m, 2m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo.
-- Quais deles respondem depende do plano do token da Brapi; o plano gratuito só entrega `1d`. O par ativo e tempo que falha aparece em aviso na tela de resultados.
+- Quais deles respondem depende do plano do token da Brapi; o do token em uso na bancada só entrega `1d`. O par ativo e tempo que falha aparece em aviso na tela de resultados.
 - Seleção múltipla para varredura em lote.
 
 ### Rastreamento (screening)

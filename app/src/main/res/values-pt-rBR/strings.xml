@@ -93,7 +93,7 @@
     <string name="view_chart">Ver gráfico</string>
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total de resultados: %1$d</string>
-    <string name="screening_failures">Não foi possível obter dados de: %1$s</string>
+    <string name="screening_failures">Não foi possível obter dados de:</string>
     <string name="verify_email_title">Confirme seu e-mail</string>
     <string name="email_sent_check_inbox">Enviamos um link de confirmação para %1$s. Verifique sua caixa de entrada (e o spam) e clique no link para concluir o cadastro.</string>
     <string name="resend_email">Reenviar e-mail</string>

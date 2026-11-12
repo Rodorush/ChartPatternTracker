@@ -74,7 +74,7 @@ fun ScreeningResultsScreen(
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
     LaunchedEffect(shouldRefresh) {
-        if (shouldRefresh || screeningResults.isEmpty()) {
+        if (shouldRefresh) {
             viewModel.startScreening()
         }
     }
@@ -171,9 +171,7 @@ fun ScreeningResultsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (screeningFailures.isNotEmpty()) {
-                val failed = screeningFailures.map { failure ->
-                    "${failure.ticker} (${stringResource(failure.timeframe.nameRes)})"
-                }.joinToString(", ")
+                val failedByTimeframe = screeningFailures.groupBy({ it.timeframe }, { it.ticker })
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -181,13 +179,21 @@ fun ScreeningResultsScreen(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = stringResource(R.string.screening_failures, failed),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 4,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.screening_failures),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        failedByTimeframe.forEach { (timeframe, tickers) ->
+                            Text(
+                                text = "${stringResource(timeframe.nameRes)}: ${tickers.joinToString(", ")}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
