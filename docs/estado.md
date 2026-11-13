@@ -17,7 +17,16 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Seguir pelos defeitos do percurso em `Ciclo atual`. O token da Brapi em uso é de bancada: a Cloud Function o grava no log, então ele é revogado no fim do caminho.
+Seguir pelos defeitos do percurso em `Ciclo atual`. O token da Brapi em uso existe só no `local.properties`; a Cloud Function grava no log o token que o app envia, então ele é trocado de novo quando ela parar de registrar o payload (C3).
+
+## Abertura do código
+
+O repositório está preparado para ser open source (Apache-2.0, `CONTRIBUTING.md`, `SECURITY.md`, modelos de issue e de PR), mas segue **privado** no GitHub. Vira público depois do C3, com esta conferência:
+
+- `gitleaks detect` no histórico completo; a varredura por padrões (regex) não acha segredo nem menção a empregador.
+- Nenhuma falha ainda aberta descrita neste arquivo, no `README.md` ou no `ROADMAP.md`.
+- No GitHub: Issues, relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR).
+- Issues espelho criadas para os cartões abertos a contribuição.
 
 ## Para publicar
 
