@@ -163,9 +163,13 @@ class ScreeningViewModel(
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
      * ser obtida, por erro ou por tempo esgotado, vai para [screeningFailures]. Se for
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
+     *
+     * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
+     * acumulados quando a tela volta do gráfico. A seleção só muda depois de
+     * [cancelScreening], então a varredura em curso nunca está defasada.
      */
     fun startScreening() {
-        screeningJob?.cancel()
+        if (screeningJob?.isActive == true) return
         screeningJob = viewModelScope.launch {
             _isScreening.value = true
             _screeningResults.value = emptyList()
@@ -246,6 +250,10 @@ class ScreeningViewModel(
         _dismissedFailures.value = _screeningFailures.value.toSet()
     }
 
+    /**
+     * Interrompe a varredura em curso. Chamado ao sair da tela de resultados por Voltar ou
+     * Home; abrir o gráfico de um resultado não cancela.
+     */
     fun cancelScreening() {
         screeningJob?.cancel()
         _isScreening.value = false
