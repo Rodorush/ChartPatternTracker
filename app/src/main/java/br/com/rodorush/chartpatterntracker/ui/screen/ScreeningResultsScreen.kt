@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -68,11 +69,12 @@ fun ScreeningResultsScreen(
 ) {
     Log.d(TAG, "Tela ScreeningResultsScreen carregada")
     val screeningResults by viewModel.screeningResults.collectAsState()
+    val screeningFailures by viewModel.screeningFailures.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
     LaunchedEffect(shouldRefresh) {
-        if (shouldRefresh || screeningResults.isEmpty()) {
+        if (shouldRefresh) {
             viewModel.startScreening()
         }
     }
@@ -167,6 +169,34 @@ fun ScreeningResultsScreen(
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (screeningFailures.isNotEmpty()) {
+                val failedByTimeframe = screeningFailures.groupBy({ it.timeframe }, { it.ticker })
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.screening_failures),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        failedByTimeframe.forEach { (timeframe, tickers) ->
+                            Text(
+                                text = "${stringResource(timeframe.nameRes)}: ${tickers.joinToString(", ")}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             if (screeningResults.isEmpty()) {
                 if (isScreening) {
