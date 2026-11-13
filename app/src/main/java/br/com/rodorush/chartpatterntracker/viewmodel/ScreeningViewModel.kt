@@ -136,19 +136,24 @@ class ScreeningViewModel(
         return candidate.trim().replace(WHITESPACE, " ")
     }
 
+    // As três atualizações de seleção cancelam a varredura em curso: ela foi lançada com a
+    // seleção anterior e, sem isso, startScreening a manteria no lugar da nova.
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
+        cancelScreening()
         _selectedPatterns.value = patterns
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
     }
 
     fun updateSelectedAssets(assets: List<AssetItem>) {
+        cancelScreening()
         _selectedAssets.value = assets
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
     }
 
     fun updateSelectedTimeframes(timeframes: List<TimeframeItem>) {
+        cancelScreening()
         _selectedTimeframes.value = timeframes
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
@@ -165,8 +170,8 @@ class ScreeningViewModel(
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
-     * acumulados quando a tela volta do gráfico. A seleção só muda depois de
-     * [cancelScreening], então a varredura em curso nunca está defasada.
+     * acumulados quando a tela volta do gráfico. Mudar a seleção cancela a varredura
+     * em curso, então a que está rodando é sempre a da seleção atual.
      */
     fun startScreening() {
         if (screeningJob?.isActive == true) return
@@ -252,7 +257,7 @@ class ScreeningViewModel(
 
     /**
      * Interrompe a varredura em curso. Chamado ao sair da tela de resultados por Voltar ou
-     * Home; abrir o gráfico de um resultado não cancela.
+     * Home e ao mudar a seleção; abrir o gráfico de um resultado não cancela.
      */
     fun cancelScreening() {
         screeningJob?.cancel()
