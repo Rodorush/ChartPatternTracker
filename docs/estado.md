@@ -17,7 +17,7 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Seguir pelos defeitos do percurso em `Ciclo atual`, começando por não cancelar a varredura ao abrir o gráfico (`7hIrPwOO`). O token da Brapi em uso é de bancada: a Cloud Function o grava no log, então ele é revogado no fim do caminho.
+Seguir pelos defeitos do percurso em `Ciclo atual`. O token da Brapi em uso é de bancada: a Cloud Function o grava no log, então ele é revogado no fim do caminho.
 
 ## Para publicar
 
