@@ -11,10 +11,10 @@ admin.initializeApp();
  * `candlesticks/{ticker}/{timeframe}` e devolve a lista ao app.
  *
  * Só atende usuário logado e só aceita `ticker` e `timeframe` válidos
- * (ver `validation.js`). O token da Brapi vem do payload (`brapiToken`) ou
- * da variável de ambiente `BRAPI_TOKEN`, e nunca vai para o log: nem o
- * payload, nem o objeto de erro do axios, que carrega o token nos parâmetros
- * da requisição.
+ * (ver `validation.js`). O token da Brapi vem sempre do payload
+ * (`brapiToken`): a função não tem token próprio, então quem chama gasta a
+ * própria cota. Ele nunca vai para o log: nem o payload, nem o objeto de
+ * erro do axios, que carrega o token nos parâmetros da requisição.
  */
 exports.updateCandlesticks = onCall(async (request) => {
   if (!request.auth) {
@@ -30,16 +30,11 @@ exports.updateCandlesticks = onCall(async (request) => {
   const {ticker, timeframe, brapiToken} = params;
 
   try {
-    const token = brapiToken || process.env.BRAPI_TOKEN;
-    if (!token) {
-      throw new Error("Brapi token not configured");
-    }
-
     const response = await axios.get(`https://brapi.dev/api/quote/${ticker}`, {
       params: {
         range: "3mo",
         interval: timeframe,
-        token: token,
+        token: brapiToken,
       },
     });
 
@@ -73,13 +68,17 @@ exports.updateCandlesticks = onCall(async (request) => {
     return candlesticks;
   } catch (error) {
     // Só campos escolhidos: o objeto de erro do axios leva o token em
-    // `config.params`.
+    // `config.params`, e o corpo da resposta não é nosso para garantir
+    // que não o repita. Da Brapi entra só o texto de `message`.
+    const body = error.response ? error.response.data : undefined;
+    const brapiMessage = body && typeof body.message === "string" ?
+      body.message.slice(0, 200) : undefined;
     logger.error("Erro ao atualizar candlesticks", {
       ticker,
       timeframe,
       mensagem: error.message,
       status: error.response ? error.response.status : undefined,
-      resposta: error.response ? error.response.data : undefined,
+      brapi: brapiMessage,
     });
     throw new HttpsError(
         "internal",

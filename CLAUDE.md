@@ -40,6 +40,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 
 - `./gradlew test` — testes unitários
 - `./gradlew installDebug` — instalar no device
+- `npm test` e `npm run lint` em `functions/` — testes e lint da Cloud Function (depois de `npm ci`)
 - `firebase deploy` sempre com `--only` (`hosting`, `functions`, `firestore:rules`, `storage`): o `firebase.json` declara tudo, e o comando puro publica também as regras de produção.
 - Requer `local.properties` com `BRAPI_TOKEN`, `WEB_CLIENT_ID`, `FIREBASE_APP_CHECK_DEBUG_TOKEN` (e `sdk.dir`). Sem essas chaves o build falha em `app/build.gradle.kts`.
 - Requer `app/google-services.json` (não versionado).

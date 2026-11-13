@@ -44,14 +44,18 @@ test("aponta o primeiro campo inválido do payload", () => {
   );
 });
 
-test("aceita payload válido, com ou sem token", () => {
-  assert.equal(findInvalidField({ticker: "WEGE3", timeframe: "1d"}), null);
+test("aceita payload válido", () => {
   assert.equal(
       findInvalidField({ticker: "WEGE3", timeframe: "1d", brapiToken: "x"}),
       null,
   );
-  assert.equal(
-      findInvalidField({ticker: "WEGE3", timeframe: "1d", brapiToken: null}),
-      null,
-  );
+});
+
+test("recusa payload sem token da Brapi", () => {
+  for (const brapiToken of [undefined, null, ""]) {
+    assert.equal(
+        findInvalidField({ticker: "WEGE3", timeframe: "1d", brapiToken}),
+        "brapiToken",
+    );
+  }
 });

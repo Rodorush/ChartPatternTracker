@@ -429,7 +429,7 @@ O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de en
 **Comportamento:**
 
 1. Só atende usuário logado; chamada sem login recebe `unauthenticated`.
-2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os dois primeiros (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, e intervalo da mesma lista de `TimeframeItem`. O que foge disso recebe `invalid-argument`.
+2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os três (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, intervalo da mesma lista de `TimeframeItem` e token obrigatório, porque a função não tem token próprio. O que foge disso recebe `invalid-argument`.
 3. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
 4. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
 5. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.

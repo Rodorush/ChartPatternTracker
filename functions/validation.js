@@ -39,16 +39,15 @@ function isValidTimeframe(timeframe) {
  *
  * @param {*} params payload enviado pelo cliente.
  * @return {?string} nome do primeiro campo inválido, ou `null` se o payload
- * é aceito. `brapiToken` é opcional, mas, quando vem, tem de ser texto.
+ * é aceito. `brapiToken` é obrigatório: a função não tem token próprio, para
+ * que ninguém gaste a cota de outra pessoa.
  */
 function findInvalidField(params) {
   if (params === null || typeof params !== "object") return "payload";
   if (!isValidTicker(params.ticker)) return "ticker";
   if (!isValidTimeframe(params.timeframe)) return "timeframe";
   const token = params.brapiToken;
-  if (token !== undefined && token !== null && typeof token !== "string") {
-    return "brapiToken";
-  }
+  if (typeof token !== "string" || token.length === 0) return "brapiToken";
   return null;
 }
 
