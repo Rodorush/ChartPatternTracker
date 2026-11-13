@@ -9,9 +9,9 @@ Este documento consolida **bugs conhecidos**, **pendências técnicas**, **melho
 - `[ ]` item pendente
 - `[x]` item concluído
 
-O andamento de cada item fica no quadro do Trello indicado no [`CLAUDE.md`](CLAUDE.md#quadro-do-projeto); aqui só se marca a entrega.
+Este arquivo mostra o rumo; aqui só se marca a entrega. O que está aberto a contribuição aparece nas [issues](https://github.com/Rodorush/ChartPatternTracker/issues) com a etiqueta `help wanted` ou `good first issue`. Antes de implementar um item, combine na issue (ver [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 
-Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) ou um **PR** vinculado.
+Itens marcados com **Reservado ao mantenedor** não aceitam contribuição externa.
 
 ---
 
@@ -114,8 +114,8 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 | NF-14 | `[ ]` **Versão iOS** (SwiftUI) com mesmo backend Firebase. |
 | NF-15 | `[ ]` **Dashboard web** (Next.js) para análise em tela maior. |
 | NF-16 | `[ ]` **Integração com corretoras** (paper trading inicialmente, real depois). |
-| NF-17 | `[ ]` **Marketplace de conteúdo educacional** (cursos, tutoriais, padrões premium). |
-| NF-18 | `[ ]` **Modelo freemium / assinatura premium** (alertas em tempo real, padrões avançados). |
+| NF-17 | `[ ]` **Marketplace de conteúdo educacional** (cursos, tutoriais, padrões premium). **Reservado ao mantenedor.** |
+| NF-18 | `[ ]` **Modelo freemium / assinatura premium** (alertas em tempo real, padrões avançados). **Reservado ao mantenedor.** |
 | NF-19 | `[ ]` **API pública** para desenvolvedores (REST autenticada). |
 | NF-20 | `[ ]` **Recursos sociais** — compartilhar resultados, seguir traders. |
 
@@ -127,7 +127,7 @@ Para contribuir, abra uma **issue** referenciando o ID do item (ex.: `BUG-03`) o
 |----|------|--------|
 | PROD-01 | `[x]` **Integrar Firebase Crashlytics** + CustomLog para monitoramento de erros. Entregue junto com `REFACT-08`: em release a CustomLogs planta `CrashlyticsTree` (WARN/ERROR + `Throwable` viram `recordException`; pares chave/valor viram `setCustomKey`). | `Bugs e roteiro.txt` |
 | PROD-02 | `[x]` **Ofuscamento (ProGuard/R8) habilitado.** `isMinifyEnabled = true` + `isShrinkResources = true` no `buildTypes.release`; keep rules em `proguard-rules.pro` para DTOs Gson da Brapi (`api.**`), campos `@SerializedName` e `PatternItem` (Firestore `toObject`). `assembleRelease` valida o build (`minifyReleaseWithR8` + `lintVitalRelease` OK). | `Bugs e roteiro.txt` |
-| PROD-03 | `[ ]` **Adicionar propagandas** (AdMob) na tier gratuita. | `Bugs e roteiro.txt` |
+| PROD-03 | `[ ]` **Adicionar propagandas** (AdMob) na tier gratuita do aplicativo oficial. **Reservado ao mantenedor.** | `Bugs e roteiro.txt` |
 | PROD-04 | `[ ]` **Signing config para release.** `build.gradle.kts` lê `keystore.properties` (não versionado) e aplica `signingConfigs.release` com fallback gracioso (sem o arquivo, release sai não assinado e o build não quebra). `.gitignore` cobre `*.jks`/`*.keystore`/`keystore.properties`. **Pendente (manual)**: gerar a upload key (`keytool`), criar `keystore.properties` e habilitar **Play App Signing** no Console. | Padrão Android |
 | PROD-05 | `[x]` **App Check Play Integrity em produção.** `ChartPatternApplication` agora seleciona o provider por `BuildConfig.DEBUG`: Debug em debug, `PlayIntegrityAppCheckProviderFactory` em release (antes instalava o provider Debug incondicionalmente — backend sem proteção real em produção). **Pendente (manual)**: registrar o SHA-256 da release e habilitar/enforçar Play Integrity no App Check do Console. | Código |
 | PROD-06 | `[ ]` **Privacy Policy + Termos de Uso.** Documentos trilíngues (PT/EN/ES) em `hosting/{privacy,terms,index}.html` servidos por **Firebase Hosting** (`firebase.json` + `.firebaserc`, projeto `chartpatterntracker`); a Política tem seção `#data-deletion` que casa com a exclusão de conta in-app (NF-03e). No app: `util/LegalUrls.kt` (fonte única das URLs), checkbox do `RegisterScreen` com "Termos de Uso"/"Política de Privacidade" clicáveis (`LinkAnnotation.Url` + `withLink`), card "Documentos legais" na `SettingsScreen` (abre via `LocalUriHandler`), strings nos 3 locales + default (substituindo `i_understood_the_terms_policy`). **Consentimento unificado:** o aceite de Termos/Política foi embutido no gate universal de aviso de risco (`DisclaimerScreen` via `LegalAgreementText`), persistido em `disclaimerAccepted` — cobre também quem entra via Google (que não passa pelo checkbox do cadastro). O Google Sign-In virou funcional no `RegisterScreen` (`SocialSignInButton` + `rememberGoogleSignInLauncher`, helper extraído e reusado com o `LoginScreen`). **Deploy concluído e verificado (2026-06-11)**: `privacy`/`terms`/`index` no ar em `chartpatterntracker.web.app`, conteúdo idêntico ao repo, âncora `#data-deletion` presente. **Pendente (manual)**: revisão jurídica dos textos; colar a Privacy Policy URL (`https://chartpatterntracker.web.app/privacy`) na ficha da Play Store e a URL `https://chartpatterntracker.web.app/privacy#data-deletion` na Play Console (seção *Data deletion*). | Compliance |
@@ -164,13 +164,12 @@ Itens de investigação levantados em `Bugs e roteiro.txt` que não são bugs cl
 
 ## 10. Como contribuir com o roadmap
 
-1. Abra uma issue no repositório com o título contendo o ID do item (ex.: `[BUG-01] Velas com valor 0`).
-2. Para sugerir um item novo, use o template `feature_request` ou `bug_report` (a criar).
-3. Vincule o PR ao item do roadmap na descrição.
+1. Procure a issue do item pelo ID (ex.: `BUG-01`). Se não existir, abra uma com o ID no título (ex.: `[BUG-01] Velas com valor 0`), usando o modelo de bug ou de sugestão.
+2. Espere a issue ser atribuída a você antes de implementar: o item pode já estar em andamento.
+3. Vincule o PR à issue e ao item do roadmap na descrição.
 4. Marque `[x]` neste arquivo no mesmo PR que entrega o item.
-5. Itens concluídos podem ser movidos para uma seção `## Histórico` com a data.
 
-> A ordenação dentro de cada seção reflete uma sugestão de prioridade, mas é flexível — discuta no canal apropriado antes de pular itens críticos.
+> A ordenação dentro de cada seção reflete uma sugestão de prioridade. Item sem issue com `help wanted` ainda não está aberto a contribuição: pergunte antes.
 
 ---
 

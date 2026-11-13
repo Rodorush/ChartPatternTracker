@@ -7,32 +7,32 @@
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2025.06-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Firebase](https://img.shields.io/badge/Firebase-BoM%2033.16-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Material 3](https://img.shields.io/badge/Material-3-757575?logo=materialdesign&logoColor=white)](https://m3.material.io)
-[![Licença](https://img.shields.io/badge/Licen%C3%A7a-a%20definir-lightgrey)](#licenca)
+[![Licença](https://img.shields.io/badge/Licen%C3%A7a-Apache%202.0-blue)](LICENSE)
 
 ---
 
 ## Sumário
 
 1. [Sobre o projeto](#sobre-o-projeto)
-2. [Demonstração](#demonstracao)
+2. [Demonstração](#demonstração)
 3. [Funcionalidades](#funcionalidades)
-4. [Padrões de candlestick suportados](#padroes-de-candlestick-suportados)
+4. [Padrões de candlestick suportados](#padrões-de-candlestick-suportados)
 5. [Arquitetura](#arquitetura)
 6. [Fluxo de dados](#fluxo-de-dados)
-7. [Stack tecnológico](#stack-tecnologico)
-8. [Pré-requisitos](#pre-requisitos)
-9. [Configuração e instalação](#configuracao-e-instalacao)
-10. [Estrutura do repositório](#estrutura-do-repositorio)
+7. [Stack tecnológico](#stack-tecnológico)
+8. [Pré-requisitos](#pré-requisitos)
+9. [Configuração e instalação](#configuração-e-instalação)
+10. [Estrutura do repositório](#estrutura-do-repositório)
 11. [Cloud Function](#cloud-function)
-12. [Internacionalização](#internacionalizacao)
+12. [Internacionalização](#internacionalização)
 13. [Testes](#testes)
 14. [Identidade visual](#identidade-visual)
-15. [Segurança e privacidade](#seguranca-e-privacidade)
-16. [Limitações conhecidas](#limitacoes-conhecidas)
+15. [Segurança e privacidade](#segurança-e-privacidade)
+16. [Limitações conhecidas](#limitações-conhecidas)
 17. [Como contribuir](#como-contribuir)
-18. [Licença](#licenca)
+18. [Licença](#licença)
 19. [Autor](#autor)
-20. [Referências do TCC](#referencias-do-tcc)
+20. [Referências do TCC](#referências-do-tcc)
 
 ---
 
@@ -40,7 +40,7 @@
 
 O **ChartPatternTracker** é um aplicativo Android nativo, escrito em Kotlin com Jetpack Compose, que automatiza a detecção de **padrões de candlestick** em ativos do mercado financeiro brasileiro (B3) e exibe gráficos interativos para apoiar a tomada de decisão de traders.
 
-Iniciativa originada como **Trabalho de Conclusão de Curso (TCC)** da Pós-Graduação em **Desenvolvimento de Sistemas para Dispositivos Móveis** do **Instituto Federal de São Paulo (IFSP) — Campus São Carlos** (autor: **Rodolfo Pereira de Andrade**, orientador: **Prof. Dr. Pedro Nobile**), atualmente em transição para **produto comercial**, com lançamento Beta planejado na Google Play e roadmap de monetização (ver [`ROADMAP.md`](ROADMAP.md)).
+O projeto nasceu como **Trabalho de Conclusão de Curso (TCC)** da Pós-Graduação em **Desenvolvimento de Sistemas para Dispositivos Móveis** do **Instituto Federal de São Paulo (IFSP) — Campus São Carlos** (autor: **Rodolfo Pereira de Andrade**, orientador: **Prof. Dr. Pedro Nobile**). Hoje é um **projeto open source**, sob a [Apache License 2.0](LICENSE) e aberto a contribuições (ver [Como contribuir](#como-contribuir)), com lançamento Beta do aplicativo oficial planejado na Google Play. O rumo está no [`ROADMAP.md`](ROADMAP.md).
 
 ### O problema
 
@@ -330,7 +330,7 @@ A política de freshness considera o `lastUpdate` da última vela e o intervalo 
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/<usuario>/ChartPatternTracker.git
+git clone https://github.com/Rodorush/ChartPatternTracker.git
 cd ChartPatternTracker
 ```
 
@@ -408,6 +408,9 @@ ChartPatternTracker/
 ├── settings.gradle.kts
 ├── gradle.properties
 ├── local.properties              (não versionado)
+├── LICENSE                       Apache License 2.0
+├── NOTICE                        Copyright, marcas e créditos de terceiros
+├── CONTRIBUTING.md               Como contribuir
 ├── README.md
 └── ROADMAP.md
 ```
@@ -520,19 +523,24 @@ A lista completa, com prioridades e itens planejados, está em [`ROADMAP.md`](RO
 
 ## Como contribuir
 
-1. Faça um fork e crie uma branch a partir de `main`.
-2. Siga o padrão de commits em **português** observado no histórico (ex.: `feat(pattern): Adiciona detecção de Harami Cross`, `fix(chart): Correção em configurações e fluxo de dados`).
-3. Adicione testes para novos detectores em `PatternDetectionTest.kt`.
-4. Garante que `./gradlew test` passe.
-5. Abra um Pull Request descrevendo a motivação e o impacto.
+Contribuições são bem-vindas, e todas passam pela revisão do mantenedor.
 
-Para reportar bugs ou sugerir features, abra uma issue vinculando ao item correspondente do `ROADMAP.md`.
+- **Para onde o projeto vai:** [`ROADMAP.md`](ROADMAP.md).
+- **O que está aberto a contribuição:** [issues](https://github.com/Rodorush/ChartPatternTracker/issues) com a etiqueta `help wanted` ou `good first issue` e sem responsável.
+- **Como participar:** combine na issue antes de implementar e depois abra um Pull Request a partir de um fork. O passo a passo e as áreas reservadas ao mantenedor estão no [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- **Falha de segurança:** relate em privado, conforme o [`SECURITY.md`](SECURITY.md).
+
+A convivência no projeto segue o [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ---
 
 ## Licença
 
-A definir pelo autor. Sugestão: **MIT**.
+Código sob a [Apache License 2.0](LICENSE): pode ser usado, modificado e redistribuído, inclusive comercialmente, mantidos os avisos de copyright e de licença.
+
+O nome "Chart Pattern Tracker", o logotipo e a marca "Rodorush" **não** estão incluídos na licença: uma versão modificada precisa de nome e identidade visual próprios. Créditos de terceiros no [`NOTICE`](NOTICE).
+
+O backend oficial (projeto Firebase, dados e token da Brapi) não faz parte do que é licenciado. Quem compila o app usa o próprio projeto Firebase e o próprio token. O uso do aplicativo oficial segue os [Termos de Uso](https://chartpatterntracker.web.app/terms).
 
 ---
 
@@ -543,8 +551,7 @@ Pós-Graduação em Desenvolvimento de Sistemas para Dispositivos Móveis — IF
 Orientador: Prof. Dr. Pedro Nobile
 
 - E-mail: rodolfop.andrade@gmail.com
-- LinkedIn: <!-- TODO: adicionar URL -->
-- GitHub: <!-- TODO: adicionar URL -->
+- GitHub: [@Rodorush](https://github.com/Rodorush)
 
 ---
 

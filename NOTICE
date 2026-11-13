@@ -1,0 +1,27 @@
+ChartPatternTracker
+Copyright 2024-2026 Rodolfo Pereira de Andrade
+
+Este produto é distribuído sob a Apache License, Version 2.0 (ver LICENSE).
+
+Marcas
+------
+O nome "Chart Pattern Tracker", o logotipo do aplicativo e a marca "Rodorush"
+não são licenciados pela Apache License 2.0 (seção 6). Uma versão modificada
+deve ser distribuída com nome e identidade visual próprios.
+
+Os logotipos do Google, do Facebook e do X presentes em
+app/src/main/res/drawable/ são marcas de seus respectivos titulares e aparecem
+apenas para identificar os provedores de login.
+
+Componentes de terceiros
+------------------------
+Poppins (app/src/main/res/font/)
+  Copyright The Poppins Project Authors
+  SIL Open Font License, Version 1.1 — https://openfontlicense.org
+
+DXcharts Lite (carregada em tempo de execução por app/src/main/assets/chart.html)
+  Copyright Devexperts Solutions IE Limited
+  Mozilla Public License 2.0 — https://github.com/devexperts/dxcharts-lite
+
+As demais dependências são obtidas pelo Gradle e pelo npm e mantêm as licenças
+de seus autores (ver gradle/libs.versions.toml e functions/package.json).

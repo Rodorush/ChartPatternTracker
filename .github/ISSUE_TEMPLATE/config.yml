@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Falha de segurança
+    url: https://github.com/Rodorush/ChartPatternTracker/security/advisories/new
+    about: Relate em privado. Não abra issue pública para vulnerabilidade.
+  - name: Rumo do projeto
+    url: https://github.com/Rodorush/ChartPatternTracker/blob/main/ROADMAP.md
+    about: Veja o que está planejado antes de sugerir algo novo.

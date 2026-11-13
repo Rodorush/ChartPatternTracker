@@ -64,6 +64,9 @@ keystore.properties
 # Google Services (e.g. APIs or Firebase)
 # google-services.json
 
+# Claude Code — permissões locais, com caminhos da máquina
+.claude/settings.local.json
+
 # Firebase CLI — cache local de deploy (Hosting), por-máquina
 .firebase/
 
