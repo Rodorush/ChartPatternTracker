@@ -2,16 +2,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regra específica para a coleção /assets/{ticker}
-    match /assets/{ticker} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && request.resource.data.keys().hasOnly(['shortName', 'longName'])
-        && (request.resource.data.shortName is string || !('shortName' in request.resource.data))
-        && (request.resource.data.longName is string || !('longName' in request.resource.data));
-    }
-
-    // Regra geral para todos os outros documentos
+    // Leitura só com login. Nenhuma escrita pelo cliente: quem grava é a
+    // Cloud Function, pelo Admin SDK, que não passa por estas regras.
     match /{document=**} {
       allow read: if request.auth != null;
       allow write: if false;

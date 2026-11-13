@@ -47,23 +47,4 @@ class FirestoreService(
             }
         }
     }
-
-    suspend fun saveCandlesticks(ticker: String, timeframe: String, candlesticks: List<Candlestick>) {
-        val batch = db.batch()
-        candlesticks.forEach { candlestick ->
-            val docRef = db.collection("candlesticks")
-                .document(ticker)
-                .collection(timeframe)
-                .document(candlestick.time.toString())
-            batch.set(docRef, mapOf(
-                "time" to candlestick.time,
-                "open" to candlestick.open,
-                "high" to candlestick.high,
-                "low" to candlestick.low,
-                "close" to candlestick.close,
-                "volume" to candlestick.volume
-            ))
-        }
-        batch.commit().await()
-    }
 }

@@ -12,8 +12,6 @@ import br.com.rodorush.chartpatterntracker.model.ScreeningFailure
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.Retrofit
@@ -91,22 +88,6 @@ class ScreeningViewModel(
             val sn = normalizeName(info?.shortName)
             val ln = normalizeName(info?.longName)
             val pair = sn to ln
-            try {
-                val docRef = FirebaseFirestore.getInstance().collection("assets").document(ticker)
-                val doc = docRef.get().await()
-                val existingSn = doc.getString("shortName")
-                val existingLn = doc.getString("longName")
-                if ((sn != null && existingSn.isNullOrBlank()) || (ln != null && existingLn.isNullOrBlank())) {
-                    val data = mutableMapOf<String, Any>()
-                    if (sn != null) data["shortName"] = sn
-                    if (ln != null) data["longName"] = ln
-                    if (data.isNotEmpty()) docRef.set(data, SetOptions.merge()).await()
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Falha de cache no Firestore não impacta o resultado do screening.
-            }
             assetInfoCache[ticker] = pair
             pair
         } catch (e: CancellationException) {

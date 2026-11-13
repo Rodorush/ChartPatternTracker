@@ -519,7 +519,7 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 - **Firebase Authentication** gerencia hashing/salt de senhas e tokens de sessão.
 - **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento). O enforcement ainda não está ativado no backend, então chamadas sem atestado continuam aceitas.
 - **Tokens sensíveis** (Brapi, WebClientId) ficam em `local.properties`, **fora do versionamento**.
-- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam a escrita pelo cliente, exceto em `assets/{ticker}`.
+- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam toda escrita pelo cliente. Quem grava no Firestore é a Cloud Function, pelo Admin SDK.
 - **Transporte HTTPS** automático via Firebase e Retrofit.
 - **Dados coletados**, conforme a [Política de Privacidade](https://chartpatterntracker.web.app/privacy): e-mail e nome de exibição, provedor de login, relatórios de falha (Crashlytics), métricas de uso (Analytics) e identificadores de integridade (App Check). Cotações e candles em cache ficam só no aparelho (Room).
 
