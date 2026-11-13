@@ -136,19 +136,24 @@ class ScreeningViewModel(
         return candidate.trim().replace(WHITESPACE, " ")
     }
 
+    // As três atualizações de seleção cancelam a varredura em curso: ela foi lançada com a
+    // seleção anterior e, sem isso, startScreening a manteria no lugar da nova.
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
+        cancelScreening()
         _selectedPatterns.value = patterns
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
     }
 
     fun updateSelectedAssets(assets: List<AssetItem>) {
+        cancelScreening()
         _selectedAssets.value = assets
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
     }
 
     fun updateSelectedTimeframes(timeframes: List<TimeframeItem>) {
+        cancelScreening()
         _selectedTimeframes.value = timeframes
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
@@ -163,9 +168,13 @@ class ScreeningViewModel(
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
      * ser obtida, por erro ou por tempo esgotado, vai para [screeningFailures]. Se for
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
+     *
+     * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
+     * acumulados quando a tela volta do gráfico. Mudar a seleção cancela a varredura
+     * em curso, então a que está rodando é sempre a da seleção atual.
      */
     fun startScreening() {
-        screeningJob?.cancel()
+        if (screeningJob?.isActive == true) return
         screeningJob = viewModelScope.launch {
             _isScreening.value = true
             _screeningResults.value = emptyList()
@@ -246,6 +255,10 @@ class ScreeningViewModel(
         _dismissedFailures.value = _screeningFailures.value.toSet()
     }
 
+    /**
+     * Interrompe a varredura em curso. Chamado ao sair da tela de resultados por Voltar ou
+     * Home e ao mudar a seleção; abrir o gráfico de um resultado não cancela.
+     */
     fun cancelScreening() {
         screeningJob?.cancel()
         _isScreening.value = false
