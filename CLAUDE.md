@@ -81,7 +81,3 @@ Andamento, pontos, sprints e horas ficam no quadro privado do Trello: https://tr
 - Ao fechar um ciclo, gravar os números em `docs/sprints/ciclo-N.md`.
 - Nenhum segredo entra em cartão. Os cartões descrevem falhas de segurança abertas, então convidar alguém para o quadro pede cuidado.
 - O quadro é a gestão do mantenedor; a vitrine pública são as issues do GitHub. Só cartão **aberto a contribuição** ganha issue espelho (`help wanted` ou `good first issue`), com o link dela no cartão. Cartão de segurança, de monetização ou já em andamento não vira issue. Com o repositório público, falha de segurança aberta não é descrita em issue nem em arquivo versionado: fica no cartão.
-
-## Memory
-
-Memória pessoal do usuário em `~/.claude/projects/-mnt-c-Users-rodol-Projetos-ChartPatternTracker/memory/MEMORY.md` (o slug segue o caminho do clone; era `...-StudioProjects-...` na máquina anterior). Materiais físicos do TCC ficam em `G:\Meu Drive\Pós Graduação\TCC` (não acessível pelo WSL — pedir cópia para `C:\Temp\TCC` quando precisar; não ler `.json`).

@@ -26,7 +26,6 @@ O repositório está preparado para ser open source (Apache-2.0, `CONTRIBUTING.m
 - `gitleaks detect` no histórico completo; a varredura por padrões (regex) não acha segredo nem menção a empregador.
 - Nenhuma falha ainda aberta descrita neste arquivo, no `README.md` ou no `ROADMAP.md`.
 - No GitHub: Issues, relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR).
-- Os Termos de Uso com a cláusula de código aberto publicados no Hosting.
 - Issues espelho criadas para os cartões abertos a contribuição.
 
 ## Para publicar
