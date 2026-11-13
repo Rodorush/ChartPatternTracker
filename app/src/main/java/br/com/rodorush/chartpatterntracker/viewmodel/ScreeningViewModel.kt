@@ -46,6 +46,14 @@ class ScreeningViewModel(
     private val _screeningFailures = MutableStateFlow<List<ScreeningFailure>>(emptyList())
     val screeningFailures: StateFlow<List<ScreeningFailure>> = _screeningFailures
 
+    private val _dismissedFailureCount = MutableStateFlow(0)
+
+    /**
+     * Quantas falhas de [screeningFailures] o usuário já dispensou. O aviso só aparece
+     * enquanto a lista for maior que isso, então uma falha nova o traz de volta.
+     */
+    val dismissedFailureCount: StateFlow<Int> = _dismissedFailureCount
+
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
 
@@ -158,6 +166,7 @@ class ScreeningViewModel(
             _isScreening.value = true
             _screeningResults.value = emptyList()
             _screeningFailures.value = emptyList()
+            _dismissedFailureCount.value = 0
             val results = mutableListOf<ScreeningResult>()
             val patterns = _selectedPatterns.value
             val patternIds = patterns.map { it.id }
@@ -227,6 +236,11 @@ class ScreeningViewModel(
                 _isScreening.value = false
             }
         }
+    }
+
+    /** Fecha o aviso de falhas até a próxima falha ou a próxima varredura. */
+    fun dismissFailures() {
+        _dismissedFailureCount.value = _screeningFailures.value.size
     }
 
     fun cancelScreening() {

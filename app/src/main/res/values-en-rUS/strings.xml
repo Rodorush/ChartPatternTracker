@@ -94,6 +94,7 @@
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total results: %1$d</string>
     <string name="screening_failures">Could not get data for:</string>
+    <string name="dismiss_screening_failures">Dismiss notice</string>
     <string name="verify_email_title">Confirm your email</string>
     <string name="email_sent_check_inbox">We sent a confirmation link to %1$s. Check your inbox (and spam folder) and click the link to finish signing up.</string>
     <string name="resend_email">Resend email</string>
