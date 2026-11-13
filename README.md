@@ -40,10 +40,10 @@
 
 O **ChartPatternTracker** é um aplicativo Android nativo, escrito em Kotlin com Jetpack Compose, que automatiza a detecção de **padrões de candlestick** em ativos do mercado financeiro brasileiro (B3) e exibe gráficos interativos para apoiar a tomada de decisão de traders.
 
-A ideia tem duas etapas acadêmicas, ambas no **Instituto Federal de São Paulo (IFSP)**, do mesmo autor, **Rodolfo Pereira de Andrade**:
+A ideia tem duas etapas acadêmicas, ambas no **Instituto Federal de São Paulo (IFSP) — Campus São Carlos**, do mesmo autor, **Rodolfo Pereira de Andrade**:
 
-1. **Graduação** — Tecnologia em Análise e Desenvolvimento de Sistemas (2011–2015): o TCC implementou o rastreamento de padrões gráficos para a plataforma **MetaTrader 5** (MQL5).
-2. **Pós-graduação** — Especialização em Desenvolvimento de Sistemas para Dispositivos Móveis, Campus São Carlos (2023–2025), orientador **Prof. Dr. Pedro Nobile**: o TCC levou a ideia para **Android**, e é dele que nasce este repositório.
+1. **Graduação** — Tecnologia em Análise e Desenvolvimento de Sistemas (2011–2015), orientador **Prof. Danilo Moschetto**: o TCC *"Plugin Rastreador de Padrões Gráficos para a Plataforma Metatrader 5"*, escrito em MQL5, que evoluiu para o projeto [CustomScreener](https://github.com/Rodorush/CustomScreener).
+2. **Pós-graduação** — Especialização em Desenvolvimento de Sistemas para Dispositivos Móveis (2023–2025), orientador **Prof. Dr. Pedro Nobile**, com o Prof. Danilo Moschetto na banca: o TCC levou a ideia para **Android**, e é dele que nasce este repositório.
 
 Hoje é um **projeto open source**, sob a [Apache License 2.0](LICENSE) e aberto a contribuições (ver [Como contribuir](#como-contribuir)), com lançamento Beta do aplicativo oficial planejado na Google Play. O rumo está no [`ROADMAP.md`](ROADMAP.md).
 
@@ -553,7 +553,7 @@ O backend oficial (projeto Firebase, dados e token da Brapi) não faz parte do q
 
 **Rodolfo Pereira de Andrade**
 Especialista em Desenvolvimento de Sistemas para Dispositivos Móveis — IFSP São Carlos (orientador: Prof. Dr. Pedro Nobile)
-Tecnólogo em Análise e Desenvolvimento de Sistemas — IFSP
+Tecnólogo em Análise e Desenvolvimento de Sistemas — IFSP São Carlos (orientador: Prof. Danilo Moschetto)
 
 - E-mail: rodolfop.andrade@gmail.com
 - LinkedIn: [linkedin.com/in/rodorush](https://www.linkedin.com/in/rodorush)
