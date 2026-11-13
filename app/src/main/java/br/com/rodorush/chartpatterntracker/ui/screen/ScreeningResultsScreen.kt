@@ -71,7 +71,7 @@ fun ScreeningResultsScreen(
     Log.d(TAG, "Tela ScreeningResultsScreen carregada")
     val screeningResults by viewModel.screeningResults.collectAsState()
     val screeningFailures by viewModel.screeningFailures.collectAsState()
-    val dismissedFailureCount by viewModel.dismissedFailureCount.collectAsState()
+    val dismissedFailures by viewModel.dismissedFailures.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
@@ -172,7 +172,7 @@ fun ScreeningResultsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (screeningFailures.size > dismissedFailureCount) {
+            if (screeningFailures.any { it !in dismissedFailures }) {
                 val failedByTimeframe = screeningFailures.groupBy({ it.timeframe }, { it.ticker })
                 Card(
                     colors = CardDefaults.cardColors(

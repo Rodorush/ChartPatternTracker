@@ -46,13 +46,14 @@ class ScreeningViewModel(
     private val _screeningFailures = MutableStateFlow<List<ScreeningFailure>>(emptyList())
     val screeningFailures: StateFlow<List<ScreeningFailure>> = _screeningFailures
 
-    private val _dismissedFailureCount = MutableStateFlow(0)
+    private val _dismissedFailures = MutableStateFlow<Set<ScreeningFailure>>(emptySet())
 
     /**
-     * Quantas falhas de [screeningFailures] o usuário já dispensou. O aviso só aparece
-     * enquanto a lista for maior que isso, então uma falha nova o traz de volta.
+     * Falhas de [screeningFailures] que o usuário já dispensou. O aviso só aparece enquanto
+     * houver falha fora deste conjunto, então uma falha nova o traz de volta. Vale até a
+     * seleção mudar: a varredura refeita depois de um cancelamento não reabre o aviso.
      */
-    val dismissedFailureCount: StateFlow<Int> = _dismissedFailureCount
+    val dismissedFailures: StateFlow<Set<ScreeningFailure>> = _dismissedFailures
 
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
@@ -138,16 +139,19 @@ class ScreeningViewModel(
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
         _selectedPatterns.value = patterns
         _shouldRefresh.value = true
+        _dismissedFailures.value = emptySet()
     }
 
     fun updateSelectedAssets(assets: List<AssetItem>) {
         _selectedAssets.value = assets
         _shouldRefresh.value = true
+        _dismissedFailures.value = emptySet()
     }
 
     fun updateSelectedTimeframes(timeframes: List<TimeframeItem>) {
         _selectedTimeframes.value = timeframes
         _shouldRefresh.value = true
+        _dismissedFailures.value = emptySet()
     }
 
     fun setAllPatternsChecked(value: Boolean) { _allPatternsChecked.value = value }
@@ -166,7 +170,6 @@ class ScreeningViewModel(
             _isScreening.value = true
             _screeningResults.value = emptyList()
             _screeningFailures.value = emptyList()
-            _dismissedFailureCount.value = 0
             val results = mutableListOf<ScreeningResult>()
             val patterns = _selectedPatterns.value
             val patternIds = patterns.map { it.id }
@@ -238,9 +241,9 @@ class ScreeningViewModel(
         }
     }
 
-    /** Fecha o aviso de falhas até a próxima falha ou a próxima varredura. */
+    /** Fecha o aviso de falhas até surgir uma falha nova ou a seleção mudar. */
     fun dismissFailures() {
-        _dismissedFailureCount.value = _screeningFailures.value.size
+        _dismissedFailures.value = _screeningFailures.value.toSet()
     }
 
     fun cancelScreening() {
