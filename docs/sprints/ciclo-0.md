@@ -40,7 +40,7 @@ Horários no fuso de Brasília (UTC−3).
 
 ## Arquivos
 
-- **Repositório**, commit `11cc3c8`:
+- **Repositório**, commit `a8c9984`:
   - `CLAUDE.md`: seção "Quadro do projeto";
   - `ROADMAP.md`: o `[~]` deixa de ser usado;
   - `docs/estado.md`: novo.
