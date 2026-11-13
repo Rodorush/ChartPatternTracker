@@ -1,73 +1,89 @@
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-const axios = require('axios');
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
+const admin = require("firebase-admin");
+const axios = require("axios");
+const {findInvalidField} = require("./validation");
 
 admin.initializeApp();
 
-exports.updateCandlesticks = functions.https.onCall(async (data, context) => {
-    console.log('updateCandlesticks chamado com:', {
-        data: data.data || data,
-        auth: context.auth?.uid,
-        app: context.app?.appId
-    });
+/**
+ * Busca na Brapi as velas dos últimos 3 meses de um ativo, grava em
+ * `candlesticks/{ticker}/{timeframe}` e devolve a lista ao app.
+ *
+ * Só atende usuário logado e só aceita `ticker` e `timeframe` válidos
+ * (ver `validation.js`). O token da Brapi vem do payload (`brapiToken`) ou
+ * da variável de ambiente `BRAPI_TOKEN`, e nunca vai para o log: nem o
+ * payload, nem o objeto de erro do axios, que carrega o token nos parâmetros
+ * da requisição.
+ */
+exports.updateCandlesticks = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentication required");
+  }
 
-    console.log('Variáveis de ambiente:', {
-        BRAPI_TOKEN: process.env.BRAPI_TOKEN ? 'Configurado' : 'Não configurado',
-        FIREBASE_CONFIG: process.env.FIREBASE_CONFIG
-    });
+  const params = request.data;
+  const invalidField = findInvalidField(params);
+  if (invalidField) {
+    logger.warn("Entrada recusada", {campo: invalidField});
+    throw new HttpsError("invalid-argument", `Invalid ${invalidField}`);
+  }
+  const {ticker, timeframe, brapiToken} = params;
 
-    const params = data.data || data;
-    const { ticker, timeframe, brapiToken } = params;
-
-    console.log('Parâmetros extraídos:', { ticker, timeframe, brapiToken: brapiToken ? 'Fornecido' : 'Não fornecido' });
-    if (!ticker || !timeframe) {
-        console.error('Parâmetros faltantes:', { ticker, timeframe });
-        throw new functions.https.HttpsError('invalid-argument', 'Missing required parameters');
+  try {
+    const token = brapiToken || process.env.BRAPI_TOKEN;
+    if (!token) {
+      throw new Error("Brapi token not configured");
     }
 
-    try {
-        console.log(`Consultando Brapi API para ticker=${ticker}, interval=${timeframe}, range=3mo`);
-        const token = brapiToken || process.env.BRAPI_TOKEN;
-        if (!token) {
-            console.error('Token da Brapi não configurado');
-            throw new functions.https.HttpsError('internal', 'Brapi token not configured');
-        }
-        console.log(`Usando token Brapi: ${token.substring(0, 5)}...${token.substring(token.length - 5)}`);
+    const response = await axios.get(`https://brapi.dev/api/quote/${ticker}`, {
+      params: {
+        range: "3mo",
+        interval: timeframe,
+        token: token,
+      },
+    });
 
-        const response = await axios.get(`https://brapi.dev/api/quote/${ticker}`, {
-            params: {
-                range: '3mo',
-                interval: timeframe,
-                token: token
-            }
-        });
+    const history = response.data.results[0].historicalDataPrice;
+    const candlesticks = history.map((candle) => ({
+      // A Brapi devolve a data em segundos; o app trabalha em milissegundos.
+      time: new Date(candle.date * 1000).getTime(),
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+      volume: candle.volume,
+    }));
 
-        const candlesticks = response.data.results[0].historicalDataPrice.map(candle => ({
-            // Brapi retorna a data em segundos. É necessário converter para milissegundos.
-            time: new Date(candle.date * 1000).getTime(),
-            open: candle.open,
-            high: candle.high,
-            low: candle.low,
-            close: candle.close,
-            volume: candle.volume
-        }));
+    const batch = admin.firestore().batch();
+    candlesticks.forEach((candle) => {
+      const docRef = admin.firestore()
+          .collection("candlesticks")
+          .doc(ticker)
+          .collection(timeframe)
+          .doc(candle.time.toString());
+      batch.set(docRef, candle);
+    });
+    await batch.commit();
 
-        console.log(`Dados recebidos da Brapi: ${candlesticks.length} candlesticks`);
-        const batch = admin.firestore().batch();
-        candlesticks.forEach(candle => {
-            const docRef = admin.firestore()
-                .collection('candlesticks')
-                .doc(ticker)
-                .collection(timeframe)
-                .doc(candle.time.toString());
-            batch.set(docRef, candle);
-        });
-        await batch.commit();
-
-        console.log(`Dados salvos no Firestore para ${ticker}-${timeframe}`);
-        return candlesticks;
-    } catch (error) {
-        console.error('Erro ao atualizar candlesticks:', error.message, error.response?.data || error);
-        throw new functions.https.HttpsError('internal', `Failed to update candlesticks: ${error.message}`);
-    }
+    logger.info("Velas gravadas", {
+      ticker,
+      timeframe,
+      total: candlesticks.length,
+    });
+    return candlesticks;
+  } catch (error) {
+    // Só campos escolhidos: o objeto de erro do axios leva o token em
+    // `config.params`.
+    logger.error("Erro ao atualizar candlesticks", {
+      ticker,
+      timeframe,
+      mensagem: error.message,
+      status: error.response ? error.response.status : undefined,
+      resposta: error.response ? error.response.data : undefined,
+    });
+    throw new HttpsError(
+        "internal",
+        `Failed to update candlesticks: ${error.message}`,
+    );
+  }
 });

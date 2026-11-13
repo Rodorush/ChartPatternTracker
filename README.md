@@ -367,7 +367,7 @@ Na pasta `functions/`:
 cd functions
 npm ci
 firebase login
-firebase deploy --only functions
+firebase deploy --only functions:updateCandlesticks
 ```
 
 > O `firebase.json` declara Hosting, função e regras do Firestore e do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
@@ -424,15 +424,26 @@ ChartPatternTracker/
 
 ## Cloud Function
 
-O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** (`functions.https.onCall`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
+O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** de 2ª geração (`onCall` de `firebase-functions/v2/https`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
 
 **Comportamento:**
 
-1. Recebe `ticker`, `timeframe` e `brapiToken` do cliente.
-2. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
-3. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
-4. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
-5. Retorna o array para o app, que então salva no Room.
+1. Só atende usuário logado; chamada sem login recebe `unauthenticated`.
+2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os dois primeiros (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, e intervalo da mesma lista de `TimeframeItem`. O que foge disso recebe `invalid-argument`.
+3. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
+4. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
+5. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
+6. Retorna o array para o app, que então salva no Room.
+
+O token da Brapi não vai para o log em nenhum nível: a função não registra o payload nem o objeto de erro do axios, que carrega o token nos parâmetros da requisição.
+
+**Testes e lint** (na pasta `functions/`):
+
+```bash
+npm ci
+npm test
+npm run lint
+```
 
 **Implantação:**
 
