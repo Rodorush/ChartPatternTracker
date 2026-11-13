@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -70,6 +71,7 @@ fun ScreeningResultsScreen(
     Log.d(TAG, "Tela ScreeningResultsScreen carregada")
     val screeningResults by viewModel.screeningResults.collectAsState()
     val screeningFailures by viewModel.screeningFailures.collectAsState()
+    val dismissedFailures by viewModel.dismissedFailures.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
@@ -170,7 +172,7 @@ fun ScreeningResultsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (screeningFailures.isNotEmpty()) {
+            if (screeningFailures.any { it !in dismissedFailures }) {
                 val failedByTimeframe = screeningFailures.groupBy({ it.timeframe }, { it.ticker })
                 Card(
                     colors = CardDefaults.cardColors(
@@ -179,18 +181,31 @@ fun ScreeningResultsScreen(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.screening_failures),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        failedByTimeframe.forEach { (timeframe, tickers) ->
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                        ) {
                             Text(
-                                text = "${stringResource(timeframe.nameRes)}: ${tickers.joinToString(", ")}",
+                                text = stringResource(R.string.screening_failures),
                                 style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                fontWeight = FontWeight.Bold
+                            )
+                            failedByTimeframe.forEach { (timeframe, tickers) ->
+                                Text(
+                                    text = "${stringResource(timeframe.nameRes)}: ${tickers.joinToString(", ")}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        IconButton(onClick = { viewModel.dismissFailures() }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.dismiss_screening_failures),
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
