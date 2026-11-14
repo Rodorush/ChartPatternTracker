@@ -7,8 +7,8 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 - **App:** fora da Play Store. O código está em `versionName 1.0.0` (`versionCode 100`), com `targetSdk 35`, que a Play recusa, porque a exigência atual é 36.
 - **Site:** Política de Privacidade e Termos de Uso em `https://chartpatterntracker.web.app` (`/privacy`, `/terms` e âncora `#data-deletion`).
 - **Backend:** projeto Firebase `chartpatterntracker`, no plano Blaze.
-  - **Cloud Function:** a `updateCandlesticks` (callable, 2ª geração, `nodejs22`, `us-central1`) está ativa, com o código de `functions/`, que é cópia do pacote implantado. Não houve chamadas nos últimos 30 dias.
-  - **Regras:** `firestore.rules` e `storage.rules` são cópia do que está implantado. Exigem login para ler e bloqueiam a escrita, exceto em `assets/{ticker}`, que qualquer usuário logado altera.
+  - **Cloud Function:** a `updateCandlesticks` (callable, 2ª geração, `nodejs22`, `us-central1`) roda o código de `functions/`. Só atende usuário logado, valida `ticker`, `timeframe` e `brapiToken`, e não grava o token no log. Não tem token próprio: a variável `BRAPI_TOKEN` não existe no ambiente dela, e o token vem sempre do app.
+  - **Regras:** `firestore.rules` e `storage.rules` são o que está implantado. Exigem login para ler e bloqueiam toda escrita do cliente; quem grava é a Cloud Function.
   - **Padrões:** `candlestick_patterns` tem os 10 padrões do `PatternDetectorRegistry`.
 
 ## Ciclo atual
@@ -17,21 +17,21 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Antes de tudo, o mínimo para abrir o código (ver `Abertura do código`): três cartões adiantados do C3 e a conferência final. Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. O token da Brapi em uso existe só no `local.properties`; a Cloud Function grava no log o token que o app envia, então ele é trocado de novo quando ela parar de registrar o payload (C3).
+Fechar a abertura do código (ver `Abertura do código`): o teste logado no aparelho, o aceite dos três cartões e a conferência no GitHub. Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. O token da Brapi em uso foi gravado no log da Cloud Function pela versão anterior dela; como a atual não registra mais o token, ele já pode ser trocado ([cartão](https://trello.com/c/6DjBll0Q)).
 
 ## Abertura do código
 
-O repositório está preparado para ser open source (Apache-2.0, `CONTRIBUTING.md`, `SECURITY.md`, modelos de issue e de PR), mas segue **privado** no GitHub. Vira público depois de três cartões adiantados do C3, sem esperar o ciclo inteiro:
+O repositório está preparado para ser open source (Apache-2.0, `CONTRIBUTING.md`, `SECURITY.md`, modelos de issue e de PR), mas segue **privado** no GitHub. Vira público com o aceite de três cartões adiantados do C3, que estão em `Em teste`:
 
 - [Exigir login, validar entrada e parar de logar o token](https://trello.com/c/EGrrZKqD)
 - [Versionar e revisar as regras do Firestore](https://trello.com/c/7kYoOw4m)
 - [Criar alerta de orçamento no Google Cloud](https://trello.com/c/RG5tGD54)
 
-Os demais cartões do C3 tratam do token dentro do APK, que bloqueia a Play, não a abertura do código. Com os três entregues, a conferência:
+Os demais cartões do C3 tratam do token dentro do APK, que bloqueia a Play, não a abertura do código. A conferência:
 
-- `gitleaks detect` no histórico completo; a varredura por padrões (regex) não acha segredo nem menção a empregador.
+- `gitleaks detect` no histórico completo e varredura por padrões (regex): sem segredo e sem menção a empregador (conferido em 13/11/2026; repetir se entrar commit novo antes de abrir).
 - Nenhuma falha ainda aberta descrita neste arquivo, no `README.md` ou no `ROADMAP.md`.
-- No GitHub: Issues, relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR).
+- No GitHub: Issues já ligadas. Relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR) só existem com o repositório público no plano gratuito, então são ligados logo depois de abrir.
 - Issues espelho criadas para os cartões abertos a contribuição.
 
 ## Para publicar
@@ -40,7 +40,6 @@ O caminho tem 9 ciclos, de C0 a C8, cada um com seu cartão na lista `Ciclos` do
 
 - `targetSdk 35`, recusado pela Play.
 - Token da Brapi dentro do APK.
-- Cloud Function sem exigir login e sem validar entrada. A reimplantação a partir do repositório ainda não foi testada, e as variáveis de ambiente da função implantada não foram conferidas. Ela também grava o token da Brapi no log a cada chamada, porque registra o payload inteiro que o app envia.
+- Reimplantação da Cloud Function com o token no servidor (Secret Manager), que os cartões do token no APK pedem.
 - App Check sem enforcement no Firestore, no Storage e no Auth.
-- Regras do Firestore que deixam qualquer usuário logado alterar `assets/{ticker}`.
 - Conta pessoal na Play: o teste fechado exige 12 testadores por 14 dias seguidos.
