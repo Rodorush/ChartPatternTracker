@@ -17,31 +17,14 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Fechar a abertura do código, na branch `fix/ciclo-3-minimo-para-abrir` (6 commits locais, sem push; função e regras já implantadas e verificadas). Decisões já tomadas pelo usuário em 13/11/2026, falta só executar, nesta ordem:
-
-1. **Aceite:** mover para `Concluído` os cartões `EGrrZKqD`, `7kYoOw4m`, `RG5tGD54` e `6DjBll0Q`, com `hours <cartão> 0,5` em cada um.
-2. **Diff aprovado, em commit separado:** tirar do `README.md` (seção Segurança e privacidade) a frase sobre o enforcement do App Check, e em `Para publicar`, abaixo, trocar as linhas do token no APK e do App Check por uma só, "Cartões do C3 (backend seguro), no quadro". Não reescrever o histórico do git.
-3. **Issues espelho** (`good first issue`), com o link de cada uma no cartão: `eLiAXvWp`, `2fx9SdGi`, `SPLXLmJ1`, `hW36lztr`, `A9lSuwO0`.
-4. **Merge** da branch na `main` e push (credencial do `gh`). O `.idea/codeStyles/Project.xml` modificado na árvore não é desta tarefa e não entra.
-5. **Abertura:** o usuário roda `gh repo edit Rodorush/ChartPatternTracker --visibility public --accept-visibility-change-consequences`. Logo depois, ligar relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR); a API recusa os três com o repositório privado.
-6. Reescrever esta seção e a `Abertura do código` no presente.
-
-Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`.
+Voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Cinco deles têm issue espelho aberta a contribuição (seção abaixo): antes de pegar um desses, conferir se a issue já tem responsável.
 
 ## Abertura do código
 
-O repositório está preparado para ser open source (Apache-2.0, `CONTRIBUTING.md`, `SECURITY.md`, modelos de issue e de PR), mas segue **privado** no GitHub. Vira público com o aceite de três cartões adiantados do C3, que estão em `Em teste`:
+O repositório é público no GitHub, sob Apache-2.0, com `CONTRIBUTING.md`, `SECURITY.md` e modelos de issue e de PR.
 
-- [Exigir login, validar entrada e parar de logar o token](https://trello.com/c/EGrrZKqD)
-- [Versionar e revisar as regras do Firestore](https://trello.com/c/7kYoOw4m)
-- [Criar alerta de orçamento no Google Cloud](https://trello.com/c/RG5tGD54)
-
-Os demais cartões do C3 tratam do token dentro do APK, que bloqueia a Play, não a abertura do código. A conferência:
-
-- `gitleaks detect` no histórico completo e varredura por padrões (regex): sem segredo e sem menção a empregador (conferido em 13/11/2026; repetir se entrar commit novo antes de abrir).
-- Nenhuma falha ainda aberta descrita neste arquivo, no `README.md` ou no `ROADMAP.md`.
-- No GitHub: Issues já ligadas. Relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR) só existem com o repositório público no plano gratuito, então são ligados logo depois de abrir.
-- Issues espelho criadas para os cartões abertos a contribuição.
+- **Proteções:** relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main`. A `main` só recebe PR, sem aprovação obrigatória, sem force push e sem deleção, e a regra vale também para o administrador.
+- **Abertas a contribuição:** as issues #80 a #84 (`good first issue`), espelhos de cartões de `Ciclo atual`, com o link no cartão.
 
 ## Para publicar
 

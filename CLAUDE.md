@@ -77,6 +77,7 @@ Catálogo de itens por ID, com prioridade e ordem sugerida, em [`ROADMAP.md`](RO
 Andamento, pontos, sprints e horas ficam no quadro privado do Trello: https://trello.com/b/7RGMFlGW. Operar pela skill `trello`, onde estão o script, as convenções e as métricas.
 
 - Cada ciclo é uma sprint, com branch própria. O commit termina com `Refs: https://trello.com/c/<id>`.
+- A `main` só recebe PR, e a proteção vale também para o administrador: push direto é recusado. A branch sobe com a credencial do `gh` e entra por `gh pr create` e `gh pr merge --merge`.
 - No máximo 2 cartões em `Em andamento`.
 - Cartão terminado vai para `Em teste` com comentário dizendo o commit e como testar. Só vai para `Concluído` com o OK do usuário, e nesse momento entram as horas dele.
 - Ao fechar um ciclo, gravar os números em `docs/sprints/ciclo-N.md`.
