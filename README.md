@@ -53,7 +53,7 @@ Traders precisam monitorar dezenas de ativos simultaneamente em diferentes timef
 
 ### A proposta de valor
 
-- **Primeiro app mobile nativo** com varredura automática de padrões em múltiplos ativos e timeframes.
+- **App mobile nativo** com varredura automática de padrões em múltiplos ativos e timeframes.
 - **Jornada guiada** em três passos simples: escolher padrões → escolher ativos → escolher timeframes.
 - **Visualização interativa** dos resultados com gráfico de candlestick e marcação dos padrões.
 - **Modo offline** com cache em duas camadas (Room + Firestore) para uso sem internet.
@@ -67,17 +67,17 @@ Traders precisam monitorar dezenas de ativos simultaneamente em diferentes timef
 
 ## Demonstração
 
-<!-- TODO: adicionar screenshots das principais telas -->
+A varredura em três passos e o que ela devolve:
 
-| Tela | Descrição |
-|------|-----------|
-| Login | Autenticação com e-mail/senha ou Google |
-| Menu Principal | Acesso rápido às funcionalidades |
-| Seleção de Padrões | Escolha múltipla com busca |
-| Seleção de Ativos | Tickers da B3 com logos |
-| Seleção de Timeframes | Múltiplos intervalos simultâneos |
-| Resultados | Lista de ocorrências com confiabilidade |
-| Detalhe do Gráfico | Candlestick interativo com pattern destacado |
+| 1. Padrões | 2. Ativos | 3. Tempos gráficos |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/padroes.png" width="240" alt="Lista dos 10 padrões de candlestick, todos selecionados, com o desenho de cada um"> | <img src="docs/screenshots/ativos.png" width="240" alt="Busca de ativos da B3 com logos, com BBAS3 selecionado"> | <img src="docs/screenshots/tempos.png" width="240" alt="Lista de tempos gráficos, com o Diário selecionado"> |
+| Escolha múltipla com busca | Tickers da B3 com logos | Um ou vários intervalos |
+
+| Resultados | Gráfico |
+|:---:|:---:|
+| <img src="docs/screenshots/resultados.png" width="240" alt="Padrões encontrados por ativo e tempo gráfico, com a confiabilidade e a direção da reversão"> | <img src="docs/screenshots/grafico.png" width="240" alt="Gráfico de candlestick do BBAS3 no diário, com o padrão Três Fora de Alta destacado"> |
+| Ocorrências com confiabilidade e direção | Candlestick interativo com o padrão destacado |
 
 ---
 
