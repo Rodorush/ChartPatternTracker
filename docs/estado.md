@@ -17,7 +17,16 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Fechar a abertura do código (ver `Abertura do código`): o teste logado no aparelho, o aceite dos três cartões e a conferência no GitHub. Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Trocar o token da Brapi ([cartão](https://trello.com/c/6DjBll0Q)) antes de abrir.
+Fechar a abertura do código, na branch `fix/ciclo-3-minimo-para-abrir` (6 commits locais, sem push; função e regras já implantadas e verificadas). Decisões já tomadas pelo usuário em 13/11/2026, falta só executar, nesta ordem:
+
+1. **Aceite:** mover para `Concluído` os cartões `EGrrZKqD`, `7kYoOw4m`, `RG5tGD54` e `6DjBll0Q`, com `hours <cartão> 0,5` em cada um.
+2. **Diff aprovado, em commit separado:** tirar do `README.md` (seção Segurança e privacidade) a frase sobre o enforcement do App Check, e em `Para publicar`, abaixo, trocar as linhas do token no APK e do App Check por uma só, "Cartões do C3 (backend seguro), no quadro". Não reescrever o histórico do git.
+3. **Issues espelho** (`good first issue`), com o link de cada uma no cartão: `eLiAXvWp`, `2fx9SdGi`, `SPLXLmJ1`, `hW36lztr`, `A9lSuwO0`.
+4. **Merge** da branch na `main` e push (credencial do `gh`). O `.idea/codeStyles/Project.xml` modificado na árvore não é desta tarefa e não entra.
+5. **Abertura:** o usuário roda `gh repo edit Rodorush/ChartPatternTracker --visibility public --accept-visibility-change-consequences`. Logo depois, ligar relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main` (merge só por PR); a API recusa os três com o repositório privado.
+6. Reescrever esta seção e a `Abertura do código` no presente.
+
+Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`.
 
 ## Abertura do código
 
