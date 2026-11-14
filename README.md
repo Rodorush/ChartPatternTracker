@@ -517,7 +517,7 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 ## Segurança e privacidade
 
 - **Firebase Authentication** gerencia hashing/salt de senhas e tokens de sessão.
-- **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento). O enforcement ainda não está ativado no backend, então chamadas sem atestado continuam aceitas.
+- **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento).
 - **Tokens sensíveis** (Brapi, WebClientId) ficam em `local.properties`, **fora do versionamento**.
 - **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam toda escrita pelo cliente. Quem grava no Firestore é a Cloud Function, pelo Admin SDK.
 - **Transporte HTTPS** automático via Firebase e Retrofit.
