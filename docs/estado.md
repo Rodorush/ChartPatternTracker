@@ -7,7 +7,7 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 - **App:** fora da Play Store. O código está em `versionName 1.0.0` (`versionCode 100`), com `targetSdk 35`, que a Play recusa, porque a exigência atual é 36.
 - **Site:** Política de Privacidade e Termos de Uso em `https://chartpatterntracker.web.app` (`/privacy`, `/terms` e âncora `#data-deletion`).
 - **Backend:** projeto Firebase `chartpatterntracker`, no plano Blaze.
-  - **Cloud Function:** a `updateCandlesticks` (callable, 2ª geração, `nodejs22`, `us-central1`) roda o código de `functions/`. Só atende usuário logado, valida `ticker`, `timeframe` e `brapiToken`, e não grava o token no log. Não tem token próprio: a variável `BRAPI_TOKEN` não existe no ambiente dela, e o token vem sempre do app.
+  - **Cloud Function:** a `updateCandlesticks` (callable, 2ª geração, `nodejs22`, `us-central1`) roda o código de `functions/`. Só atende usuário logado, valida os parâmetros da chamada e não grava o token da Brapi no log.
   - **Regras:** `firestore.rules` e `storage.rules` são o que está implantado. Exigem login para ler e bloqueiam toda escrita do cliente; quem grava é a Cloud Function.
   - **Padrões:** `candlestick_patterns` tem os 10 padrões do `PatternDetectorRegistry`.
 
