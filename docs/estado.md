@@ -17,7 +17,7 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Fechar a abertura do código (ver `Abertura do código`): o teste logado no aparelho, o aceite dos três cartões e a conferência no GitHub. Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. O token da Brapi em uso foi gravado no log da Cloud Function pela versão anterior dela; como a atual não registra mais o token, ele já pode ser trocado ([cartão](https://trello.com/c/6DjBll0Q)).
+Fechar a abertura do código (ver `Abertura do código`): o teste logado no aparelho, o aceite dos três cartões e a conferência no GitHub. Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Trocar o token da Brapi ([cartão](https://trello.com/c/6DjBll0Q)) antes de abrir.
 
 ## Abertura do código
 
