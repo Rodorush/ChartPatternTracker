@@ -42,7 +42,7 @@ O **ChartPatternTracker** é um aplicativo Android nativo, escrito em Kotlin com
 
 A ideia tem duas etapas acadêmicas, ambas no **Instituto Federal de São Paulo (IFSP) — Campus São Carlos**, do mesmo autor, **Rodolfo Pereira de Andrade**:
 
-1. **Graduação** — Tecnologia em Análise e Desenvolvimento de Sistemas (2011–2015), orientador **Prof. Danilo Moschetto**: o TCC *"Plugin Rastreador de Padrões Gráficos para a Plataforma Metatrader 5"*, escrito em MQL5, que evoluiu para o projeto [CustomScreener](https://github.com/Rodorush/CustomScreener).
+1. **Graduação** — Tecnologia em Análise e Desenvolvimento de Sistemas (2011–2015), orientador **Prof. Danilo Moschetto**: o TCC *"Plugin Rastreador de Padrões Gráficos para a Plataforma Metatrader 5"*, escrito em MQL5, que evoluiu para o projeto CustomScreener.
 2. **Pós-graduação** — Especialização em Desenvolvimento de Sistemas para Dispositivos Móveis (2023–2025), orientador **Prof. Dr. Pedro Nobile**, com o Prof. Danilo Moschetto na banca: o TCC levou a ideia para **Android**, e é dele que nasce este repositório.
 
 Hoje é um **projeto open source**, sob a [Apache License 2.0](LICENSE) e aberto a contribuições (ver [Como contribuir](#como-contribuir)), com lançamento Beta do aplicativo oficial planejado na Google Play. O rumo está no [`ROADMAP.md`](ROADMAP.md).

@@ -17,7 +17,7 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Seis cartões de lá têm issue espelho aberta a contribuição (seção abaixo): antes de pegar um desses, conferir se a issue já tem responsável.
+Fechar a rodada que prepara a divulgação da abertura do código: os cartões dela estão em `Ciclo atual`, e o da divulgação, em `Em andamento`. Depois, voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Seis cartões de lá têm issue espelho aberta a contribuição (seção abaixo): antes de pegar um desses, conferir se a issue já tem responsável.
 
 ## Abertura do código
 
