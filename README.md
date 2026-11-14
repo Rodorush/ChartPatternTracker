@@ -367,7 +367,7 @@ Na pasta `functions/`:
 cd functions
 npm ci
 firebase login
-firebase deploy --only functions
+firebase deploy --only functions:updateCandlesticks
 ```
 
 > O `firebase.json` declara Hosting, função e regras do Firestore e do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
@@ -424,15 +424,26 @@ ChartPatternTracker/
 
 ## Cloud Function
 
-O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** (`functions.https.onCall`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
+O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** de 2ª geração (`onCall` de `firebase-functions/v2/https`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
 
 **Comportamento:**
 
-1. Recebe `ticker`, `timeframe` e `brapiToken` do cliente.
-2. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
-3. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
-4. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
-5. Retorna o array para o app, que então salva no Room.
+1. Só atende usuário logado; chamada sem login recebe `unauthenticated`.
+2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os três (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, intervalo da mesma lista de `TimeframeItem` e token obrigatório, porque a função não tem token próprio. O que foge disso recebe `invalid-argument`.
+3. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
+4. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
+5. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
+6. Retorna o array para o app, que então salva no Room.
+
+O token da Brapi não vai para o log em nenhum nível: a função não registra o payload nem o objeto de erro do axios, que carrega o token nos parâmetros da requisição.
+
+**Testes e lint** (na pasta `functions/`):
+
+```bash
+npm ci
+npm test
+npm run lint
+```
 
 **Implantação:**
 
@@ -506,9 +517,9 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 ## Segurança e privacidade
 
 - **Firebase Authentication** gerencia hashing/salt de senhas e tokens de sessão.
-- **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento). O enforcement ainda não está ativado no backend, então chamadas sem atestado continuam aceitas.
+- **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento).
 - **Tokens sensíveis** (Brapi, WebClientId) ficam em `local.properties`, **fora do versionamento**.
-- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam a escrita pelo cliente, exceto em `assets/{ticker}`.
+- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam toda escrita pelo cliente. Quem grava no Firestore é a Cloud Function, pelo Admin SDK.
 - **Transporte HTTPS** automático via Firebase e Retrofit.
 - **Dados coletados**, conforme a [Política de Privacidade](https://chartpatterntracker.web.app/privacy): e-mail e nome de exibição, provedor de login, relatórios de falha (Crashlytics), métricas de uso (Analytics) e identificadores de integridade (App Check). Cotações e candles em cache ficam só no aparelho (Room).
 
