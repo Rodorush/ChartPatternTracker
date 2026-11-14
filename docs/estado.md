@@ -17,14 +17,14 @@ Retrato de 13/11/2026. Andamento, pontos e horas ficam no [quadro do Trello](htt
 
 ## Próximo passo
 
-Voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Cinco deles têm issue espelho aberta a contribuição (seção abaixo): antes de pegar um desses, conferir se a issue já tem responsável.
+Voltar ao fluxo normal pelos defeitos do percurso em `Ciclo atual`. Seis cartões de lá têm issue espelho aberta a contribuição (seção abaixo): antes de pegar um desses, conferir se a issue já tem responsável.
 
 ## Abertura do código
 
 O repositório é público no GitHub, sob Apache-2.0, com `CONTRIBUTING.md`, `SECURITY.md` e modelos de issue e de PR.
 
 - **Proteções:** relato privado de vulnerabilidade, secret scanning com push protection e proteção da `main`. A `main` só recebe PR, sem aprovação obrigatória, sem force push e sem deleção, e a regra vale também para o administrador.
-- **Abertas a contribuição:** as issues #80 a #84 (`good first issue`), espelhos de cartões de `Ciclo atual`, com o link no cartão.
+- **Abertas a contribuição:** as issues #80 a #84 e #87 (`good first issue`), espelhos de cartões de `Ciclo atual`, com o link no cartão.
 
 ## Para publicar
 
