@@ -7,12 +7,13 @@ import com.google.firebase.functions.FirebaseFunctionsException
  * devolveu a recusa. É uma resposta esperada, não um defeito: quem a recebe não registra
  * erro no Crashlytics nem tenta a Brapi direta, que recusaria o mesmo intervalo.
  *
- * @param cause a [FirebaseFunctionsException] original da chamada.
+ * @param cause a [FirebaseFunctionsException] original da chamada; `null` quando a recusa vem
+ * de [RefusedPairs], que lembra o par já recusado e não chama a função de novo.
  */
 class IntervalNotInPlanException(
     val ticker: String,
     val timeframe: String,
-    cause: Throwable
+    cause: Throwable?
 ) : Exception("Intervalo $timeframe fora do plano do token da Brapi ($ticker)", cause)
 
 /**

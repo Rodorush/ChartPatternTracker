@@ -15,6 +15,8 @@ class CandlestickRepository(
     private val dao: CandlestickDao,
     private val firestoreService: FirestoreService
 ) {
+    private val refusedPairs = RefusedPairs()
+
     suspend fun fetchCandlesticks(ticker: String, timeframe: String, range: String = "3mo"): List<Candlestick> {
         return withContext(Dispatchers.IO) {
             val today = System.currentTimeMillis()
@@ -31,7 +33,9 @@ class CandlestickRepository(
                 } else {
                     val remoteCandlesticks = firestoreService.fetchCandlesticks(ticker, timeframe, latest, today)
                     val candlesticksToSave = if (remoteCandlesticks.isEmpty() || remoteCandlesticks.last().time < today - ONE_DAY_MS) {
-                        val updatedCandlesticks = callUpdateCandlesticks(ticker, timeframe)
+                        val updatedCandlesticks = refusedPairs.guard(ticker, timeframe) {
+                            callUpdateCandlesticks(ticker, timeframe)
+                        }
                         (remoteCandlesticks + updatedCandlesticks).distinctBy { it.time }.filter { it.time !in existingTimes }
                     } else {
                         remoteCandlesticks.filter { it.time !in existingTimes }
@@ -47,7 +51,8 @@ class CandlestickRepository(
                     finalCandlesticks
                 }
             } catch (e: IntervalNotInPlanException) {
-                // Recusa esperada, já registrada em callUpdateCandlesticks.
+                // Recusa esperada: a primeira do par vira breadcrumb em callUpdateCandlesticks;
+                // as seguintes vêm de RefusedPairs, sem chamar a função, só com Log.d.
                 throw e
             } catch (e: Exception) {
                 Log.e(
