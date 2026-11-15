@@ -154,6 +154,7 @@ class ChartViewModel(
             Log.d(TAG, "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
                 var finalCandlesticks: List<Candlestick>? = null
+                var intervalNotInPlan = false
 
                 runCatching { repository.fetchCandlesticks(ticker, interval, range) }
                     .onSuccess { cached ->
@@ -171,14 +172,21 @@ class ChartViewModel(
                         }
                     }
                     .onFailure { e ->
-                        Log.w(
-                            TAG,
-                            "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
-                            e
-                        )
+                        if (e is IntervalNotInPlanException) {
+                            // Recusa esperada, já registrada no repositório; a Brapi direta
+                            // recusaria o mesmo intervalo.
+                            intervalNotInPlan = true
+                            _error.value = "Nenhum dado disponível"
+                        } else {
+                            Log.w(
+                                TAG,
+                                "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
+                                e
+                            )
+                        }
                     }
 
-                if (finalCandlesticks == null) {
+                if (finalCandlesticks == null && !intervalNotInPlan) {
                     Log.d(
                         TAG,
                         "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}"
