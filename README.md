@@ -367,10 +367,13 @@ Na pasta `functions/`:
 cd functions
 npm ci
 firebase login
+firebase deploy --only firestore
 firebase deploy --only functions:updateCandlesticks
 ```
 
-> O `firebase.json` declara Hosting, função e regras do Firestore e do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
+O Firestore vai antes da função: as regras escondem do cliente a cota de chamadas que a função grava (ver [Cloud Function](#cloud-function)).
+
+> O `firebase.json` declara Hosting, função, regras e índices do Firestore e regras do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
 
 ### 5. Compilar e executar
 
@@ -424,16 +427,17 @@ ChartPatternTracker/
 
 ## Cloud Function
 
-O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** de 2ª geração (`onCall` de `firebase-functions/v2/https`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados.
+O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de entrada é `functions/index.js`, que exporta a função definida em `functions/updateCandlesticks.js`. É uma função **callable** de 2ª geração (`onCall` de `firebase-functions/v2/https`) chamada por `CandlestickRepository.callUpdateCandlesticks()` quando os dados locais ou no Firestore estão ausentes ou desatualizados. Roda com no máximo 5 instâncias simultâneas (`maxInstances`).
 
 **Comportamento:**
 
 1. Só atende usuário logado; chamada sem login recebe `unauthenticated`.
 2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os três (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, intervalo da mesma lista de `TimeframeItem` e token obrigatório, porque a função não tem token próprio. O que foge disso recebe `invalid-argument`.
-3. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
-4. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
-5. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
-6. Retorna o array para o app, que então salva no Room.
+3. Conta a chamada na cota diária do usuário (`functions/rateLimit.js`): 300 chamadas por dia, em UTC, guardadas em `rate_limits/{uid}`. Acima disso, recebe `resource-exhausted` antes de qualquer chamada à Brapi, e o app busca direto na Brapi.
+4. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
+5. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
+6. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
+7. Retorna o array para o app, que então salva no Room.
 
 O token da Brapi não vai para o log em nenhum nível: a função não registra o payload nem o objeto de erro do axios, que carrega o token nos parâmetros da requisição.
 
@@ -448,8 +452,11 @@ npm run lint
 **Implantação:**
 
 ```bash
+firebase deploy --only firestore
 firebase deploy --only functions:updateCandlesticks
 ```
+
+O Firestore vai primeiro, nesta ordem, porque a regra que esconde `rate_limits` do cliente precisa estar no ar antes de a função gravar ali. O mesmo deploy aplica o `firestore.indexes.json`, que liga a política de TTL no campo `expireAt` de `rate_limits`. O campo guarda a meia-noite UTC seguinte, e o Firestore apaga o documento depois que o dia acaba.
 
 ---
 
@@ -519,7 +526,7 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 - **Firebase Authentication** gerencia hashing/salt de senhas e tokens de sessão.
 - **Firebase App Check** está integrado ao app (Play Integrity em release, Debug Provider em desenvolvimento).
 - **Tokens sensíveis** (Brapi, WebClientId) ficam em `local.properties`, **fora do versionamento**.
-- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam toda escrita pelo cliente. Quem grava no Firestore é a Cloud Function, pelo Admin SDK.
+- **Regras do Firestore e do Storage** (`firestore.rules` e `storage.rules`) exigem login para ler e bloqueiam toda escrita pelo cliente. No Firestore, a leitura vale só para `candlesticks`, `candlestick_patterns` e `assets`. Quem grava é a Cloud Function, pelo Admin SDK.
 - **Transporte HTTPS** automático via Firebase e Retrofit.
 - **Dados coletados**, conforme a [Política de Privacidade](https://chartpatterntracker.web.app/privacy): e-mail e nome de exibição, provedor de login, relatórios de falha (Crashlytics), métricas de uso (Analytics) e identificadores de integridade (App Check). Cotações e candles em cache ficam só no aparelho (Room).
 

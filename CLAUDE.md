@@ -41,7 +41,7 @@ App Android nativo (Kotlin + Jetpack Compose) que detecta padrões de candlestic
 - `./gradlew test` — testes unitários
 - `./gradlew installDebug` — instalar no device
 - `npm test` e `npm run lint` em `functions/` — testes e lint da Cloud Function (depois de `npm ci`)
-- `firebase deploy` sempre com `--only` (`hosting`, `functions`, `firestore:rules`, `storage`): o `firebase.json` declara tudo, e o comando puro publica também as regras de produção.
+- `firebase deploy` sempre com `--only` (`hosting`, `functions`, `firestore`, `storage`): o `firebase.json` declara tudo, e o comando puro publica também as regras de produção. Ao mexer na função e no Firestore juntos, `--only firestore` vai antes, porque as regras escondem do cliente a cota que a função grava.
 - Requer `local.properties` com `BRAPI_TOKEN`, `WEB_CLIENT_ID`, `FIREBASE_APP_CHECK_DEBUG_TOKEN` (e `sdk.dir`). Sem essas chaves o build falha em `app/build.gradle.kts`.
 - Requer `app/google-services.json` (não versionado).
 - `./gradlew bundleRelease` (ou `assembleRelease`) — build de release com **R8/minify ligado**. Para sair **assinado**, requer `keystore.properties` na raiz (`storeFile`/`storePassword`/`keyAlias`/`keyPassword`, não versionado); sem o arquivo o release sai não assinado (fallback gracioso, build não quebra). App Check usa Play Integrity em release (Debug só em debug). Keep rules de R8 vivem em `app/proguard-rules.pro`.
