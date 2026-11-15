@@ -43,7 +43,6 @@ class CandlestickRepository(
 
                     if (candlesticksToSave.isNotEmpty()) {
                         dao.insertAll(candlesticksToSave.toEntities(ticker, timeframe))
-                        dao.getCandlesticks(ticker, timeframe, 0)
                     }
 
                     val finalCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
