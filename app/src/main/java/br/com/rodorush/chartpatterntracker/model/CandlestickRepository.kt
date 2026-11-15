@@ -1,6 +1,7 @@
 package br.com.rodorush.chartpatterntracker.model
 
 import br.com.rodorush.customlogs.Log
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,9 @@ class CandlestickRepository(
                     Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): ${finalCandlesticks.size} velas (remoto=${remoteCandlesticks.size}, novas=${candlesticksToSave.size})")
                     finalCandlesticks
                 }
+            } catch (e: IntervalNotInPlanException) {
+                // Recusa esperada, já registrada em callUpdateCandlesticks.
+                throw e
             } catch (e: Exception) {
                 Log.e(
                     TAG,
@@ -88,6 +92,16 @@ class CandlestickRepository(
                 }
             }
         } catch (e: Exception) {
+            if (e is FirebaseFunctionsException && isIntervalNotInPlan(e.code.name, e.details)) {
+                // Sem Throwable: fica só como breadcrumb, sem virar não fatal no Crashlytics.
+                Log.w(
+                    TAG,
+                    "Intervalo fora do plano do token da Brapi",
+                    "ticker" to ticker,
+                    "timeframe" to timeframe
+                )
+                throw IntervalNotInPlanException(ticker, timeframe, e)
+            }
             Log.e(
                 TAG,
                 "Erro ao chamar updateCandlesticks",

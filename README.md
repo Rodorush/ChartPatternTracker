@@ -434,7 +434,7 @@ O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de en
 1. Só atende usuário logado; chamada sem login recebe `unauthenticated`.
 2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os três (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, intervalo da mesma lista de `TimeframeItem` e token obrigatório, porque a função não tem token próprio. O que foge disso recebe `invalid-argument`.
 3. Conta a chamada na cota diária do usuário (`functions/rateLimit.js`): 300 chamadas por dia, em UTC, guardadas em `rate_limits/{uid}`. Acima disso, recebe `resource-exhausted` antes de qualquer chamada à Brapi, e o app busca direto na Brapi.
-4. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`.
+4. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`. Se a Brapi recusa o intervalo porque o plano do token não o libera (400 com `code: "INVALID_INTERVAL"`, ver `functions/brapiError.js`), responde `failed-precondition` com `details.reason = "plan-interval"`. O app marca o par como falha, sem buscar direto na Brapi e sem registrar erro no Crashlytics. Os demais erros da Brapi saem como `internal`.
 5. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
 6. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
 7. Retorna o array para o app, que então salva no Room.
