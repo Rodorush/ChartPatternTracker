@@ -25,7 +25,7 @@ internal class RefusedPairs {
         val pair = ticker to timeframe
         if (pair in pairs) {
             Log.d(TAG, "updateCandlesticks($ticker,$timeframe) não chamada: par já recusado pelo plano")
-            throw IntervalNotInPlanException(ticker, timeframe)
+            throw IntervalNotInPlanException(ticker, timeframe, cause = null)
         }
         try {
             return call()

@@ -51,7 +51,8 @@ class CandlestickRepository(
                     finalCandlesticks
                 }
             } catch (e: IntervalNotInPlanException) {
-                // Recusa esperada, já registrada em callUpdateCandlesticks.
+                // Recusa esperada: a primeira do par vira breadcrumb em callUpdateCandlesticks;
+                // as seguintes vêm de RefusedPairs, sem chamar a função, só com Log.d.
                 throw e
             } catch (e: Exception) {
                 Log.e(

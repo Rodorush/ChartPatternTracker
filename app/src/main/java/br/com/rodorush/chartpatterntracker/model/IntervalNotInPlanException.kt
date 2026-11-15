@@ -13,7 +13,7 @@ import com.google.firebase.functions.FirebaseFunctionsException
 class IntervalNotInPlanException(
     val ticker: String,
     val timeframe: String,
-    cause: Throwable? = null
+    cause: Throwable?
 ) : Exception("Intervalo $timeframe fora do plano do token da Brapi ($ticker)", cause)
 
 /**
