@@ -93,13 +93,10 @@ class CandlestickRepository(
             }
         } catch (e: Exception) {
             if (e is FirebaseFunctionsException && isIntervalNotInPlan(e.code.name, e.details)) {
-                // Sem Throwable: fica só como breadcrumb, sem virar não fatal no Crashlytics.
-                Log.w(
-                    TAG,
-                    "Intervalo fora do plano do token da Brapi",
-                    "ticker" to ticker,
-                    "timeframe" to timeframe
-                )
+                // Sem Throwable, fica só como breadcrumb e não vira não fatal no Crashlytics.
+                // O par vai no texto, não em pares chave/valor: esses viram custom keys, que
+                // ficariam presas ao próximo crash sem relação com a recusa.
+                Log.w(TAG, "Intervalo fora do plano do token da Brapi: $ticker-$timeframe")
                 throw IntervalNotInPlanException(ticker, timeframe, e)
             }
             Log.e(
