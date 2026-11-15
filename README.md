@@ -367,10 +367,13 @@ Na pasta `functions/`:
 cd functions
 npm ci
 firebase login
+firebase deploy --only firestore
 firebase deploy --only functions:updateCandlesticks
 ```
 
-> O `firebase.json` declara Hosting, função e regras do Firestore e do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
+O Firestore vai antes da função: as regras escondem do cliente a cota de chamadas que a função grava (ver [Cloud Function](#cloud-function)).
+
+> O `firebase.json` declara Hosting, função, regras e índices do Firestore e regras do Storage. Use sempre `--only`: um `firebase deploy` puro publica tudo de uma vez.
 
 ### 5. Compilar e executar
 
@@ -449,14 +452,11 @@ npm run lint
 **Implantação:**
 
 ```bash
+firebase deploy --only firestore
 firebase deploy --only functions:updateCandlesticks
 ```
 
-Cada documento de `rate_limits` leva o campo `expireAt`, a meia-noite UTC seguinte. Para o Firestore apagar esses documentos depois que o dia acaba, ative uma vez, no projeto, a política de TTL nesse campo:
-
-```bash
-gcloud firestore fields ttls update expireAt --collection-group=rate_limits --enable-ttl
-```
+O Firestore vai primeiro, nesta ordem, porque a regra que esconde `rate_limits` do cliente precisa estar no ar antes de a função gravar ali. O mesmo deploy aplica o `firestore.indexes.json`, que liga a política de TTL no campo `expireAt` de `rate_limits`. O campo guarda a meia-noite UTC seguinte, e o Firestore apaga o documento depois que o dia acaba.
 
 ---
 

@@ -8,9 +8,9 @@ const {consumeQuota} = require("./rateLimit");
 admin.initializeApp();
 
 /**
- * Opções da função. `maxInstances` é o teto de instâncias simultâneas: o app
- * faz uma chamada por vez por usuário, e cada instância atende várias
- * chamadas ao mesmo tempo.
+ * Opções da função. `maxInstances` é o teto de instâncias simultâneas; o de
+ * chamadas simultâneas é ele vezes a concorrência por instância. O app faz
+ * uma chamada por vez por usuário.
  */
 const OPTIONS = {maxInstances: 5};
 
@@ -58,7 +58,18 @@ exports.updateCandlesticks = onCall(OPTIONS, async (request) => {
   }
   const {ticker, timeframe, brapiToken} = params;
 
-  if (!(await reserveCall(request.auth.uid))) {
+  let allowed;
+  try {
+    allowed = await reserveCall(request.auth.uid);
+  } catch (error) {
+    logger.error("Erro ao reservar a cota", {
+      ticker,
+      timeframe,
+      mensagem: error.message,
+    });
+    throw new HttpsError("internal", "Failed to reserve quota");
+  }
+  if (!allowed) {
     logger.warn("Cota diária esgotada", {ticker, timeframe});
     throw new HttpsError("resource-exhausted", "Daily call limit reached");
   }

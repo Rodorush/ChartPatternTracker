@@ -6,9 +6,11 @@
 /**
  * Chamadas por usuário por dia (UTC). O app só chama a função para o par de
  * ativo e tempo sem velas do dia no Room nem no Firestore, um par por vez, e
- * o Firestore é compartilhado: o limite cobre várias varreduras de dezenas
- * de ativos. Quem passa dele continua com dados, porque o app busca direto
- * na Brapi quando a função recusa.
+ * o Firestore é compartilhado. A chamada conta antes de ir à Brapi, então a
+ * que a Brapi recusa também gasta cota, como os tempos fora do plano do
+ * token, que nunca chegam ao Firestore e se repetem a cada varredura. Quem
+ * passa do limite continua com dados, porque o app busca direto na Brapi
+ * quando a função recusa.
  */
 const DAILY_CALL_LIMIT = 300;
 
