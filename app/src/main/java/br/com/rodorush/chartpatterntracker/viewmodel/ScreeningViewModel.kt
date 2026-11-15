@@ -7,6 +7,7 @@ import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
+import br.com.rodorush.chartpatterntracker.model.IntervalNotInPlanException
 import br.com.rodorush.chartpatterntracker.model.PatternItem
 import br.com.rodorush.chartpatterntracker.model.ScreeningFailure
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
@@ -147,7 +148,8 @@ class ScreeningViewModel(
     /**
      * Varre cada par (ativo, tempo gráfico) uma única vez, com todos os padrões selecionados,
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
-     * ser obtida, por erro ou por tempo esgotado, vai para [screeningFailures]. Se for
+     * ser obtida, por erro, por recusa do plano do token da Brapi ou por tempo esgotado, vai
+     * para [screeningFailures]. Só o erro vai para o Crashlytics. Se for
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
@@ -179,6 +181,10 @@ class ScreeningViewModel(
                             }
                         } catch (e: CancellationException) {
                             throw e
+                        } catch (e: IntervalNotInPlanException) {
+                            // Recusa esperada, já registrada no repositório: o par vai para
+                            // as falhas sem virar erro no Crashlytics.
+                            null
                         } catch (e: Exception) {
                             Log.e(
                                 TAG,

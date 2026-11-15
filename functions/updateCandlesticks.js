@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const axios = require("axios");
 const {findInvalidField} = require("./validation");
 const {consumeQuota} = require("./rateLimit");
+const {PLAN_INTERVAL_REASON, isIntervalNotInPlan} = require("./brapiError");
 
 admin.initializeApp();
 
@@ -40,7 +41,11 @@ async function reserveCall(uid) {
  * Só atende usuário logado e só aceita `ticker` e `timeframe` válidos
  * (ver `validation.js`). Cada usuário tem uma cota diária de chamadas
  * (`rateLimit.js`); acima dela, a função recusa com `resource-exhausted`
- * antes de chamar a Brapi. O token da Brapi vem sempre do payload
+ * antes de chamar a Brapi. Quando a Brapi recusa o intervalo porque o plano
+ * do token não o libera (`brapiError.js`), a função responde
+ * `failed-precondition` com `details.reason` igual a `PLAN_INTERVAL_REASON`,
+ * para o app tratar a recusa como esperada; os demais erros saem como
+ * `internal`. O token da Brapi vem sempre do payload
  * (`brapiToken`): a função não tem token próprio, então quem chama gasta a
  * própria cota. Ele nunca vai para o log: nem o payload, nem o objeto de
  * erro do axios, que carrega o token nos parâmetros da requisição.
@@ -115,14 +120,23 @@ exports.updateCandlesticks = onCall(OPTIONS, async (request) => {
     // Só campos escolhidos: o objeto de erro do axios leva o token em
     // `config.params`, e o corpo da resposta não é nosso para garantir
     // que não o repita. Da Brapi entra só o texto de `message`.
+    const status = error.response ? error.response.status : undefined;
     const body = error.response ? error.response.data : undefined;
+    if (isIntervalNotInPlan(status, body)) {
+      logger.warn("Intervalo fora do plano do token", {ticker, timeframe});
+      throw new HttpsError(
+          "failed-precondition",
+          "Interval not available in the Brapi plan",
+          {reason: PLAN_INTERVAL_REASON},
+      );
+    }
     const brapiMessage = body && typeof body.message === "string" ?
       body.message.slice(0, 200) : undefined;
     logger.error("Erro ao atualizar candlesticks", {
       ticker,
       timeframe,
       mensagem: error.message,
-      status: error.response ? error.response.status : undefined,
+      status,
       brapi: brapiMessage,
     });
     throw new HttpsError(

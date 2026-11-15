@@ -12,6 +12,7 @@ import br.com.rodorush.chartpatterntracker.data.BrapiDataSource
 import br.com.rodorush.chartpatterntracker.data.MockDataSource
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
+import br.com.rodorush.chartpatterntracker.model.IntervalNotInPlanException
 import br.com.rodorush.chartpatterntracker.model.PatternDisplayMode
 import br.com.rodorush.chartpatterntracker.model.PatternOccurrence
 import kotlinx.coroutines.CancellationException
@@ -153,6 +154,7 @@ class ChartViewModel(
             Log.d(TAG, "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
                 var finalCandlesticks: List<Candlestick>? = null
+                var intervalNotInPlan = false
 
                 runCatching { repository.fetchCandlesticks(ticker, interval, range) }
                     .onSuccess { cached ->
@@ -170,14 +172,21 @@ class ChartViewModel(
                         }
                     }
                     .onFailure { e ->
-                        Log.w(
-                            TAG,
-                            "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
-                            e
-                        )
+                        if (e is IntervalNotInPlanException) {
+                            // Recusa esperada, já registrada no repositório; a Brapi direta
+                            // recusaria o mesmo intervalo.
+                            intervalNotInPlan = true
+                            _error.value = "Nenhum dado disponível"
+                        } else {
+                            Log.w(
+                                TAG,
+                                "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
+                                e
+                            )
+                        }
                     }
 
-                if (finalCandlesticks == null) {
+                if (finalCandlesticks == null && !intervalNotInPlan) {
                     Log.d(
                         TAG,
                         "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}"
@@ -255,6 +264,8 @@ class ChartViewModel(
      * cruzada entre iterações ou com a tela de gráfico ativa.
      *
      * @return ocorrências por ID de padrão; mapa vazio quando a série existe mas não tem velas.
+     * @throws IntervalNotInPlanException quando o plano do token da Brapi não libera o
+     * intervalo. A fonte direta não é tentada, porque recusaria o mesmo intervalo.
      * @throws Exception quando nem o repositório nem a fonte direta entregam a série, para o
      * chamador distinguir falha de busca de ausência de padrão.
      */
@@ -269,12 +280,17 @@ class ChartViewModel(
             repository.fetchCandlesticks(ticker, interval, range)
         } catch (e: CancellationException) {
             throw e
+        } catch (e: IntervalNotInPlanException) {
+            throw e
         } catch (e: Exception) {
             // O repositório já registrou o erro; a fonte direta é a segunda tentativa.
             emptyList()
         }
         val candlesticks = if (cached.isNotEmpty()) cached
-        else _currentSource.value.getHistoricalData(ticker, range, interval).getOrThrow()
+        else {
+            Log.d(TAG, "runScreening($ticker,$interval): sem série no repositório, tentando a Brapi direta")
+            _currentSource.value.getHistoricalData(ticker, range, interval).getOrThrow()
+        }
         if (candlesticks.isEmpty()) return emptyMap()
         return repository.detectPatterns(patternIds, candlesticks)
     }
