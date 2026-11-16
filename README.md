@@ -255,7 +255,12 @@ flowchart TD
 4. **Cloud Function `updateCandlesticks`** — busca dados frescos.
 5. **Brapi API** — fonte primária de OHLCV.
 
-A série em cache vale enquanto nenhum pregão da B3 tiver aberto depois do período da última vela: o dia, a semana no `1wk` e o mês no `1mo`. Fim de semana, feriado e o horário antes da abertura não contam, então a vela do último pregão basta e a Cloud Function não é chamada à toa. O calendário de pregões está em `model/B3Calendar.kt`.
+A série em cache vale enquanto cumprir duas condições, decididas em `model/CandleFreshness.kt`:
+
+- **Nenhum pregão da B3 abriu depois do período da última vela:** o dia, a semana no `1wk` e o mês no `1mo`. Fim de semana, feriado e o horário antes da abertura não contam, então a vela do último pregão basta e a Cloud Function não é chamada à toa.
+- **Ela foi lida da Brapi depois do último fechamento.** A Brapi devolve a vela do período em andamento, então a série lida com o pregão aberto traz a última vela parcial. Depois do fechamento ela é buscada mais uma vez, e a vela fechada substitui a parcial no Room. Por isso `1wk` e `1mo` também são buscados uma vez por pregão.
+
+O instante da leitura na Brapi acompanha a vela nas duas camadas: `fetchedAt` no documento do Firestore e `lastUpdated` na linha do Room. O calendário de pregões e a hora do fechamento estão em `model/B3Calendar.kt`.
 
 ---
 
@@ -435,8 +440,8 @@ O backend serverless mora em `functions/`, com runtime `nodejs22`. O ponto de en
 2. Recebe `ticker`, `timeframe` e `brapiToken` do cliente e valida os três (`functions/validation.js`): ticker com 4 a 10 letras maiúsculas ou dígitos, intervalo da mesma lista de `TimeframeItem` e token obrigatório, porque a função não tem token próprio. O que foge disso recebe `invalid-argument`.
 3. Conta a chamada na cota diária do usuário (`functions/rateLimit.js`): 300 chamadas por dia, em UTC, guardadas em `rate_limits/{uid}`. Acima disso, recebe `resource-exhausted` antes de qualquer chamada à Brapi, e o app busca direto na Brapi.
 4. Consulta `https://brapi.dev/api/quote/{ticker}?range=3mo&interval={timeframe}&token=...`. Se a Brapi recusa o intervalo porque o plano do token não o libera (400 com `code: "INVALID_INTERVAL"` e `details.feature: "__historical_interval__"`, ver `functions/brapiError.js`), responde `failed-precondition` com `details.reason = "plan-interval"`. O app marca o par como falha, sem buscar direto na Brapi e sem registrar erro no Crashlytics, e até ser fechado não chama mais a função para esse par. Os demais erros da Brapi saem como `internal`.
-5. Transforma os dados em objetos `{time, open, high, low, close, volume}`.
-6. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch.
+5. Transforma os dados em objetos `{time, open, high, low, close, volume, fetchedAt}` (`functions/candles.js`). `fetchedAt` é o instante da consulta à Brapi, em ms epoch, igual em todas as velas da chamada.
+6. Persiste em `candlesticks/{ticker}/{timeframe}` no Firestore via batch, regravando os 3 meses. Assim, só a última vela da série pode estar parcial, e o `fetchedAt` diz ao app se ela foi lida antes do fechamento.
 7. Retorna o array para o app, que então salva no Room.
 
 O token da Brapi não vai para o log em nenhum nível: a função não registra o payload nem o objeto de erro do axios, que carrega o token nos parâmetros da requisição.

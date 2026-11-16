@@ -4,6 +4,13 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/**
+ * Vela no cache local.
+ *
+ * @property lastUpdated instante em que a vela foi lida da Brapi, em ms epoch: o da chamada à
+ * `updateCandlesticks`, ou o `fetchedAt` do documento quando ela vem do Firestore. `0` quando o
+ * documento não traz o carimbo.
+ */
 @Entity(
     tableName = "candlesticks",
     indices = [

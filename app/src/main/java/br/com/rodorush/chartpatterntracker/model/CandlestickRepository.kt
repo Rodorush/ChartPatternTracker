@@ -17,36 +17,53 @@ class CandlestickRepository(
 ) {
     private val refusedPairs = RefusedPairs()
 
+    /**
+     * Velas dos últimos 90 dias do par, pelo cache em camadas: o Room, depois o Firestore e,
+     * por fim, a `updateCandlesticks`, que consulta a Brapi. Cada camada só serve enquanto
+     * [CandleFreshness.isUpToDate] a der como atualizada.
+     *
+     * O que chega do Firestore ou da função regrava no Room a vela de mesmo horário: a última
+     * vela da série pode ter sido lida em formação, e a versão fechada tem de substituí-la.
+     *
+     * @param range não é usado: a função busca sempre 3 meses.
+     * @throws IntervalNotInPlanException quando o plano do token da Brapi recusa o par.
+     */
     suspend fun fetchCandlesticks(ticker: String, timeframe: String, range: String = "3mo"): List<Candlestick> {
         return withContext(Dispatchers.IO) {
             val today = System.currentTimeMillis()
             val threeMonthsAgo = today - NINETY_DAYS_MS
             val latest = dao.getLatestTimestamp(ticker, timeframe) ?: 0
+            val lastFetch = dao.getLastFetchTime(ticker, timeframe) ?: 0
 
             try {
                 val existingCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
-                val existingTimes = existingCandlesticks.map { it.time }.toSet()
 
-                if (CandleFreshness.isUpToDate(latest, today, timeframe) && latest >= threeMonthsAgo && existingCandlesticks.isNotEmpty()) {
+                if (CandleFreshness.isUpToDate(latest, lastFetch, today, timeframe) && latest >= threeMonthsAgo && existingCandlesticks.isNotEmpty()) {
                     Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): cache local com ${existingCandlesticks.size} velas")
                     existingCandlesticks
                 } else {
-                    val remoteCandlesticks = firestoreService.fetchCandlesticks(ticker, timeframe, latest, today)
-                    val candlesticksToSave = if (remoteCandlesticks.isEmpty() || !CandleFreshness.isUpToDate(remoteCandlesticks.last().time, today, timeframe)) {
-                        val updatedCandlesticks = refusedPairs.guard(ticker, timeframe) {
+                    val remote = firestoreService.fetchCandlesticks(ticker, timeframe, latest, today)
+                    val remoteUpToDate = remote.candles.isNotEmpty() &&
+                        CandleFreshness.isUpToDate(remote.candles.last().time, remote.fetchedAt, today, timeframe)
+                    val updatedCandlesticks = if (remoteUpToDate) {
+                        emptyList()
+                    } else {
+                        refusedPairs.guard(ticker, timeframe) {
                             callUpdateCandlesticks(ticker, timeframe)
                         }
-                        (remoteCandlesticks + updatedCandlesticks).distinctBy { it.time }.filter { it.time !in existingTimes }
-                    } else {
-                        remoteCandlesticks.filter { it.time !in existingTimes }
                     }
 
-                    if (candlesticksToSave.isNotEmpty()) {
-                        dao.insertAll(candlesticksToSave.toEntities(ticker, timeframe))
+                    // Cada origem com o seu carimbo. A resposta da função vai por último na
+                    // lista: é mais nova que a leitura do Firestore, feita antes da chamada, e
+                    // o REPLACE do DAO deixa valer a última linha de cada horário.
+                    val entitiesToSave = remote.candles.toEntities(ticker, timeframe, remote.fetchedAt) +
+                        updatedCandlesticks.toEntities(ticker, timeframe, today)
+                    if (entitiesToSave.isNotEmpty()) {
+                        dao.insertAll(entitiesToSave)
                     }
 
                     val finalCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
-                    Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): ${finalCandlesticks.size} velas (remoto=${remoteCandlesticks.size}, novas=${candlesticksToSave.size})")
+                    Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): ${finalCandlesticks.size} velas (remoto=${remote.candles.size}, função=${updatedCandlesticks.size})")
                     finalCandlesticks
                 }
             } catch (e: IntervalNotInPlanException) {

@@ -8,7 +8,8 @@ import java.time.Month
 import java.time.ZoneId
 
 /**
- * Calendário de pregões da B3: quais dias têm negociação e a que horas a sessão abre.
+ * Calendário de pregões da B3: quais dias têm negociação, a que horas a sessão abre e a partir
+ * de que hora os dados do pregão estão fechados na Brapi.
  *
  * Fonte: calendário de negociação da B3, conferido contra a série diária da Brapi para PETR4
  * de nov/2021 a nov/2026, sem divergência, e contra a série horária do último ano para o
@@ -21,6 +22,13 @@ internal object B3Calendar {
 
     private val REGULAR_OPEN: LocalTime = LocalTime.of(10, 0)
     private val ASH_WEDNESDAY_OPEN: LocalTime = LocalTime.of(13, 0)
+
+    /**
+     * Hora a partir da qual as velas do pregão do dia contam como fechadas na Brapi. A última
+     * vela horária de um pregão começa às 16:00, mas a diária segue mudando depois das 17:00:
+     * em PETR4, o volume do dia ainda subia às 18:29. As 19:00 são a margem sobre isso.
+     */
+    private val SETTLED_AT: LocalTime = LocalTime.of(19, 0)
     private const val BLACK_CONSCIOUSNESS_SINCE = 2024
 
     /** Se [date] tem pregão: dia de semana fora dos feriados da B3. */
@@ -35,9 +43,25 @@ internal object B3Calendar {
         val local = now.atZone(ZONE)
         val today = local.toLocalDate()
         if (isTradingDay(today) && !local.toLocalTime().isBefore(sessionOpen(today))) return today
-        // Termina: nenhum ano tem mais que alguns dias de semana seguidos sem pregão.
-        return generateSequence(today.minusDays(1)) { it.minusDays(1) }.first { isTradingDay(it) }
+        return previousTradingDay(today)
     }
+
+    /**
+     * O instante mais recente, até [now], em que as velas de um pregão ficaram fechadas na
+     * Brapi. O que foi lido dela antes desse instante pode trazer a última vela ainda em
+     * formação.
+     */
+    fun lastSettlement(now: Instant): Instant {
+        val local = now.atZone(ZONE)
+        val today = local.toLocalDate()
+        val settledToday = isTradingDay(today) && !local.toLocalTime().isBefore(SETTLED_AT)
+        val session = if (settledToday) today else previousTradingDay(today)
+        return session.atTime(SETTLED_AT).atZone(ZONE).toInstant()
+    }
+
+    // Termina: nenhum ano tem mais que alguns dias de semana seguidos sem pregão.
+    private fun previousTradingDay(date: LocalDate): LocalDate =
+        generateSequence(date.minusDays(1)) { it.minusDays(1) }.first { isTradingDay(it) }
 
     /** Abertura da sessão em [date], no fuso da B3: 13:00 na Quarta de Cinzas, 10:00 nos demais. */
     private fun sessionOpen(date: LocalDate): LocalTime =

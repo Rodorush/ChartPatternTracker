@@ -83,4 +83,25 @@ class B3CalendarTest {
         assertEquals(day(2026, 2, 13), B3Calendar.lastOpenedSession(brt(2026, 2, 18, 12, 59)))
         assertEquals(day(2026, 2, 18), B3Calendar.lastOpenedSession(brt(2026, 2, 18, 13, 0)))
     }
+
+    @Test
+    fun `pregao do dia so fecha as 19h`() {
+        assertEquals(brt(2026, 11, 13, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 16, 18, 59)))
+        assertEquals(brt(2026, 11, 16, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 16, 19, 0)))
+        assertEquals(brt(2026, 11, 16, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 17, 9, 0)))
+    }
+
+    @Test
+    fun `fim de semana e feriado mantem o fechamento do ultimo pregao`() {
+        assertEquals(brt(2026, 11, 13, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 14, 20, 0)))
+        assertEquals(brt(2026, 11, 13, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 15, 20, 0)))
+        assertEquals(brt(2026, 11, 19, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 20, 20, 0)))
+        assertEquals(brt(2026, 11, 19, 19, 0), B3Calendar.lastSettlement(brt(2026, 11, 23, 18, 59)))
+    }
+
+    @Test
+    fun `quarta de cinzas fecha no horario normal`() {
+        assertEquals(brt(2026, 2, 13, 19, 0), B3Calendar.lastSettlement(brt(2026, 2, 18, 18, 59)))
+        assertEquals(brt(2026, 2, 18, 19, 0), B3Calendar.lastSettlement(brt(2026, 2, 18, 19, 0)))
+    }
 }
