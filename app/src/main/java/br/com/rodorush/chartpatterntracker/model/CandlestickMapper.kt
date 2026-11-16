@@ -1,6 +1,7 @@
 package br.com.rodorush.chartpatterntracker.model
 
-fun Candlestick.toEntity(ticker: String, timeframe: String, lastUpdated: Long = System.currentTimeMillis()): CandlestickEntity {
+/** @param lastUpdated instante da leitura na Brapi, como em [CandlestickEntity.lastUpdated]. */
+fun Candlestick.toEntity(ticker: String, timeframe: String, lastUpdated: Long): CandlestickEntity {
     return CandlestickEntity(
         ticker = ticker,
         timeframe = timeframe,
@@ -25,7 +26,8 @@ fun CandlestickEntity.toCandlestick(): Candlestick {
     )
 }
 
-fun List<Candlestick>.toEntities(ticker: String, timeframe: String, lastUpdated: Long = System.currentTimeMillis()): List<CandlestickEntity> {
+/** @param lastUpdated instante da leitura na Brapi, como em [CandlestickEntity.lastUpdated]. */
+fun List<Candlestick>.toEntities(ticker: String, timeframe: String, lastUpdated: Long): List<CandlestickEntity> {
     return map { it.toEntity(ticker, timeframe, lastUpdated) }
 }
 

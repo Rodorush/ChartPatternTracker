@@ -20,7 +20,7 @@ val appModule = module {
             androidContext(),
             AppDatabase::class.java,
             "chart_pattern_db"
-        ).build()
+        ).fallbackToDestructiveMigration(dropAllTables = true).build()
     }
 
     single { get<AppDatabase>().candlestickDao() }

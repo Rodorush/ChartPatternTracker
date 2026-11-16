@@ -5,6 +5,7 @@ const axios = require("axios");
 const {findInvalidField} = require("./validation");
 const {consumeQuota} = require("./rateLimit");
 const {PLAN_INTERVAL_REASON, isIntervalNotInPlan} = require("./brapiError");
+const {toCandlesticks} = require("./candles");
 
 admin.initializeApp();
 
@@ -36,7 +37,10 @@ async function reserveCall(uid) {
 
 /**
  * Busca na Brapi as velas dos últimos 3 meses de um ativo, grava em
- * `candlesticks/{ticker}/{timeframe}` e devolve a lista ao app.
+ * `candlesticks/{ticker}/{timeframe}` e devolve a lista ao app. Cada vela
+ * leva `fetchedAt`, o instante da consulta (`candles.js`): a Brapi devolve a
+ * vela do período em andamento, e a chamada regrava os 3 meses, então só a
+ * última vela da série pode estar parcial.
  *
  * Só atende usuário logado e só aceita `ticker` e `timeframe` válidos
  * (ver `validation.js`). Cada usuário tem uma cota diária de chamadas
@@ -80,6 +84,8 @@ exports.updateCandlesticks = onCall(OPTIONS, async (request) => {
   }
 
   try {
+    // Antes da consulta: o carimbo nunca fica à frente do dado que acompanha.
+    const fetchedAt = Date.now();
     const response = await axios.get(`https://brapi.dev/api/quote/${ticker}`, {
       params: {
         range: "3mo",
@@ -89,15 +95,7 @@ exports.updateCandlesticks = onCall(OPTIONS, async (request) => {
     });
 
     const history = response.data.results[0].historicalDataPrice;
-    const candlesticks = history.map((candle) => ({
-      // A Brapi devolve a data em segundos; o app trabalha em milissegundos.
-      time: new Date(candle.date * 1000).getTime(),
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-      volume: candle.volume,
-    }));
+    const candlesticks = toCandlesticks(history, fetchedAt);
 
     const batch = admin.firestore().batch();
     candlesticks.forEach((candle) => {
