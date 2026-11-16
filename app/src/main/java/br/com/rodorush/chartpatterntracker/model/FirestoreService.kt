@@ -6,10 +6,10 @@ import com.google.firebase.firestore.ktx.firestoreSettings
 import kotlinx.coroutines.tasks.await
 
 /**
- * Velas lidas do Firestore.
+ * Velas que vieram do backend, do Firestore ou da resposta da `updateCandlesticks`.
  *
- * @property fetchedAt instante em que a `updateCandlesticks` leu a série da Brapi, em ms epoch:
- * o maior `fetchedAt` dos documentos lidos. `0` quando nenhum deles traz o campo.
+ * @property fetchedAt instante em que a função leu a série da Brapi, em ms epoch. Do
+ * Firestore, é o maior `fetchedAt` dos documentos lidos, e `0` quando nenhum traz o campo.
  */
 data class RemoteCandlesticks(val candles: List<Candlestick>, val fetchedAt: Long)
 

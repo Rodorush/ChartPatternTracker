@@ -24,6 +24,7 @@ class CandlestickRepository(
      *
      * O que chega do Firestore ou da função regrava no Room a vela de mesmo horário: a última
      * vela da série pode ter sido lida em formação, e a versão fechada tem de substituí-la.
+     * Cada vela vai para o Room com o instante em que a função a leu da Brapi.
      *
      * @param range não é usado: a função busca sempre 3 meses.
      * @throws IntervalNotInPlanException quando o plano do token da Brapi recusa o par.
@@ -45,25 +46,23 @@ class CandlestickRepository(
                     val remote = firestoreService.fetchCandlesticks(ticker, timeframe, latest, today)
                     val remoteUpToDate = remote.candles.isNotEmpty() &&
                         CandleFreshness.isUpToDate(remote.candles.last().time, remote.fetchedAt, today, timeframe)
-                    val updatedCandlesticks = if (remoteUpToDate) {
-                        emptyList()
+                    // Com o Firestore desatualizado, vale só a resposta da função: ela traz os
+                    // 3 meses e é mais nova que a leitura do Firestore, feita antes da chamada.
+                    val fetched = if (remoteUpToDate) {
+                        remote
                     } else {
                         refusedPairs.guard(ticker, timeframe) {
-                            callUpdateCandlesticks(ticker, timeframe)
+                            callUpdateCandlesticks(ticker, timeframe, today)
                         }
                     }
 
-                    // Cada origem com o seu carimbo. A resposta da função vai por último na
-                    // lista: é mais nova que a leitura do Firestore, feita antes da chamada, e
-                    // o REPLACE do DAO deixa valer a última linha de cada horário.
-                    val entitiesToSave = remote.candles.toEntities(ticker, timeframe, remote.fetchedAt) +
-                        updatedCandlesticks.toEntities(ticker, timeframe, today)
-                    if (entitiesToSave.isNotEmpty()) {
-                        dao.insertAll(entitiesToSave)
+                    if (fetched.candles.isNotEmpty()) {
+                        dao.insertAll(fetched.candles.toEntities(ticker, timeframe, fetched.fetchedAt))
                     }
 
                     val finalCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
-                    Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): ${finalCandlesticks.size} velas (remoto=${remote.candles.size}, função=${updatedCandlesticks.size})")
+                    val source = if (remoteUpToDate) "Firestore" else "função"
+                    Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): ${finalCandlesticks.size} velas (origem=$source, gravadas=${fetched.candles.size})")
                     finalCandlesticks
                 }
             } catch (e: IntervalNotInPlanException) {
@@ -83,10 +82,15 @@ class CandlestickRepository(
         }
     }
 
+    /**
+     * @param calledAt instante da chamada, em ms epoch. Vira o carimbo da leitura quando a
+     * resposta não traz `fetchedAt`.
+     */
     private suspend fun callUpdateCandlesticks(
         ticker: String,
-        timeframe: String
-    ): List<Candlestick> {
+        timeframe: String,
+        calledAt: Long
+    ): RemoteCandlesticks {
         val callable = Firebase.functions.getHttpsCallable("updateCandlesticks")
         val params = mapOf(
             "ticker" to ticker,
@@ -97,7 +101,10 @@ class CandlestickRepository(
             val result = callable.call(params).await()
             val data = (result.data as? List<*>)?.filterIsInstance<Map<String, Any>>().orEmpty()
             Log.d(TAG, "updateCandlesticks($ticker,$timeframe): ${data.size} velas recebidas")
-            return data.mapNotNull { map ->
+            // O carimbo é o do servidor, o mesmo que a função grava no Firestore: assim o Room
+            // e o Firestore medem a leitura pelo mesmo relógio.
+            val fetchedAt = data.firstNotNullOfOrNull { (it["fetchedAt"] as? Number)?.toLong() } ?: calledAt
+            val candles = data.mapNotNull { map ->
                 try {
                     Candlestick(
                         time = (map["time"] as Number).toLong(),
@@ -112,6 +119,7 @@ class CandlestickRepository(
                     null
                 }
             }
+            return RemoteCandlesticks(candles, fetchedAt)
         } catch (e: Exception) {
             if (e is FirebaseFunctionsException && isIntervalNotInPlan(e.code.name, e.details)) {
                 // Sem Throwable, fica só como breadcrumb e não vira não fatal no Crashlytics.

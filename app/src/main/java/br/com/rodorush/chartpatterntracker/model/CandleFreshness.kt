@@ -7,7 +7,8 @@ import java.time.temporal.TemporalAdjusters
 
 /**
  * Decide se a série em cache ainda vale, para o app não chamar a `updateCandlesticks` à toa
- * nem entregar ao detector uma vela pela metade.
+ * nem seguir, depois do fechamento, com a vela que leu pela metade. Durante o pregão, a vela
+ * em formação vale como foi lida.
  *
  * A série está atualizada quando cumpre as duas condições:
  * - Nenhum pregão da B3 abriu depois do período da última vela. Fim de semana, feriado e a
