@@ -27,12 +27,12 @@ class CandlestickRepository(
                 val existingCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
                 val existingTimes = existingCandlesticks.map { it.time }.toSet()
 
-                if (latest >= today - ONE_DAY_MS && latest >= threeMonthsAgo && existingCandlesticks.isNotEmpty()) {
+                if (CandleFreshness.isUpToDate(latest, today, timeframe) && latest >= threeMonthsAgo && existingCandlesticks.isNotEmpty()) {
                     Log.d(TAG, "fetchCandlesticks($ticker,$timeframe): cache local com ${existingCandlesticks.size} velas")
                     existingCandlesticks
                 } else {
                     val remoteCandlesticks = firestoreService.fetchCandlesticks(ticker, timeframe, latest, today)
-                    val candlesticksToSave = if (remoteCandlesticks.isEmpty() || remoteCandlesticks.last().time < today - ONE_DAY_MS) {
+                    val candlesticksToSave = if (remoteCandlesticks.isEmpty() || !CandleFreshness.isUpToDate(remoteCandlesticks.last().time, today, timeframe)) {
                         val updatedCandlesticks = refusedPairs.guard(ticker, timeframe) {
                             callUpdateCandlesticks(ticker, timeframe)
                         }
@@ -43,7 +43,6 @@ class CandlestickRepository(
 
                     if (candlesticksToSave.isNotEmpty()) {
                         dao.insertAll(candlesticksToSave.toEntities(ticker, timeframe))
-                        dao.getCandlesticks(ticker, timeframe, 0)
                     }
 
                     val finalCandlesticks = dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()

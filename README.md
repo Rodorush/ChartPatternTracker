@@ -255,7 +255,7 @@ flowchart TD
 4. **Cloud Function `updateCandlesticks`** — busca dados frescos.
 5. **Brapi API** — fonte primária de OHLCV.
 
-A política de freshness considera o `lastUpdate` da última vela e o intervalo do timeframe.
+A série em cache vale enquanto nenhum pregão da B3 tiver aberto depois do período da última vela: o dia, a semana no `1wk` e o mês no `1mo`. Fim de semana, feriado e o horário antes da abertura não contam, então a vela do último pregão basta e a Cloud Function não é chamada à toa. O calendário de pregões está em `model/B3Calendar.kt`.
 
 ---
 
