@@ -22,7 +22,7 @@ import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.RealTimeQuotesScreen
 import br.com.rodorush.chartpatterntracker.util.AppPreferences
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
-import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -85,7 +85,7 @@ fun AppNavHost(
             val screeningViewModel: ScreeningViewModel = koinViewModel(
                 viewModelStoreOwner = viewModelStoreOwner
             )
-            CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
+            CompositionLocalProvider(LocalAssetsProvider provides koinInject<AssetsProvider>()) {
                 SelectAssetsScreen(
                     viewModel = screeningViewModel,
                     onNavigateBack = { navController.popBackStack() },
@@ -99,7 +99,7 @@ fun AppNavHost(
         }
 
         composable(Screen.RealTimeQuotes.route) {
-            CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
+            CompositionLocalProvider(LocalAssetsProvider provides koinInject<AssetsProvider>()) {
                 RealTimeQuotesScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onRowClick = { ticker ->

@@ -264,6 +264,8 @@ A série em cache vale enquanto cumprir duas condições, decididas em `model/Ca
 
 O instante da leitura na Brapi acompanha a vela nas duas camadas: `fetchedAt` no documento do Firestore e `lastUpdated` na linha do Room. O calendário de pregões e a hora do fechamento estão em `model/B3Calendar.kt`.
 
+A lista de ativos da seleção vem do `/quote/list` da Brapi, e a última carga fica num arquivo do aparelho (`brapi_quote_list.json`, em `filesDir`). Sem rede, a seleção de ativos abre com essa lista, e a varredura segue pelas camadas acima. A tela de cotações não usa a cópia, para não mostrar preço velho como atual. O código está em `util/provider/BrapiAssetsProvider.kt`.
+
 ---
 
 ## Stack tecnológico

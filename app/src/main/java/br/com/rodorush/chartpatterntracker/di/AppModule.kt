@@ -8,11 +8,15 @@ import br.com.rodorush.chartpatterntracker.model.CandlestickDao
 import br.com.rodorush.chartpatterntracker.model.CandlestickRepository
 import br.com.rodorush.chartpatterntracker.model.FirestoreService
 import br.com.rodorush.chartpatterntracker.util.AppPreferences
+import br.com.rodorush.chartpatterntracker.util.provider.AssetListCache
+import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ChartViewModel
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import java.io.File
 
 val appModule = module {
     single {
@@ -34,6 +38,10 @@ val appModule = module {
     }
 
     single { AppPreferences(get<SharedPreferences>()) }
+
+    single<AssetsProvider> {
+        BrapiAssetsProvider(AssetListCache(File(androidContext().filesDir, "brapi_quote_list.json")))
+    }
 
     viewModel {
         ChartViewModel(

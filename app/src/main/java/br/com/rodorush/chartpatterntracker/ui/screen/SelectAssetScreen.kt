@@ -73,7 +73,7 @@ fun SelectAssetsScreen(
     val selectedAssets by viewModel.selectedAssets.collectAsState()
 
     LaunchedEffect(Unit) {
-        assetsProvider.fetchAssets { loadedAssets ->
+        assetsProvider.fetchAssets(useLastLoad = true) { loadedAssets ->
             val filtered = loadedAssets.filterNot { it.ticker.endsWith("F", ignoreCase = true) }
             assets = filtered.sortedBy { it.ticker }
             Log.d(
@@ -274,7 +274,16 @@ fun SelectAssetsScreen(
                                 )
                             }
                         }
-                        IconButton(onClick = { onChartClick(asset.ticker) }) {
+                        IconButton(onClick = {
+                            // A tela sai da composição e perde os checkStates; o ViewModel os guarda.
+                            // Só quando a seleção mudou: atualizar cancela a varredura e a refaz.
+                            val selected = assets.filterIndexed { i, _ -> checkStates[i] }
+                            val saved = viewModel.selectedAssets.value
+                            if (selected.map { it.ticker }.toSet() != saved.map { it.ticker }.toSet()) {
+                                viewModel.updateSelectedAssets(selected)
+                            }
+                            onChartClick(asset.ticker)
+                        }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.castical_64px),
                                 contentDescription = stringResource(R.string.view_chart),
