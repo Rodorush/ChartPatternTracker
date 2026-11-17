@@ -4,7 +4,7 @@ import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
 
 class MockAssetsProvider : AssetsProvider {
-    override suspend fun fetchAssets(onResult: (List<AssetItem>) -> Unit) {
+    override suspend fun fetchAssets(useLastLoad: Boolean, onResult: (List<AssetItem>) -> Unit) {
         val mockAssets = listOf(
             AssetItem(ticker = "PETR4", shortName = "Petrobras PN", longName = "Petróleo Brasileiro S.A. - Petrobras", name = "Petrobras", lastPrice = 38.5, changePercent = 1.2),
             AssetItem(ticker = "VALE3", shortName = "Vale ON", longName = "Vale S.A.", name = "Vale", lastPrice = 62.3, changePercent = -0.8),

@@ -22,7 +22,7 @@ import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.RealTimeQuotesScreen
 import br.com.rodorush.chartpatterntracker.util.AppPreferences
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
-import br.com.rodorush.chartpatterntracker.util.provider.BrapiAssetsProvider
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -40,6 +40,7 @@ fun AppNavHost(
     // NF-05 + PROD-06: gate universal de primeiro uso — aceite do aviso de risco e dos
     // Termos/Política (persistido em AppPreferences.disclaimerAccepted; cobre e-mail e Google).
     val appPreferences = koinInject<AppPreferences>()
+    val assetsProvider = koinInject<AssetsProvider>()
     val startDestination = if (appPreferences.disclaimerAccepted) {
         Screen.Main.route
     } else {
@@ -85,7 +86,7 @@ fun AppNavHost(
             val screeningViewModel: ScreeningViewModel = koinViewModel(
                 viewModelStoreOwner = viewModelStoreOwner
             )
-            CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
+            CompositionLocalProvider(LocalAssetsProvider provides assetsProvider) {
                 SelectAssetsScreen(
                     viewModel = screeningViewModel,
                     onNavigateBack = { navController.popBackStack() },
@@ -99,7 +100,7 @@ fun AppNavHost(
         }
 
         composable(Screen.RealTimeQuotes.route) {
-            CompositionLocalProvider(LocalAssetsProvider provides BrapiAssetsProvider()) {
+            CompositionLocalProvider(LocalAssetsProvider provides assetsProvider) {
                 RealTimeQuotesScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onRowClick = { ticker ->
