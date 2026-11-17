@@ -255,7 +255,7 @@ flowchart TD
 4. **Cloud Function `updateCandlesticks`** — busca dados frescos.
 5. **Brapi API** — fonte primária de OHLCV.
 6. **Brapi direta, pelo app** — quando a função falha.
-7. **Room vencido** — último recurso, quando nenhuma fonte responde (sem rede, sem cota, função fora do ar). A série que perdeu a validade ainda é servida, e a tela de resultados e o gráfico avisam que ela pode estar desatualizada. A cadeia de fontes está em `viewmodel/SeriesLoader.kt`.
+7. **Room vencido** — último recurso, quando nenhuma fonte responde (sem rede, sem cota, função fora do ar) ou a busca de um par passa do tempo limite da varredura. A série que perdeu a validade ainda é servida, e a tela de resultados e o gráfico avisam que ela pode estar desatualizada. A cadeia de fontes está em `viewmodel/SeriesLoader.kt`.
 
 A série em cache vale enquanto cumprir duas condições, decididas em `model/CandleFreshness.kt`:
 

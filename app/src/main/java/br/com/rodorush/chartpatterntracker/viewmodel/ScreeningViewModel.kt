@@ -166,7 +166,8 @@ class ScreeningViewModel(
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
      * ser obtida, por erro, por recusa do plano do token da Brapi ou por tempo esgotado, vai
      * para [screeningFailures]. Só o erro vai para o Crashlytics. O par varrido sobre a série
-     * vencida do Room, porque nenhuma fonte respondeu, vai para [stalePairs]. Se for
+     * vencida do Room, porque nenhuma fonte respondeu ou o tempo esgotou, vai para [stalePairs]
+     * e só cai nas falhas quando o Room também não tem a série. Se for
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
@@ -194,8 +195,15 @@ class ScreeningViewModel(
                                     interval = timeframe.value,
                                     patternIds = patternIds
                                 )
-                            }.also {
-                                if (it == null) Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
+                            } ?: run {
+                                // Rede lenta não chega a falhar: o tempo limite corta a busca
+                                // antes do Room vencido, que vira o recurso aqui.
+                                Log.e(TAG, "Timeout em ${asset.ticker}-${timeframe.value}")
+                                chartViewModel.runStaleScreening(
+                                    ticker = asset.ticker,
+                                    interval = timeframe.value,
+                                    patternIds = patternIds
+                                )
                             }
                         } catch (e: CancellationException) {
                             throw e

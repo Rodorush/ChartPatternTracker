@@ -27,6 +27,8 @@ class SeriesLoaderTest {
         fromBrapi: Result<List<Candlestick>>,
         fromStaleCache: List<Candlestick>
     ) = loadSeries(
+        ticker = "PETR4",
+        timeframe = "1d",
         fromRepository = fromRepository,
         fromBrapi = { brapiCalls++; fromBrapi },
         fromStaleCache = { cacheCalls++; fromStaleCache }
@@ -67,10 +69,37 @@ class SeriesLoaderTest {
 
     @Test
     fun `Brapi direta vazia tambem cai no Room vencido`() = runTest {
-        val result = load({ emptyList() }, Result.success(emptyList()), saved)
+        val result = load({ throw IOException("sem rede") }, Result.success(emptyList()), saved)
 
         assertEquals(saved, result.candles)
         assertTrue(result.stale)
+    }
+
+    @Test
+    fun `repositorio vazio sem falha nao le o Room vencido`() = runTest {
+        // Vazio sem falha quer dizer que o Room não tem a série na janela.
+        val result = load({ emptyList() }, Result.success(emptyList()), saved)
+
+        assertTrue(result.candles.isEmpty())
+        assertFalse(result.stale)
+        assertEquals(0, cacheCalls)
+    }
+
+    @Test
+    fun `falha ao ler o Room vencido relanca a falha da Brapi direta`() = runTest {
+        val brapiFailure = IOException("sem rede")
+
+        val e = runCatching {
+            loadSeries(
+                ticker = "PETR4",
+                timeframe = "1d",
+                fromRepository = { throw IOException("função") },
+                fromBrapi = { Result.failure(brapiFailure) },
+                fromStaleCache = { throw IllegalStateException("disco") }
+            )
+        }.exceptionOrNull()
+
+        assertSame(brapiFailure, e)
     }
 
     @Test

@@ -161,6 +161,7 @@ class ChartViewModel(
         detectPatterns: Boolean = true,
         patternIds: List<String> = emptyList()
     ) {
+        _isStale.value = false
         if (ticker.isBlank() || interval.isBlank()) {
             Log.e(TAG, "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
             _error.value = "Parâmetros inválidos"
@@ -169,12 +170,13 @@ class ChartViewModel(
         }
 
         _isLoading.value = true
-        _isStale.value = false
         viewModelScope.launch {
             Log.d(TAG, "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
                 val load = try {
                     loadSeries(
+                        ticker = ticker,
+                        timeframe = interval,
                         fromRepository = { repository.fetchCandlesticks(ticker, interval, range) },
                         fromBrapi = {
                             Log.d(
@@ -208,9 +210,6 @@ class ChartViewModel(
                 if (load != null && load.candles.isEmpty()) {
                     Log.w(TAG, "Nenhum dado retornado para $ticker-$interval")
                     _error.value = "Nenhum dado disponível"
-                }
-                if (load?.stale == true) {
-                    Log.w(TAG, "Nenhuma fonte respondeu; série vencida do Room para $ticker-$interval")
                 }
                 _isStale.value = load?.stale == true
 
@@ -278,6 +277,8 @@ class ChartViewModel(
             return ScreeningScan(emptyMap(), stale = false)
         }
         val load = loadSeries(
+            ticker = ticker,
+            timeframe = interval,
             fromRepository = { repository.fetchCandlesticks(ticker, interval, range) },
             fromBrapi = {
                 Log.d(TAG, "runScreening($ticker,$interval): sem série no repositório, tentando a Brapi direta")
@@ -285,11 +286,26 @@ class ChartViewModel(
             },
             fromStaleCache = { repository.cachedCandlesticks(ticker, interval) }
         )
-        if (load.stale) {
-            Log.w(TAG, "runScreening($ticker,$interval): nenhuma fonte respondeu; série vencida do Room")
-        }
         if (load.candles.isEmpty()) return ScreeningScan(emptyMap(), stale = false)
         return ScreeningScan(repository.detectPatterns(patternIds, load.candles), load.stale)
+    }
+
+    /**
+     * Varre o par só com a série que o Room guarda, sem conferir a validade, sem mutar o estado
+     * público. É o recurso da varredura quando [runScreening] estoura o tempo limite: a rede
+     * lenta não chega a falhar, e [loadSeries] não alcança o Room vencido.
+     *
+     * @return o resultado marcado como desatualizado, ou `null` quando o Room não tem a série.
+     */
+    suspend fun runStaleScreening(
+        ticker: String,
+        interval: String,
+        patternIds: List<String>
+    ): ScreeningScan? {
+        val candlesticks = repository.cachedCandlesticks(ticker, interval)
+        if (candlesticks.isEmpty()) return null
+        Log.w(TAG, "runStaleScreening($ticker,$interval): tempo esgotado; série vencida do Room")
+        return ScreeningScan(repository.detectPatterns(patternIds, candlesticks), stale = true)
     }
 
     fun getCandlestickDataAsJson(): String {
