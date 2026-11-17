@@ -6,6 +6,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import br.com.rodorush.chartpatterntracker.model.Candlestick
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
@@ -67,6 +69,7 @@ fun ChartDetailScreen(
     val patternsData by viewModel.patternsData.collectAsState()
     val error by viewModel.error.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isStale by viewModel.isStale.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isChartInitialized by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -179,6 +182,17 @@ fun ChartDetailScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                if (isStale) {
+                    Text(
+                        text = stringResource(R.string.chart_stale_data),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)

@@ -9,7 +9,7 @@ import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.model.IntervalNotInPlanException
 import br.com.rodorush.chartpatterntracker.model.PatternItem
-import br.com.rodorush.chartpatterntracker.model.ScreeningFailure
+import br.com.rodorush.chartpatterntracker.model.ScreeningPair
 import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
@@ -41,17 +41,30 @@ class ScreeningViewModel(
     private val _screeningResults = MutableStateFlow<List<ScreeningResult>>(emptyList())
     val screeningResults: StateFlow<List<ScreeningResult>> = _screeningResults
 
-    private val _screeningFailures = MutableStateFlow<List<ScreeningFailure>>(emptyList())
-    val screeningFailures: StateFlow<List<ScreeningFailure>> = _screeningFailures
+    private val _screeningFailures = MutableStateFlow<List<ScreeningPair>>(emptyList())
+    val screeningFailures: StateFlow<List<ScreeningPair>> = _screeningFailures
 
-    private val _dismissedFailures = MutableStateFlow<Set<ScreeningFailure>>(emptySet())
+    private val _dismissedFailures = MutableStateFlow<Set<ScreeningPair>>(emptySet())
 
     /**
      * Falhas de [screeningFailures] que o usuário já dispensou. O aviso só aparece enquanto
      * houver falha fora deste conjunto, então uma falha nova o traz de volta. Vale até a
      * seleção mudar: a varredura refeita depois de um cancelamento não reabre o aviso.
      */
-    val dismissedFailures: StateFlow<Set<ScreeningFailure>> = _dismissedFailures
+    val dismissedFailures: StateFlow<Set<ScreeningPair>> = _dismissedFailures
+
+    private val _stalePairs = MutableStateFlow<List<ScreeningPair>>(emptyList())
+
+    /**
+     * Pares varridos sobre a série vencida do Room, porque nenhuma fonte respondeu. Os achados
+     * deles entram em [screeningResults] normalmente; a tela avisa que podem estar desatualizados.
+     */
+    val stalePairs: StateFlow<List<ScreeningPair>> = _stalePairs
+
+    private val _dismissedStale = MutableStateFlow<Set<ScreeningPair>>(emptySet())
+
+    /** Pares de [stalePairs] que o usuário já dispensou, com a mesma regra de [dismissedFailures]. */
+    val dismissedStale: StateFlow<Set<ScreeningPair>> = _dismissedStale
 
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
@@ -123,22 +136,25 @@ class ScreeningViewModel(
     fun updateSelectedPatterns(patterns: List<PatternItem>) {
         cancelScreening()
         _selectedPatterns.value = patterns
-        _shouldRefresh.value = true
-        _dismissedFailures.value = emptySet()
+        onSelectionChanged()
     }
 
     fun updateSelectedAssets(assets: List<AssetItem>) {
         cancelScreening()
         _selectedAssets.value = assets
-        _shouldRefresh.value = true
-        _dismissedFailures.value = emptySet()
+        onSelectionChanged()
     }
 
     fun updateSelectedTimeframes(timeframes: List<TimeframeItem>) {
         cancelScreening()
         _selectedTimeframes.value = timeframes
+        onSelectionChanged()
+    }
+
+    private fun onSelectionChanged() {
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
+        _dismissedStale.value = emptySet()
     }
 
     fun setAllPatternsChecked(value: Boolean) { _allPatternsChecked.value = value }
@@ -149,7 +165,8 @@ class ScreeningViewModel(
      * Varre cada par (ativo, tempo gráfico) uma única vez, com todos os padrões selecionados,
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
      * ser obtida, por erro, por recusa do plano do token da Brapi ou por tempo esgotado, vai
-     * para [screeningFailures]. Só o erro vai para o Crashlytics. Se for
+     * para [screeningFailures]. Só o erro vai para o Crashlytics. O par varrido sobre a série
+     * vencida do Room, porque nenhuma fonte respondeu, vai para [stalePairs]. Se for
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
@@ -162,13 +179,14 @@ class ScreeningViewModel(
             _isScreening.value = true
             _screeningResults.value = emptyList()
             _screeningFailures.value = emptyList()
+            _stalePairs.value = emptyList()
             val results = mutableListOf<ScreeningResult>()
             val patterns = _selectedPatterns.value
             val patternIds = patterns.map { it.id }
             try {
                 for (asset in _selectedAssets.value) {
                     for (timeframe in _selectedTimeframes.value) {
-                        val detected = try {
+                        val scan = try {
                             withTimeoutOrNull(SCREENING_TIMEOUT_MS) {
                                 chartViewModel.runScreening(
                                     ticker = asset.ticker,
@@ -195,11 +213,14 @@ class ScreeningViewModel(
                             )
                             null
                         }
-                        if (detected == null) {
-                            _screeningFailures.update { it + ScreeningFailure(asset.ticker, timeframe) }
+                        if (scan == null) {
+                            _screeningFailures.update { it + ScreeningPair(asset.ticker, timeframe) }
                             continue
                         }
-                        val found = patterns.filter { !detected[it.id].isNullOrEmpty() }
+                        if (scan.stale) {
+                            _stalePairs.update { it + ScreeningPair(asset.ticker, timeframe) }
+                        }
+                        val found = patterns.filter { !scan.patterns[it.id].isNullOrEmpty() }
                         if (found.isEmpty()) continue
 
                         val (sn, ln) = fetchAssetInfo(asset.ticker)
@@ -240,6 +261,11 @@ class ScreeningViewModel(
     /** Fecha o aviso de falhas até surgir uma falha nova ou a seleção mudar. */
     fun dismissFailures() {
         _dismissedFailures.value = _screeningFailures.value.toSet()
+    }
+
+    /** Fecha o aviso de séries vencidas até surgir um par novo ou a seleção mudar. */
+    fun dismissStale() {
+        _dismissedStale.value = _stalePairs.value.toSet()
     }
 
     /**
