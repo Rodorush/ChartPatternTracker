@@ -83,6 +83,18 @@ class CandlestickRepository(
     }
 
     /**
+     * Velas dos últimos 90 dias que o Room guarda para o par, sem conferir se a série ainda
+     * vale: pode estar vencida. É a última tentativa quando nenhuma fonte responde, e quem a
+     * usa avisa que os dados podem estar desatualizados. Lista vazia quando o par nunca foi lido.
+     */
+    suspend fun cachedCandlesticks(ticker: String, timeframe: String): List<Candlestick> {
+        return withContext(Dispatchers.IO) {
+            val threeMonthsAgo = System.currentTimeMillis() - NINETY_DAYS_MS
+            dao.getCandlesticks(ticker, timeframe, threeMonthsAgo).toCandlesticks()
+        }
+    }
+
+    /**
      * @param calledAt instante da chamada, em ms epoch. Vira o carimbo da leitura quando a
      * resposta não traz `fetchedAt`.
      */

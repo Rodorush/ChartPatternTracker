@@ -22,6 +22,17 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Resultado da varredura de um par.
+ *
+ * @property stale `true` quando a série veio do Room vencido: a tela avisa que o par foi
+ * varrido sobre dados que podem estar desatualizados.
+ */
+data class ScreeningScan(
+    val patterns: Map<String, List<PatternOccurrence>>,
+    val stale: Boolean
+)
+
 class ChartViewModel(
     private val preferences: SharedPreferences,
     private val repository: CandlestickRepository
@@ -55,6 +66,14 @@ class ChartViewModel(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _isStale = MutableStateFlow(false)
+
+    /**
+     * `true` quando a série de [candlestickData] veio do Room vencido, porque nenhuma fonte
+     * respondeu; a tela avisa que ela pode estar desatualizada. Volta a `false` a cada [fetchData].
+     */
+    val isStale: StateFlow<Boolean> = _isStale
 
     private val sources = mapOf(
         "Brapi" to BrapiDataSource(),
@@ -142,6 +161,7 @@ class ChartViewModel(
         detectPatterns: Boolean = true,
         patternIds: List<String> = emptyList()
     ) {
+        _isStale.value = false
         if (ticker.isBlank() || interval.isBlank()) {
             Log.e(TAG, "Ticker ou interval inválidos: ticker=$ticker, interval=$interval")
             _error.value = "Parâmetros inválidos"
@@ -153,74 +173,47 @@ class ChartViewModel(
         viewModelScope.launch {
             Log.d(TAG, "Iniciando fetchData para ticker=$ticker, range=$range, interval=$interval")
             try {
-                var finalCandlesticks: List<Candlestick>? = null
-                var intervalNotInPlan = false
-
-                runCatching { repository.fetchCandlesticks(ticker, interval, range) }
-                    .onSuccess { cached ->
-                        if (cached.isNotEmpty()) {
-                            finalCandlesticks = cached
+                val load = try {
+                    loadSeries(
+                        ticker = ticker,
+                        timeframe = interval,
+                        fromRepository = { repository.fetchCandlesticks(ticker, interval, range) },
+                        fromBrapi = {
                             Log.d(
                                 TAG,
-                                "Candlesticks obtidos via Room/Firestore: ${cached.size}"
+                                "Sem série no repositório para $ticker-$interval; fonte direta: " +
+                                    _currentSource.value.javaClass.simpleName
                             )
-                        } else {
-                            Log.d(
-                                TAG,
-                                "Cache local vazio para $ticker-$interval; tentando fonte remota"
-                            )
-                        }
-                    }
-                    .onFailure { e ->
-                        if (e is IntervalNotInPlanException) {
-                            // Recusa esperada, já registrada no repositório; a Brapi direta
-                            // recusaria o mesmo intervalo.
-                            intervalNotInPlan = true
-                            _error.value = "Nenhum dado disponível"
-                        } else {
-                            Log.w(
-                                TAG,
-                                "Falha ao consultar Room/Firestore para $ticker-$interval: ${e.message}",
-                                e
-                            )
-                        }
-                    }
-
-                if (finalCandlesticks == null && !intervalNotInPlan) {
-                    Log.d(
-                        TAG,
-                        "Fonte de dados atual: ${_currentSource.value.javaClass.simpleName}"
+                            _currentSource.value.getHistoricalData(ticker, range, interval)
+                        },
+                        fromStaleCache = { repository.cachedCandlesticks(ticker, interval) }
                     )
-                    val remoteCandlesticks =
-                        _currentSource.value.getHistoricalData(ticker, range, interval)
-                    remoteCandlesticks.onSuccess { remoteData ->
-                        Log.d(
-                            TAG,
-                            "Fonte remota retornou ${remoteData.size} candlesticks"
-                        )
-                        if (remoteData.isNotEmpty()) {
-                            finalCandlesticks = remoteData
-                        } else {
-                            Log.w(
-                                TAG,
-                                "Nenhum dado remoto retornado para $ticker"
-                            )
-                            _error.value = "Nenhum dado disponível"
-                        }
-                    }.onFailure { e ->
-                        Log.e(
-                            TAG,
-                            "Erro ao obter dados remotos",
-                            e,
-                            "ticker" to ticker,
-                            "interval" to interval,
-                            "range" to range
-                        )
-                        _error.value = e.message ?: "Falha ao buscar dados iniciais"
-                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: IntervalNotInPlanException) {
+                    // Recusa esperada, já registrada no repositório.
+                    _error.value = "Nenhum dado disponível"
+                    null
+                } catch (e: Exception) {
+                    Log.e(
+                        TAG,
+                        "Erro ao obter dados remotos",
+                        e,
+                        "ticker" to ticker,
+                        "interval" to interval,
+                        "range" to range
+                    )
+                    _error.value = e.message ?: "Falha ao buscar dados iniciais"
+                    null
                 }
 
-                val candlesticks = finalCandlesticks.orEmpty()
+                if (load != null && load.candles.isEmpty()) {
+                    Log.w(TAG, "Nenhum dado retornado para $ticker-$interval")
+                    _error.value = "Nenhum dado disponível"
+                }
+                _isStale.value = load?.stale == true
+
+                val candlesticks = load?.candles.orEmpty()
                 if (candlesticks.isEmpty()) {
                     _candlestickData.value = emptyList()
                     _patternsData.value = emptyMap()
@@ -238,6 +231,8 @@ class ChartViewModel(
                         _patternsData.value = emptyMap()
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(
                     TAG,
@@ -263,10 +258,13 @@ class ChartViewModel(
      * lote, onde o ChartViewModel é compartilhado e qualquer mutação causaria contaminação
      * cruzada entre iterações ou com a tela de gráfico ativa.
      *
-     * @return ocorrências por ID de padrão; mapa vazio quando a série existe mas não tem velas.
+     * A série vem de [loadSeries]: quando nem o repositório nem a fonte direta respondem, vale
+     * a série vencida do Room, e o resultado sai marcado como desatualizado.
+     *
+     * @return ocorrências por ID de padrão, vazias quando a série existe mas não tem velas.
      * @throws IntervalNotInPlanException quando o plano do token da Brapi não libera o
      * intervalo. A fonte direta não é tentada, porque recusaria o mesmo intervalo.
-     * @throws Exception quando nem o repositório nem a fonte direta entregam a série, para o
+     * @throws Exception quando nenhuma fonte, nem o Room vencido, entrega a série, para o
      * chamador distinguir falha de busca de ausência de padrão.
      */
     suspend fun runScreening(
@@ -274,25 +272,40 @@ class ChartViewModel(
         range: String,
         interval: String,
         patternIds: List<String>
-    ): Map<String, List<PatternOccurrence>> {
-        if (ticker.isBlank() || interval.isBlank() || patternIds.isEmpty()) return emptyMap()
-        val cached = try {
-            repository.fetchCandlesticks(ticker, interval, range)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IntervalNotInPlanException) {
-            throw e
-        } catch (e: Exception) {
-            // O repositório já registrou o erro; a fonte direta é a segunda tentativa.
-            emptyList()
+    ): ScreeningScan {
+        if (ticker.isBlank() || interval.isBlank() || patternIds.isEmpty()) {
+            return ScreeningScan(emptyMap(), stale = false)
         }
-        val candlesticks = if (cached.isNotEmpty()) cached
-        else {
-            Log.d(TAG, "runScreening($ticker,$interval): sem série no repositório, tentando a Brapi direta")
-            _currentSource.value.getHistoricalData(ticker, range, interval).getOrThrow()
-        }
-        if (candlesticks.isEmpty()) return emptyMap()
-        return repository.detectPatterns(patternIds, candlesticks)
+        val load = loadSeries(
+            ticker = ticker,
+            timeframe = interval,
+            fromRepository = { repository.fetchCandlesticks(ticker, interval, range) },
+            fromBrapi = {
+                Log.d(TAG, "runScreening($ticker,$interval): sem série no repositório, tentando a Brapi direta")
+                _currentSource.value.getHistoricalData(ticker, range, interval)
+            },
+            fromStaleCache = { repository.cachedCandlesticks(ticker, interval) }
+        )
+        if (load.candles.isEmpty()) return ScreeningScan(emptyMap(), stale = false)
+        return ScreeningScan(repository.detectPatterns(patternIds, load.candles), load.stale)
+    }
+
+    /**
+     * Varre o par só com a série que o Room guarda, sem conferir a validade, sem mutar o estado
+     * público. É o recurso da varredura quando [runScreening] estoura o tempo limite: a rede
+     * lenta não chega a falhar, e [loadSeries] não alcança o Room vencido.
+     *
+     * @return o resultado marcado como desatualizado, ou `null` quando o Room não tem a série.
+     */
+    suspend fun runStaleScreening(
+        ticker: String,
+        interval: String,
+        patternIds: List<String>
+    ): ScreeningScan? {
+        val candlesticks = repository.cachedCandlesticks(ticker, interval)
+        if (candlesticks.isEmpty()) return null
+        Log.w(TAG, "runStaleScreening($ticker,$interval): tempo esgotado; série vencida do Room")
+        return ScreeningScan(repository.detectPatterns(patternIds, candlesticks), stale = true)
     }
 
     fun getCandlestickDataAsJson(): String {

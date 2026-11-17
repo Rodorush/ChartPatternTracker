@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
+import br.com.rodorush.chartpatterntracker.model.ScreeningPair
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import br.com.rodorush.customlogs.Log
@@ -71,6 +73,8 @@ fun ScreeningResultsScreen(
     val screeningResults by viewModel.screeningResults.collectAsState()
     val screeningFailures by viewModel.screeningFailures.collectAsState()
     val dismissedFailures by viewModel.dismissedFailures.collectAsState()
+    val stalePairs by viewModel.stalePairs.collectAsState()
+    val dismissedStale by viewModel.dismissedStale.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
@@ -166,43 +170,26 @@ fun ScreeningResultsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (screeningFailures.any { it !in dismissedFailures }) {
-                val failedByTimeframe = screeningFailures.groupBy({ it.timeframe }, { it.ticker })
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(verticalAlignment = Alignment.Top) {
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.screening_failures),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            failedByTimeframe.forEach { (timeframe, tickers) ->
-                                Text(
-                                    text = "${stringResource(timeframe.nameRes)}: ${tickers.joinToString(", ")}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                        IconButton(onClick = { viewModel.dismissFailures() }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.dismiss_screening_failures),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
+                PairsNotice(
+                    title = stringResource(R.string.screening_failures),
+                    pairs = screeningFailures,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    dismissLabel = stringResource(R.string.dismiss_screening_failures),
+                    onDismiss = { viewModel.dismissFailures() }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (stalePairs.any { it !in dismissedStale }) {
+                PairsNotice(
+                    title = stringResource(R.string.screening_stale),
+                    pairs = stalePairs,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    dismissLabel = stringResource(R.string.dismiss_screening_stale),
+                    onDismiss = { viewModel.dismissStale() }
+                )
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
@@ -310,6 +297,55 @@ fun ScreeningResultsScreen(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(top = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+/** Aviso que lista pares da varredura agrupados por tempo gráfico, com botão de fechar. */
+@Composable
+private fun PairsNotice(
+    title: String,
+    pairs: List<ScreeningPair>,
+    containerColor: Color,
+    contentColor: Color,
+    dismissLabel: String,
+    onDismiss: () -> Unit
+) {
+    val tickersByTimeframe = pairs.groupBy({ it.timeframe }, { it.ticker })
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                tickersByTimeframe.forEach { (timeframe, tickers) ->
+                    Text(
+                        text = "${stringResource(timeframe.nameRes)}: ${tickers.joinToString(", ")}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = dismissLabel,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

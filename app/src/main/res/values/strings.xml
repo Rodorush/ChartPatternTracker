@@ -94,6 +94,9 @@
     <string name="total_results_found">Total de resultados: %1$d</string>
     <string name="screening_failures">Não foi possível obter dados de:</string>
     <string name="dismiss_screening_failures">Fechar aviso</string>
+    <string name="screening_stale">Dados salvos, podem estar desatualizados:</string>
+    <string name="dismiss_screening_stale">Fechar aviso de dados salvos</string>
+    <string name="chart_stale_data">Não foi possível atualizar. Exibindo dados salvos, que podem estar desatualizados.</string>
     <string name="no_patterns_found">Nenhum padrão encontrado.</string>
     <string name="pattern_display_title">Exibição dos padrões</string>
     <string name="pattern_display_all">Todas as ocorrências</string>
