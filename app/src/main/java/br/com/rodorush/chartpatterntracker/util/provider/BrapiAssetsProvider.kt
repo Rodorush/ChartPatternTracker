@@ -9,7 +9,6 @@ import br.com.rodorush.customlogs.Log
 import kotlinx.coroutines.CancellationException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.IOException
 import java.util.Objects
 
 private const val TAG = "BrapiAssetsProvider"
@@ -87,7 +86,9 @@ internal suspend fun loadQuoteList(
 private suspend fun saveQuietly(cache: AssetListCache, stocks: List<StockQuote>) {
     try {
         cache.save(stocks)
-    } catch (e: IOException) {
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
         Log.w(TAG, "Lista de ativos não foi guardada para uso sem rede", e)
     }
 }

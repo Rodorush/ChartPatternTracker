@@ -75,6 +75,26 @@ class AssetListTest {
     }
 
     @Test
+    fun `lista da Brapi vale para a tela mesmo sem conseguir grava-la`() = runTest {
+        // Um diretório no lugar do arquivo faz o rename do temporário falhar.
+        assertTrue(file.mkdir())
+
+        val result = loadQuoteList({ listOf(petr) }, cache, useLastLoad = false)
+
+        assertEquals(listOf(petr), result)
+    }
+
+    @Test
+    fun `falha da gravacao fora do disco tambem deixa a lista da Brapi na tela`() = runTest {
+        // Sem serializeSpecialFloatingPointValues, o Gson recusa NaN com IllegalArgumentException.
+        val semPreco = petr.copy(close = Double.NaN)
+
+        val result = loadQuoteList({ listOf(semPreco) }, cache, useLastLoad = false)
+
+        assertEquals(listOf(semPreco), result)
+    }
+
+    @Test
     fun `falha da Brapi devolve a ultima carga`() = runTest {
         cache.save(listOf(petr, vale))
 
