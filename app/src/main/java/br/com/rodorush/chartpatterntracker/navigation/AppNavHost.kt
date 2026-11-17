@@ -40,7 +40,6 @@ fun AppNavHost(
     // NF-05 + PROD-06: gate universal de primeiro uso — aceite do aviso de risco e dos
     // Termos/Política (persistido em AppPreferences.disclaimerAccepted; cobre e-mail e Google).
     val appPreferences = koinInject<AppPreferences>()
-    val assetsProvider = koinInject<AssetsProvider>()
     val startDestination = if (appPreferences.disclaimerAccepted) {
         Screen.Main.route
     } else {
@@ -86,7 +85,7 @@ fun AppNavHost(
             val screeningViewModel: ScreeningViewModel = koinViewModel(
                 viewModelStoreOwner = viewModelStoreOwner
             )
-            CompositionLocalProvider(LocalAssetsProvider provides assetsProvider) {
+            CompositionLocalProvider(LocalAssetsProvider provides koinInject<AssetsProvider>()) {
                 SelectAssetsScreen(
                     viewModel = screeningViewModel,
                     onNavigateBack = { navController.popBackStack() },
@@ -100,7 +99,7 @@ fun AppNavHost(
         }
 
         composable(Screen.RealTimeQuotes.route) {
-            CompositionLocalProvider(LocalAssetsProvider provides assetsProvider) {
+            CompositionLocalProvider(LocalAssetsProvider provides koinInject<AssetsProvider>()) {
                 RealTimeQuotesScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onRowClick = { ticker ->

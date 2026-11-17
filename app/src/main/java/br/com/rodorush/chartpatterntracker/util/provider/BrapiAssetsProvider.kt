@@ -44,7 +44,7 @@ class BrapiAssetsProvider internal constructor(
  *
  * A lista da Brapi, quando chega com algum ativo, substitui a salva no [cache]. Se ela falha ou
  * chega vazia, a lista salva é devolvida quando [useLastLoad] permite. As duas fontes perdem as
- * entradas sem ticker.
+ * entradas sem ticker ou com ticker em branco.
  *
  * @param useLastLoad `false` para a tela que mostra o preço como atual: sem a Brapi, a lista
  * volta vazia em vez de trazer os preços da última carga.
@@ -97,7 +97,7 @@ private suspend fun saveQuietly(cache: AssetListCache, stocks: List<StockQuote>)
  * tipo não nulo pode ser removido pelo compilador; `Objects.nonNull` confere de fato.
  */
 private fun List<StockQuote>.withTicker(): List<StockQuote> =
-    filter { Objects.nonNull(it) && Objects.nonNull(it.stock) }
+    filter { Objects.nonNull(it) && Objects.nonNull(it.stock) && it.stock.isNotBlank() }
 
 private fun StockQuote.toAssetItem(): AssetItem {
     val norm = normalizeName(name)

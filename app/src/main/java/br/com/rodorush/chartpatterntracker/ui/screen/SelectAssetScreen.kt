@@ -276,7 +276,12 @@ fun SelectAssetsScreen(
                         }
                         IconButton(onClick = {
                             // A tela sai da composição e perde os checkStates; o ViewModel os guarda.
-                            viewModel.updateSelectedAssets(assets.filterIndexed { i, _ -> checkStates[i] })
+                            // Só quando a seleção mudou: atualizar cancela a varredura e a refaz.
+                            val selected = assets.filterIndexed { i, _ -> checkStates[i] }
+                            val saved = viewModel.selectedAssets.value
+                            if (selected.map { it.ticker }.toSet() != saved.map { it.ticker }.toSet()) {
+                                viewModel.updateSelectedAssets(selected)
+                            }
                             onChartClick(asset.ticker)
                         }) {
                             Icon(

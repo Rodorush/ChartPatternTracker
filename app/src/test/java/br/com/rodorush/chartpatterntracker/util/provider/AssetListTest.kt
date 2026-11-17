@@ -117,9 +117,10 @@ class AssetListTest {
     }
 
     @Test
-    fun `entrada nula ou sem ticker sai nas duas fontes`() = runTest {
+    fun `entrada nula, sem ticker ou com ticker em branco sai nas duas fontes`() = runTest {
         // O Gson ignora a nulidade do Kotlin, como na resposta real da Brapi.
-        val json = """{"stocks":[{"name":"Sem ticker"},null,{"stock":"PETR4","name":"Petrobras"}]}"""
+        val json = """{"stocks":[{"name":"Sem ticker"},null,{"stock":" ","name":"Em branco"},""" +
+            """{"stock":"PETR4","name":"Petrobras"}]}"""
         val fromBrapi = Gson().fromJson(json, QuoteListResponse::class.java).stocks
 
         val direct = loadQuoteList({ fromBrapi }, cache, useLastLoad = true)
