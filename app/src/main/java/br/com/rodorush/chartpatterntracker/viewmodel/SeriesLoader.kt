@@ -30,7 +30,8 @@ data class SeriesLoad(
  * @param fromRepository série válida do repositório; vazia ou com exceção passa adiante.
  * @param fromBrapi série da Brapi direta; vazia ou com falha passa para o Room vencido.
  * @param fromStaleCache série do Room sem conferir a validade.
- * @return série vazia, com `stale = false`, quando nenhuma fonte falhou e nenhuma tem velas.
+ * @return série vazia, com `stale = false`, quando nenhuma fonte tem velas e a Brapi direta
+ * respondeu sem falha, mesmo que o repositório tenha falhado.
  * @throws IntervalNotInPlanException quando o repositório recusa o par pelo plano.
  * @throws Exception a falha da Brapi direta, quando o Room também não tem a série.
  */

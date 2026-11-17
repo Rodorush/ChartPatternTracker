@@ -76,6 +76,15 @@ class SeriesLoaderTest {
     }
 
     @Test
+    fun `repositorio falha, Brapi direta vazia e Room vazio devolvem serie vazia`() = runTest {
+        val result = load({ throw IOException("sem rede") }, Result.success(emptyList()), emptyList())
+
+        assertTrue(result.candles.isEmpty())
+        assertFalse(result.stale)
+        assertEquals(1, cacheCalls)
+    }
+
+    @Test
     fun `repositorio vazio sem falha nao le o Room vencido`() = runTest {
         // Vazio sem falha quer dizer que o Room não tem a série na janela.
         val result = load({ emptyList() }, Result.success(emptyList()), saved)
