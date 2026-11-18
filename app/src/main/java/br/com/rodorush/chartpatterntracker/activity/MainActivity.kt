@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.ViewModel
 import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.navigation.AppNavHost
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
@@ -25,16 +27,20 @@ class MainActivity : ComponentActivity() {
 
     private val appPreferences: AppPreferences by inject()
 
-    private val exitGate = SessionExitGate()
+    // ViewModel: sobrevive à recriação da Activity (tema, fonte, idioma) durante o signOut do
+    // Google, que é assíncrono, e a nova instância não começa outra saída.
+    private val exitGate: SessionExitGate by viewModels()
 
     // Sessão encerrada pelo Firebase com o app aberto (conta excluída ou desativada, senha trocada
     // ou token revogado em outro aparelho): sem isso, o usuário ficaria no menu com as chamadas
-    // recusadas. O próprio Sair passa pelo portão antes do signOut, então não cai aqui.
+    // recusadas. O Sair passa pelo portão antes do signOut do leaveToLogin, então não cai aqui.
     private val authStateListener = FirebaseAuth.AuthStateListener { auth ->
         if (exitGate.onAuthStateChanged(isSignedIn = auth.currentUser != null)) {
             Log.i(TAG, "Sessão encerrada fora do app; voltando ao login")
             // Não dá para distinguir conta excluída de desativada: reapresenta o aviso de risco,
-            // obrigatório para quem se cadastrar de novo no aparelho (NF-05).
+            // obrigatório para quem se cadastrar de novo no aparelho (NF-05). Na exclusão pelo
+            // Perfil, este caminho chega antes do onAccountDeleted, então o reset não pode
+            // depender só dele.
             appPreferences.disclaimerAccepted = false
             leaveToLogin()
         }
@@ -93,13 +99,15 @@ class MainActivity : ComponentActivity() {
         auth.signOut()
 
         // 2. Deslogar do Google Sign-In (para forçar a escolha de uma conta ao logar novamente)
+        // 3. Redirecionar para a tela de login. Pelo applicationContext, porque esta instância pode
+        // ter sido recriada enquanto o signOut do Google corria; o CLEAR_TASK fecha a que estiver
+        // aberta.
+        val appContext = applicationContext
         googleSignInClient.signOut().addOnCompleteListener {
-
-            // 3. Redirecionar para a tela de login
-            val intent = Intent(this, AuthenticationActivity::class.java).apply {
+            val intent = Intent(appContext, AuthenticationActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
-            startActivity(intent)
+            appContext.startActivity(intent)
             finish()
         }
     }
@@ -115,9 +123,9 @@ class MainActivity : ComponentActivity() {
  *
  * Os dois caminhos se cruzam: o Sair chama `signOut`, que dispara o `AuthStateListener`, e a
  * exclusão de conta encerra a sessão sozinha antes de avisar a tela. Sem o portão, a tela de login
- * abriria duas vezes.
+ * abriria duas vezes. É um ViewModel para valer também entre recriações da Activity.
  */
-internal class SessionExitGate {
+internal class SessionExitGate : ViewModel() {
 
     private var exiting = false
 
