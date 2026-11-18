@@ -43,7 +43,9 @@ class MainActivity : ComponentActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // Previne voltar para AuthenticationActivity
+                // Voltar no menu não faz nada. Embaixo da MainActivity não há outra tela do app:
+                // a AuthenticationActivity fecha ao abrir o menu. O voltar entre as telas do
+                // AppNavHost não passa por aqui, porque o NavHost registra o dele depois.
             }
         })
 

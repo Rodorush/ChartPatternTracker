@@ -33,9 +33,7 @@ class AuthenticationActivity : ComponentActivity() {
 
         // Ícone tocado com a tarefa do app já aberta: fechar devolve a tela que estava em cima,
         // em vez de empilhar outro login ou, com a sessão salva, um segundo menu.
-        val isLauncherIntent = intent.action == Intent.ACTION_MAIN &&
-            intent.hasCategory(Intent.CATEGORY_LAUNCHER)
-        if (isRedundantLauncherStart(isTaskRoot = isTaskRoot, isLauncherIntent = isLauncherIntent)) {
+        if (isRedundantLauncherStart(isTaskRoot, intent.action, intent.categories, intent.flags)) {
             Log.d(TAG, "Ícone com a tarefa já aberta; volta à tela que estava")
             finish()
             return
@@ -70,8 +68,12 @@ class AuthenticationActivity : ComponentActivity() {
         }
     }
 
-    /** Abre o menu e fecha as telas de autenticação, para não ficarem na pilha embaixo dele. */
+    /**
+     * Abre o menu e fecha as telas de autenticação, para não ficarem na pilha embaixo dele.
+     * Uma segunda chamada (dois toques em ENTRAR, verificação de e-mail reavaliada) não abre outro.
+     */
     private fun openMenu() {
+        if (isFinishing) return
         startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
@@ -124,8 +126,22 @@ internal fun resolveStartDestination(
  * tarefa. Se ela nasceu de outro (uma abertura explícita, como `am start -n`), o ícone cria uma
  * AuthenticationActivity nova por cima, que, com a sessão salva, abriria um segundo menu.
  *
+ * Só vale para o intent do ícone, ação MAIN com a categoria LAUNCHER, e com `NEW_TASK`, que garante
+ * que esta instância caiu na tarefa do próprio app. Sem a flag, quem abriu pôs a Activity na tarefa
+ * dele, onde ela também não é a primeira, e fechar faria o app não abrir.
+ *
  * @param isTaskRoot se esta instância é a primeira da tarefa.
- * @param isLauncherIntent se o intent é o do ícone: ação MAIN com a categoria LAUNCHER.
+ * @param action ação do intent que abriu esta instância.
+ * @param categories categorias do mesmo intent; `null` quando ele não tem nenhuma.
+ * @param flags flags do mesmo intent.
  */
-internal fun isRedundantLauncherStart(isTaskRoot: Boolean, isLauncherIntent: Boolean): Boolean =
-    isLauncherIntent && !isTaskRoot
+internal fun isRedundantLauncherStart(
+    isTaskRoot: Boolean,
+    action: String?,
+    categories: Set<String>?,
+    flags: Int
+): Boolean =
+    !isTaskRoot &&
+        action == Intent.ACTION_MAIN &&
+        categories?.contains(Intent.CATEGORY_LAUNCHER) == true &&
+        (flags and Intent.FLAG_ACTIVITY_NEW_TASK) != 0
