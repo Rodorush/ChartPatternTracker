@@ -43,9 +43,15 @@ class MainActivity : ComponentActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // Voltar no menu não faz nada. Embaixo da MainActivity não há outra tela do app:
-                // a AuthenticationActivity fecha ao abrir o menu. O voltar entre as telas do
-                // AppNavHost não passa por aqui, porque o NavHost registra o dele depois.
+                // Voltar na tela de entrada do AppNavHost (o menu, ou o aviso de risco de primeiro
+                // uso, que volta a aparecer) leva o app para segundo plano, com a sessão e a tela
+                // como estão, e o ícone traz a tarefa de volta. O padrão do sistema não basta: ele
+                // só faz isso com a Activity do ícone, e a MainActivity, aberta por intent
+                // explícito, seria fechada. O voltar entre as telas do AppNavHost não passa por
+                // aqui, porque o NavHost registra o dele depois.
+                // Durante a saída para o login, não faz nada: a tela de login abriria com o app
+                // já em segundo plano.
+                if (!exitGate.isExiting) moveTaskToBack(true)
             }
         })
 
@@ -120,7 +126,9 @@ class MainActivity : ComponentActivity() {
  */
 internal class SessionExitGate : ViewModel() {
 
-    private var exiting = false
+    /** Saída para o login em curso, pedida pelo usuário ou pelo fim da sessão. */
+    var isExiting = false
+        private set
 
     /**
      * Pedido de saída do usuário (Sair, Recusar o aviso de risco, conta excluída pelo Perfil).
@@ -128,8 +136,8 @@ internal class SessionExitGate : ViewModel() {
      * @return `true` se a saída começa agora; `false` se já estava em curso.
      */
     fun tryBeginExit(): Boolean {
-        if (exiting) return false
-        exiting = true
+        if (isExiting) return false
+        isExiting = true
         return true
     }
 

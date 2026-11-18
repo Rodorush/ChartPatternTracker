@@ -16,6 +16,26 @@ class SessionExitGateTest {
     }
 
     @Test
+    fun `saida em curso so depois do pedido`() {
+        // O Voltar da MainActivity consulta isExiting: durante a saída, não manda o app para trás.
+        val gate = SessionExitGate()
+
+        assertFalse(gate.isExiting)
+        gate.onAuthStateChanged(isSignedIn = true)
+        assertFalse(gate.isExiting)
+        gate.tryBeginExit()
+        assertTrue(gate.isExiting)
+    }
+
+    @Test
+    fun `sessao encerrada marca a saida em curso`() {
+        val gate = SessionExitGate()
+
+        gate.onAuthStateChanged(isSignedIn = false)
+        assertTrue(gate.isExiting)
+    }
+
+    @Test
     fun `sessao encerrada pede saida uma unica vez`() {
         val gate = SessionExitGate()
 
