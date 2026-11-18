@@ -88,7 +88,9 @@ A varredura em três passos e o que ela devolve:
 - Login com **Google Sign-In** (OAuth 2.0).
 - Cadastro de novos usuários.
 - Sessão lembrada: com o login salvo, o app abre direto no menu, também sem rede.
+- Sessão encerrada fora do app (conta excluída ou desativada, senha trocada em outro aparelho) leva de volta ao login. O app só percebe o fim da sessão quando renova o token de acesso, que vale 1 h.
 - Logout com limpeza de sessão Google.
+- Aviso de risco e aceite dos Termos de Uso e da Política de Privacidade uma vez por conta no aparelho: a mesma conta não o vê de novo depois de sair e entrar, e uma conta nova, inclusive a recriada depois de uma exclusão, vê.
 
 ### Catálogo de padrões
 - 10 detectores de padrões implementados (registro extensível via `PatternDetectorRegistry`).

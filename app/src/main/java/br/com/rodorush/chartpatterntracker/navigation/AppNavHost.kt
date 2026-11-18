@@ -2,6 +2,7 @@ package br.com.rodorush.chartpatterntracker.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -22,6 +23,7 @@ import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.RealTimeQuotesScreen
 import br.com.rodorush.chartpatterntracker.util.AppPreferences
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
+import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -38,12 +40,16 @@ fun AppNavHost(
         ?: throw IllegalStateException("No ViewModelStoreOwner available")
 
     // NF-05 + PROD-06: gate universal de primeiro uso — aceite do aviso de risco e dos
-    // Termos/Política (persistido em AppPreferences.disclaimerAccepted; cobre e-mail e Google).
+    // Termos/Política, uma vez por conta (AppPreferences.disclaimerAcceptedUids; cobre e-mail e Google).
+    // Calculado uma vez: o aceite muda a preferência, mas não deve trocar o destino do NavHost vivo.
     val appPreferences = koinInject<AppPreferences>()
-    val startDestination = if (appPreferences.disclaimerAccepted) {
-        Screen.Main.route
-    } else {
-        Screen.Disclaimer.createRoute(readOnly = false)
+    val authProvider = LocalAuthProvider.current
+    val startDestination = remember {
+        if (appPreferences.needsDisclaimer(authProvider.currentUserId())) {
+            Screen.Disclaimer.createRoute(readOnly = false)
+        } else {
+            Screen.Main.route
+        }
     }
 
     NavHost(
@@ -194,7 +200,8 @@ fun AppNavHost(
             DisclaimerScreen(
                 readOnly = readOnly,
                 onAccept = {
-                    appPreferences.disclaimerAccepted = true
+                    // Sem uid a sessão acabou, e o listener da MainActivity já leva ao login.
+                    authProvider.currentUserId()?.let(appPreferences::acceptDisclaimer)
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Disclaimer.route) { inclusive = true }
                     }
@@ -207,11 +214,8 @@ fun AppNavHost(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onAccountDeleted = {
-                    // Reseta o aviso de risco: novo cadastro no mesmo dispositivo deve reapresentá-lo (NF-05).
-                    appPreferences.disclaimerAccepted = false
-                    onLogout()
-                }
+                // O aviso de risco volta sozinho no próximo cadastro, que ganha outro uid (NF-05).
+                onAccountDeleted = onLogout
             )
         }
     }

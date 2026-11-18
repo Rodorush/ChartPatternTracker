@@ -255,6 +255,8 @@ class FirebaseAuthProvider : AuthProvider {
 
     override fun isEmailVerified(): Boolean = auth.currentUser?.isEmailVerified == true
 
+    override fun currentUserId(): String? = auth.currentUser?.uid
+
     override fun currentUserEmail(): String? = auth.currentUser?.email
 
     override fun currentUserDisplayName(): String? = auth.currentUser?.displayName

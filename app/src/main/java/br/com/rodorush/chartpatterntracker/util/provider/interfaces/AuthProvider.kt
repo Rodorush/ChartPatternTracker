@@ -26,6 +26,7 @@ interface AuthProvider {
     fun updateDisplayName(displayName: String, onResult: (Boolean, String?) -> Unit)
 
     fun isEmailVerified(): Boolean
+    fun currentUserId(): String?
     fun currentUserEmail(): String?
     fun currentUserDisplayName(): String?
     fun currentUserProviderId(): String?
