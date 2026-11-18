@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen.authentication
 
-import android.content.Intent
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -36,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.activity.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
 import br.com.rodorush.chartpatterntracker.ui.component.SocialSignInButton
@@ -47,6 +45,7 @@ import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
+    onSignedIn: () -> Unit,
     onNavigateToVerifyEmail: () -> Unit = {},
     onNavigateToForgotPassword: () -> Unit = {}
 ) {
@@ -65,10 +64,8 @@ fun LoginScreen(
     }
 
     // Fluxo de Google Sign-In encapsulado (ver rememberGoogleSignInLauncher); a navegação
-    // pós-sucesso fica aqui no caller. Mesma ação reaproveitada no RegisterScreen.
-    val launchGoogleSignIn = rememberGoogleSignInLauncher(
-        onSuccess = { context.startActivity(Intent(context, MainActivity::class.java)) }
-    )
+    // pós-sucesso é o onSignedIn, de quem hospeda a tela. Mesma ação reaproveitada no RegisterScreen.
+    val launchGoogleSignIn = rememberGoogleSignInLauncher(onSuccess = onSignedIn)
 
     Column(
         modifier = Modifier
@@ -132,7 +129,7 @@ fun LoginScreen(
                 authProvider.signInWithEmailAndPassword(email, password) { success, error ->
                     if (success) {
                         if (authProvider.isEmailVerified()) {
-                            context.startActivity(Intent(context, MainActivity::class.java))
+                            onSignedIn()
                         } else {
                             onNavigateToVerifyEmail()
                         }
@@ -227,6 +224,6 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     AuthProviderWrapper(authProvider = MockAuthProvider()) {
-        LoginScreen(onNavigateToRegister = {})
+        LoginScreen(onNavigateToRegister = {}, onSignedIn = {})
     }
 }

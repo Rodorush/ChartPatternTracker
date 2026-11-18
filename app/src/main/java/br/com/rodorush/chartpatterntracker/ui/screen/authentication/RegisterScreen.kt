@@ -1,6 +1,5 @@
 package br.com.rodorush.chartpatterntracker.ui.screen.authentication
 
-import android.content.Intent
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.activity.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.LegalAgreementText
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
@@ -55,6 +53,7 @@ import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
 
 @Composable
 fun RegisterScreen(
+    onSignedIn: () -> Unit,
     onNavigateToLogin: () -> Unit = {},
     onNavigateToVerifyEmail: () -> Unit = {},
     viewModel: AuthenticationViewModel = viewModel()
@@ -68,9 +67,7 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var acceptTerms by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val launchGoogleSignIn = rememberGoogleSignInLauncher(
-        onSuccess = { context.startActivity(Intent(context, MainActivity::class.java)) }
-    )
+    val launchGoogleSignIn = rememberGoogleSignInLauncher(onSuccess = onSignedIn)
 
     val isButtonEnabled = remember {
         mutableStateOf(false)
@@ -289,6 +286,6 @@ fun RegisterScreen(
 @Composable
 fun RegisterScreenPreview() {
     AuthProviderWrapper(authProvider = MockAuthProvider()) {
-        RegisterScreen(onNavigateToLogin = {})
+        RegisterScreen(onSignedIn = {}, onNavigateToLogin = {})
     }
 }
