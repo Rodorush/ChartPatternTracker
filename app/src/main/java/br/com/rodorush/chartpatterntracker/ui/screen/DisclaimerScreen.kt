@@ -74,7 +74,7 @@ fun DisclaimerScreen(
 
         // Aceite de Termos/Política embutido no gate universal: cobre também quem entra
         // via Google (que não passa pelo checkbox do cadastro por e-mail). O "Li e concordo"
-        // abaixo vale para o aviso de risco + Termos/Política; persistido por conta em disclaimerAcceptedUid.
+        // abaixo vale para o aviso de risco + Termos/Política; persistido por conta em disclaimerAcceptedUids.
         LegalAgreementText(
             modifier = Modifier.padding(horizontal = 8.dp),
             textAlign = TextAlign.Center

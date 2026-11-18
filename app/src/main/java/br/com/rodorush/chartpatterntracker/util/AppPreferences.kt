@@ -10,30 +10,35 @@ import androidx.core.content.edit
 class AppPreferences(private val prefs: SharedPreferences) {
 
     /**
-     * Conta (uid do Firebase) que deu o "Li e concordo" do gate inicial neste aparelho. Desde a
+     * Contas (uid do Firebase) que deram o "Li e concordo" do gate inicial neste aparelho. Desde a
      * unificação do consentimento (PROD-06), o aceite vale para o aviso de risco **e** para os
      * Termos de Uso / Política de Privacidade — é o registro de consentimento universal (cobre
      * login por e-mail e por Google, que não passa pelo checkbox do cadastro).
      */
-    var disclaimerAcceptedUid: String?
-        get() = prefs.getString(KEY_DISCLAIMER_ACCEPTED_UID, null)
-        set(value) = prefs.edit { putString(KEY_DISCLAIMER_ACCEPTED_UID, value) }
+    val disclaimerAcceptedUids: Set<String>
+        // Cópia: o Set devolvido pelo SharedPreferences não pode ser alterado.
+        get() = prefs.getStringSet(KEY_DISCLAIMER_ACCEPTED_UIDS, null)?.toSet().orEmpty()
+
+    /** Registra o aceite da conta [uid] neste aparelho. */
+    fun acceptDisclaimer(uid: String) {
+        prefs.edit { putStringSet(KEY_DISCLAIMER_ACCEPTED_UIDS, disclaimerAcceptedUids + uid) }
+    }
 
     /** Se a conta [uid] ainda precisa aceitar o aviso de risco neste aparelho. */
-    fun needsDisclaimer(uid: String?): Boolean = needsDisclaimer(disclaimerAcceptedUid, uid)
+    fun needsDisclaimer(uid: String?): Boolean = needsDisclaimer(disclaimerAcceptedUids, uid)
 
     private companion object {
-        const val KEY_DISCLAIMER_ACCEPTED_UID = "disclaimer_accepted_uid"
+        const val KEY_DISCLAIMER_ACCEPTED_UIDS = "disclaimer_accepted_uids"
     }
 }
 
 /**
  * Decide se o gate do aviso de risco aparece: uma vez por conta. Quem volta à mesma conta, depois
- * do Sair ou de uma sessão encerrada fora do app, não o vê de novo. Conta nova, inclusive a
- * recriada depois de uma exclusão (o uid muda), vê.
+ * do Sair, de uma sessão encerrada fora do app ou de outra conta usada no aparelho, não o vê de
+ * novo. Conta nova, inclusive a recriada depois de uma exclusão (o uid muda), vê.
  *
- * @param acceptedUid a conta que já aceitou neste aparelho; `null` se nenhuma aceitou.
+ * @param acceptedUids as contas que já aceitaram neste aparelho.
  * @param currentUid a conta da sessão atual; `null` sem sessão, caso em que o aceite é pedido.
  */
-internal fun needsDisclaimer(acceptedUid: String?, currentUid: String?): Boolean =
-    currentUid == null || acceptedUid != currentUid
+internal fun needsDisclaimer(acceptedUids: Set<String>, currentUid: String?): Boolean =
+    currentUid == null || currentUid !in acceptedUids

@@ -2,6 +2,7 @@ package br.com.rodorush.chartpatterntracker.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -39,13 +40,16 @@ fun AppNavHost(
         ?: throw IllegalStateException("No ViewModelStoreOwner available")
 
     // NF-05 + PROD-06: gate universal de primeiro uso — aceite do aviso de risco e dos
-    // Termos/Política, uma vez por conta (AppPreferences.disclaimerAcceptedUid; cobre e-mail e Google).
+    // Termos/Política, uma vez por conta (AppPreferences.disclaimerAcceptedUids; cobre e-mail e Google).
+    // Calculado uma vez: o aceite muda a preferência, mas não deve trocar o destino do NavHost vivo.
     val appPreferences = koinInject<AppPreferences>()
     val authProvider = LocalAuthProvider.current
-    val startDestination = if (appPreferences.needsDisclaimer(authProvider.currentUserId())) {
-        Screen.Disclaimer.createRoute(readOnly = false)
-    } else {
-        Screen.Main.route
+    val startDestination = remember {
+        if (appPreferences.needsDisclaimer(authProvider.currentUserId())) {
+            Screen.Disclaimer.createRoute(readOnly = false)
+        } else {
+            Screen.Main.route
+        }
     }
 
     NavHost(
@@ -196,7 +200,8 @@ fun AppNavHost(
             DisclaimerScreen(
                 readOnly = readOnly,
                 onAccept = {
-                    appPreferences.disclaimerAcceptedUid = authProvider.currentUserId()
+                    // Sem uid a sessão acabou, e o listener da MainActivity já leva ao login.
+                    authProvider.currentUserId()?.let(appPreferences::acceptDisclaimer)
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Disclaimer.route) { inclusive = true }
                     }
