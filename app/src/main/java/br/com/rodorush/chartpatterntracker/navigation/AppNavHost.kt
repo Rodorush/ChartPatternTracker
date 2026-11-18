@@ -22,6 +22,7 @@ import br.com.rodorush.chartpatterntracker.ui.screen.SettingsScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.RealTimeQuotesScreen
 import br.com.rodorush.chartpatterntracker.util.AppPreferences
 import br.com.rodorush.chartpatterntracker.util.LocalAssetsProvider
+import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AssetsProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.ScreeningViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -38,12 +39,13 @@ fun AppNavHost(
         ?: throw IllegalStateException("No ViewModelStoreOwner available")
 
     // NF-05 + PROD-06: gate universal de primeiro uso — aceite do aviso de risco e dos
-    // Termos/Política (persistido em AppPreferences.disclaimerAccepted; cobre e-mail e Google).
+    // Termos/Política, uma vez por conta (AppPreferences.disclaimerAcceptedUid; cobre e-mail e Google).
     val appPreferences = koinInject<AppPreferences>()
-    val startDestination = if (appPreferences.disclaimerAccepted) {
-        Screen.Main.route
-    } else {
+    val authProvider = LocalAuthProvider.current
+    val startDestination = if (appPreferences.needsDisclaimer(authProvider.currentUserId())) {
         Screen.Disclaimer.createRoute(readOnly = false)
+    } else {
+        Screen.Main.route
     }
 
     NavHost(
@@ -194,7 +196,7 @@ fun AppNavHost(
             DisclaimerScreen(
                 readOnly = readOnly,
                 onAccept = {
-                    appPreferences.disclaimerAccepted = true
+                    appPreferences.disclaimerAcceptedUid = authProvider.currentUserId()
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Disclaimer.route) { inclusive = true }
                     }
@@ -207,11 +209,8 @@ fun AppNavHost(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onAccountDeleted = {
-                    // Reseta o aviso de risco: novo cadastro no mesmo dispositivo deve reapresentá-lo (NF-05).
-                    appPreferences.disclaimerAccepted = false
-                    onLogout()
-                }
+                // O aviso de risco volta sozinho no próximo cadastro, que ganha outro uid (NF-05).
+                onAccountDeleted = onLogout
             )
         }
     }

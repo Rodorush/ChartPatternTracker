@@ -17,7 +17,8 @@ class MockAuthProvider(
     private var updatePasswordRequiresRecentLogin: Boolean = false,
     private var updateEmailSucceeds: Boolean = true,
     private var updateEmailRequiresRecentLogin: Boolean = false,
-    private var updateNameSucceeds: Boolean = true
+    private var updateNameSucceeds: Boolean = true,
+    private var uid: String? = "mock-uid"
 ) : AuthProvider {
 
     var sendEmailVerificationCalls: Int = 0
@@ -176,6 +177,8 @@ class MockAuthProvider(
     }
 
     override fun isEmailVerified(): Boolean = verified
+
+    override fun currentUserId(): String? = uid
 
     override fun currentUserEmail(): String? = email
 

@@ -13,7 +13,6 @@ import androidx.navigation.compose.rememberNavController
 import br.com.rodorush.chartpatterntracker.navigation.AppNavHost
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.theme.ChartPatternTrackerTheme
-import br.com.rodorush.chartpatterntracker.util.AppPreferences
 import br.com.rodorush.chartpatterntracker.util.LocalPatternProvider
 import br.com.rodorush.chartpatterntracker.util.provider.FirebaseAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.FirebasePatternProvider
@@ -21,11 +20,8 @@ import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
-import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
-
-    private val appPreferences: AppPreferences by inject()
 
     // ViewModel: sobrevive à recriação da Activity (tema, fonte, idioma) durante o signOut do
     // Google, que é assíncrono, e a nova instância não começa outra saída.
@@ -37,11 +33,6 @@ class MainActivity : ComponentActivity() {
     private val authStateListener = FirebaseAuth.AuthStateListener { auth ->
         if (exitGate.onAuthStateChanged(isSignedIn = auth.currentUser != null)) {
             Log.i(TAG, "Sessão encerrada fora do app; voltando ao login")
-            // Não dá para distinguir conta excluída de desativada: reapresenta o aviso de risco,
-            // obrigatório para quem se cadastrar de novo no aparelho (NF-05). Na exclusão pelo
-            // Perfil, este caminho chega antes do onAccountDeleted, então o reset não pode
-            // depender só dele.
-            appPreferences.disclaimerAccepted = false
             leaveToLogin()
         }
     }
