@@ -88,6 +88,7 @@ A varredura em três passos e o que ela devolve:
 - Login com **Google Sign-In** (OAuth 2.0).
 - Cadastro de novos usuários.
 - Sessão lembrada: com o login salvo, o app abre direto no menu, também sem rede.
+- Sessão encerrada fora do app (conta excluída ou desativada, senha trocada em outro aparelho) leva de volta ao login, com o aviso de risco reapresentado.
 - Logout com limpeza de sessão Google.
 
 ### Catálogo de padrões
