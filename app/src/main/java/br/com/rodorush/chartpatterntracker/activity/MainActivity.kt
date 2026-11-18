@@ -43,9 +43,12 @@ class MainActivity : ComponentActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // Voltar no menu não faz nada. Embaixo da MainActivity não há outra tela do app:
-                // a AuthenticationActivity fecha ao abrir o menu. O voltar entre as telas do
-                // AppNavHost não passa por aqui, porque o NavHost registra o dele depois.
+                // Voltar no menu leva o app para segundo plano, com a sessão e o menu como estão,
+                // e o ícone traz a tarefa de volta. O padrão do sistema não basta: ele só faz
+                // isso com a Activity do ícone, e a MainActivity, aberta por intent explícito,
+                // seria fechada. O voltar entre as telas do AppNavHost não passa por aqui, porque
+                // o NavHost registra o dele depois.
+                moveTaskToBack(true)
             }
         })
 
