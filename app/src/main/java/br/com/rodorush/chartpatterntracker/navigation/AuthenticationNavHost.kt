@@ -1,13 +1,10 @@
 package br.com.rodorush.chartpatterntracker.navigation
 
-import android.content.Intent
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import br.com.rodorush.chartpatterntracker.activity.MainActivity
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.screen.authentication.ForgotPasswordScreen
 import br.com.rodorush.chartpatterntracker.ui.screen.authentication.LoginScreen
@@ -21,18 +18,26 @@ const val ROUTE_REGISTER = "register"
 const val ROUTE_VERIFY_EMAIL = "verify_email"
 const val ROUTE_FORGOT_PASSWORD = "forgot_password"
 
+/**
+ * Telas de autenticação: login, cadastro, verificação de e-mail e senha esquecida.
+ *
+ * @param onSignedIn chamado quando o login termina com acesso liberado (Google, e-mail já
+ * verificado ou verificação concluída). Quem hospeda decide como abrir o menu e fecha estas telas,
+ * para elas não ficarem na pilha embaixo dele.
+ */
 @Composable
 fun AuthenticationNavHost(
+    onSignedIn: () -> Unit,
     navController: NavHostController = rememberNavController(),
     authProvider: AuthProvider = FirebaseAuthProvider(),
     startDestination: String = ROUTE_LOGIN
 ) {
-    val context = LocalContext.current
     AuthProviderWrapper(authProvider = authProvider) {
         NavHost(navController = navController, startDestination = startDestination) {
             composable(ROUTE_LOGIN) {
                 LoginScreen(
                     onNavigateToRegister = { navController.navigate(ROUTE_REGISTER) },
+                    onSignedIn = onSignedIn,
                     onNavigateToVerifyEmail = {
                         navController.navigate(ROUTE_VERIFY_EMAIL) {
                             popUpTo(ROUTE_LOGIN) { inclusive = true }
@@ -43,6 +48,7 @@ fun AuthenticationNavHost(
             }
             composable(ROUTE_REGISTER) {
                 RegisterScreen(
+                    onSignedIn = onSignedIn,
                     onNavigateToLogin = { navController.navigate(ROUTE_LOGIN) },
                     onNavigateToVerifyEmail = {
                         navController.navigate(ROUTE_VERIFY_EMAIL) {
@@ -58,9 +64,7 @@ fun AuthenticationNavHost(
             }
             composable(ROUTE_VERIFY_EMAIL) {
                 VerifyEmailScreen(
-                    onVerified = {
-                        context.startActivity(Intent(context, MainActivity::class.java))
-                    },
+                    onVerified = onSignedIn,
                     onLogout = {
                         navController.navigate(ROUTE_LOGIN) {
                             popUpTo(ROUTE_VERIFY_EMAIL) { inclusive = true }
