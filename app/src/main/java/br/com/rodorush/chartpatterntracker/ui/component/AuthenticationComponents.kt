@@ -146,8 +146,8 @@ fun LegalAgreementText(
  * Cria e lembra o fluxo de Google Sign-In (opções + client + launcher) e devolve a ação
  * que dispara o intent. Em sucesso chama [onSuccess]; em falha mostra um toast genérico
  * ([R.string.login_error]) e registra a [ApiException] com o `statusCode` em `Log.e`, o que
- * em release vira evento no Crashlytics. O cancelamento pelo usuário (fechar o seletor de
- * contas) fica só em `Log.i`, sem a exceção, para não poluir o Crashlytics.
+ * em release vira evento no Crashlytics. O cancelamento (fechar o seletor de contas, ou o
+ * retorno sem intent) fica só em `Log.i`, sem a exceção, para não poluir o Crashlytics.
  * A navegação fica a cargo do caller (via [onSuccess]), mantendo
  * o componente livre de dependência de tela/Activity. Reaproveitado por Login e Cadastro.
  */
@@ -180,10 +180,15 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
                 }
             }
         } catch (e: ApiException) {
-            if (e.statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
-                Log.i(TAG, "Login com Google cancelado pelo usuário")
+            // Sem intent de retorno não há status do Google: o seletor fechou sem resposta.
+            // A falha de configuração (SHA-1, client ID) volta com intent e cai no Log.e.
+            if (result.data == null || e.statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
+                Log.i(
+                    TAG,
+                    "Login com Google cancelado (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
+                )
             } else {
-                Log.e(TAG, "Falha no login com Google", e, "statusCode" to e.statusCode)
+                Log.e(TAG, "Falha no login com Google", e, "googleSignInStatusCode" to e.statusCode)
             }
             Toast.makeText(context, context.getString(R.string.login_error), Toast.LENGTH_SHORT).show()
         }

@@ -71,7 +71,9 @@ class FirebaseAuthProvider : AuthProvider {
 
     override fun signInWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
         if (idToken == null) {
-            Log.w(TAG, "signInWithGoogle: idToken nulo")
+            // Com Throwable, para virar evento no Crashlytics: idToken nulo indica
+            // configuração errada (WEB_CLIENT_ID), não falha do usuário.
+            Log.w(TAG, "signInWithGoogle: idToken nulo", IllegalStateException("idToken nulo"))
             onResult(false, "ID Token nulo ou inválido.")
             return
         }
