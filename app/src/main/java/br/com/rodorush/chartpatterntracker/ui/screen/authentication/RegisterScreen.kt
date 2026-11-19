@@ -46,6 +46,7 @@ import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.LegalAgreementText
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
 import br.com.rodorush.chartpatterntracker.ui.component.SocialSignInButton
+import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
 import br.com.rodorush.chartpatterntracker.ui.component.rememberGoogleSignInLauncher
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
@@ -193,15 +194,9 @@ fun RegisterScreen(
                             viewModel.armResendCooldown()
                             onNavigateToVerifyEmail()
                         } else {
-                            val errorMessage = when (error) {
-                                "The email address is already in use by another account." ->
-                                    context.getString(R.string.email_already_exists)
-
-                                "A network error (such as timeout, interrupted connection or unreachable host) has occurred." ->
-                                    context.getString(R.string.network_error)
-                                else ->
-                                    context.getString(R.string.registration_error)
-                            }
+                            val errorMessage = context.getString(
+                                authErrorMessage(error, fallback = R.string.registration_error)
+                            )
                             Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                         }
                     }

@@ -52,7 +52,7 @@ class MockAuthProvider(
             this.email = email
             onResult(true, null)
         } else {
-            onResult(false, "Invalid credentials")
+            onResult(false, AuthProvider.INVALID_CREDENTIAL)
         }
     }
 
@@ -68,7 +68,8 @@ class MockAuthProvider(
             sendEmailVerificationCalls++
             onResult(true, null)
         } else {
-            onResult(false, "Invalid email format")
+            // Como no FirebaseAuthProvider, e-mail malformado fica sem código.
+            onResult(false, null)
         }
     }
 
@@ -78,7 +79,7 @@ class MockAuthProvider(
             this.verified = true
             onResult(true, null)
         } else {
-            onResult(false, "Invalid Google token")
+            onResult(false, if (idToken == null) AuthProvider.MISSING_ID_TOKEN else AuthProvider.INVALID_CREDENTIAL)
         }
     }
 
@@ -90,7 +91,7 @@ class MockAuthProvider(
 
     override fun sendEmailVerification(onResult: (Boolean, String?) -> Unit) {
         sendEmailVerificationCalls++
-        if (sendVerificationSucceeds) onResult(true, null) else onResult(false, "send_failed")
+        if (sendVerificationSucceeds) onResult(true, null) else onResult(false, null)
     }
 
     override fun reloadCurrentUser(onResult: (Boolean, String?) -> Unit) {
@@ -101,7 +102,7 @@ class MockAuthProvider(
     override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
         sendPasswordResetEmailCalls++
         lastPasswordResetEmail = email
-        if (sendPasswordResetSucceeds) onResult(true, null) else onResult(false, "send_failed")
+        if (sendPasswordResetSucceeds) onResult(true, null) else onResult(false, null)
     }
 
     override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
@@ -113,7 +114,7 @@ class MockAuthProvider(
                 verified = false
                 onResult(true, null)
             }
-            else -> onResult(false, "delete_failed")
+            else -> onResult(false, null)
         }
     }
 
@@ -127,7 +128,7 @@ class MockAuthProvider(
             clearRecentLoginFlags()
             onResult(true, null)
         } else {
-            onResult(false, "reauth_failed")
+            onResult(false, AuthProvider.INVALID_CREDENTIAL)
         }
     }
 
@@ -137,7 +138,7 @@ class MockAuthProvider(
             clearRecentLoginFlags()
             onResult(true, null)
         } else {
-            onResult(false, "reauth_failed")
+            onResult(false, if (idToken == null) AuthProvider.MISSING_ID_TOKEN else AuthProvider.INVALID_CREDENTIAL)
         }
     }
 
@@ -146,7 +147,7 @@ class MockAuthProvider(
         when {
             updatePasswordRequiresRecentLogin -> onResult(false, AuthProvider.REQUIRES_RECENT_LOGIN)
             updatePasswordSucceeds -> onResult(true, null)
-            else -> onResult(false, "update_failed")
+            else -> onResult(false, null)
         }
     }
 
@@ -156,7 +157,7 @@ class MockAuthProvider(
         when {
             updateEmailRequiresRecentLogin -> onResult(false, AuthProvider.REQUIRES_RECENT_LOGIN)
             updateEmailSucceeds -> onResult(true, null)
-            else -> onResult(false, "update_failed")
+            else -> onResult(false, null)
         }
     }
 
@@ -166,7 +167,7 @@ class MockAuthProvider(
             this.displayName = displayName
             onResult(true, null)
         } else {
-            onResult(false, "update_failed")
+            onResult(false, null)
         }
     }
 

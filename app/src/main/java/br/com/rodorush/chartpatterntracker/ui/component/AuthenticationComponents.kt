@@ -3,6 +3,7 @@ package br.com.rodorush.chartpatterntracker.ui.component
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +40,7 @@ import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.util.LegalUrls
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -150,11 +152,34 @@ fun LegalAgreementText(
 }
 
 /**
+ * Texto que a tela mostra para o código de erro do [AuthProvider]. O código sem texto próprio,
+ * inclusive `null`, cai no [fallback] da operação.
+ *
+ * @param fallback o texto genérico da operação (login, cadastro, Perfil).
+ * @param invalidCredential o texto de [AuthProvider.INVALID_CREDENTIAL], que depende do que a
+ *   tela pediu: e-mail e senha no login, só a senha na reautenticação do Perfil.
+ */
+@StringRes
+internal fun authErrorMessage(
+    code: String?,
+    @StringRes fallback: Int,
+    @StringRes invalidCredential: Int = R.string.invalid_email_password
+): Int = when (code) {
+    AuthProvider.NETWORK -> R.string.network_error
+    AuthProvider.TOO_MANY_REQUESTS -> R.string.auth_error_too_many_requests
+    AuthProvider.INVALID_CREDENTIAL -> invalidCredential
+    AuthProvider.USER_MISMATCH -> R.string.auth_error_user_mismatch
+    AuthProvider.EMAIL_IN_USE -> R.string.email_already_exists
+    else -> fallback
+}
+
+/**
  * Cria e lembra o fluxo de Google Sign-In (opções + client + launcher) e devolve a ação
- * que dispara o intent. Em sucesso chama [onSuccess]; em falha mostra um toast genérico
- * ([R.string.login_error]). O retorno do seletor é triado por [readGoogleSignInResult]: a
- * falha real vai para `Log.e` com a exceção, o que em release vira evento no Crashlytics;
- * o cancelamento fica só em `Log.i`, sem a exceção, e o login já em andamento (toque duplo)
+ * que dispara o intent. Em sucesso chama [onSuccess]; a falha do seletor ou do Firebase
+ * mostra um toast pelo [authErrorMessage], com [R.string.login_error] como texto genérico.
+ * O retorno do seletor é triado por [readGoogleSignInResult]: a falha real vai para `Log.e`
+ * com a exceção, o que em release vira evento no Crashlytics; o cancelamento fica só em
+ * `Log.i`, sem a exceção e sem aviso na tela, e o login já em andamento (toque duplo)
  * é ignorado, porque o seletor aberto antes conclui o fluxo.
  * A navegação fica a cargo do caller (via [onSuccess]), mantendo
  * o componente livre de dependência de tela/Activity. Reaproveitado por Login e Cadastro.
@@ -185,18 +210,24 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
                     } else {
                         Toast.makeText(
                             context,
-                            error ?: context.getString(R.string.login_error),
+                            // Sem e-mail nem senha digitados, a credencial recusada fica no genérico.
+                            context.getString(
+                                authErrorMessage(
+                                    error,
+                                    fallback = R.string.login_error,
+                                    invalidCredential = R.string.login_error
+                                )
+                            ),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 }
-            is GoogleSignInOutcome.Cancelled -> {
+            // Fechar o seletor é escolha do usuário, não erro: a tela de login fica como estava.
+            is GoogleSignInOutcome.Cancelled ->
                 Log.i(
                     TAG,
                     "Login com Google cancelado (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
-                Toast.makeText(context, context.getString(R.string.login_error), Toast.LENGTH_SHORT).show()
-            }
             // O seletor aberto antes conclui o login; este retorno não muda nada na tela.
             GoogleSignInOutcome.InProgress -> Log.i(TAG, "Login com Google já em andamento")
             is GoogleSignInOutcome.Failure -> {

@@ -19,6 +19,10 @@
     <string name="email_already_exists">La dirección de correo electrónico ya está en uso por otra cuenta.</string>
     <string name="registration_error">Error al intentar registrarse, inténtelo de nuevo.</string>
     <string name="network_error">Error de conexión, verifica tu internet e inténtalo de nuevo.</string>
+    <string name="auth_error_user_mismatch">La cuenta elegida no es la de esta sesión. Elige la cuenta con la que iniciaste sesión.</string>
+    <string name="auth_error_wrong_password">Contraseña incorrecta, inténtalo de nuevo.</string>
+    <string name="auth_error_too_many_requests">Demasiados intentos. Espera unos minutos e inténtalo de nuevo.</string>
+    <string name="auth_error_generic">No se pudo completar la operación. Inténtalo de nuevo.</string>
     <string name="email_example">correo@dominio.com</string>
     <string name="create_your_account">Crea tu cuenta</string>
     <string name="name">Nombre</string>
