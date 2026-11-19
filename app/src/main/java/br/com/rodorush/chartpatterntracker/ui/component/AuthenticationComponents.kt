@@ -2,7 +2,6 @@ package br.com.rodorush.chartpatterntracker.ui.component
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -181,7 +180,7 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
                 }
             }
         } catch (e: ApiException) {
-            if (isGoogleSignInCancelled(result, e)) {
+            if (isGoogleSignInCancelled(hasIntent = result.data != null, statusCode = e.statusCode)) {
                 Log.i(
                     TAG,
                     "Login com Google cancelado (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
@@ -201,6 +200,9 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
  * Google porque o seletor fechou sem resposta. A falha de configuração (SHA-1, client ID)
  * volta com intent e não conta. Usada no login e na reautenticação do Perfil, para que o
  * cancelamento fique fora do Crashlytics nos dois.
+ *
+ * @param hasIntent se o seletor devolveu intent (`ActivityResult.data != null`).
+ * @param statusCode o `statusCode` da `ApiException`.
  */
-internal fun isGoogleSignInCancelled(result: ActivityResult, e: ApiException): Boolean =
-    result.data == null || e.statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED
+internal fun isGoogleSignInCancelled(hasIntent: Boolean, statusCode: Int): Boolean =
+    !hasIntent || statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED

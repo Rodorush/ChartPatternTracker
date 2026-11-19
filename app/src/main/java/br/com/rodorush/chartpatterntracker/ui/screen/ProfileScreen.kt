@@ -112,11 +112,18 @@ fun ProfileScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        // O idToken nulo segue para a ViewModel e encerra a operação com erro; aqui só se
+        // registra a causa, que lá não chega: o cancelamento também vira idToken nulo.
         val idToken = try {
-            task.getResult(ApiException::class.java)?.idToken
+            task.getResult(ApiException::class.java)?.idToken.also {
+                if (it == null) {
+                    // Conta selecionada sem idToken indica configuração errada (WEB_CLIENT_ID).
+                    // Com Throwable, para virar evento no Crashlytics.
+                    Log.w(TAG, "Reautenticação com Google sem idToken", IllegalStateException("idToken nulo"))
+                }
+            }
         } catch (e: ApiException) {
-            // O idToken nulo segue para a ViewModel, que avisa o usuário; aqui só se registra a causa.
-            if (isGoogleSignInCancelled(result, e)) {
+            if (isGoogleSignInCancelled(hasIntent = result.data != null, statusCode = e.statusCode)) {
                 Log.i(
                     TAG,
                     "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
