@@ -181,13 +181,14 @@ fun ProfileScreen(
     fun toast(resId: Int) =
         Toast.makeText(context, context.getString(resId), Toast.LENGTH_LONG).show()
 
-    // A reautenticação do Perfil só pede a senha; por isso a credencial recusada é "senha incorreta".
+    // Na conta com senha, a credencial recusada vem da reautenticação, que só pede a senha. Na
+    // conta Google não há senha digitada, e o texto fica o genérico.
     fun toastError(code: String?) =
         toast(
             authErrorMessage(
                 code,
                 fallback = R.string.auth_error_generic,
-                invalidCredential = R.string.auth_error_wrong_password
+                invalidCredential = if (isGoogle) R.string.auth_error_generic else R.string.auth_error_wrong_password
             )
         )
 

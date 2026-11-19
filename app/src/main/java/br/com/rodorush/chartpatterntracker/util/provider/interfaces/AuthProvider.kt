@@ -49,10 +49,7 @@ interface AuthProvider {
         /** O login ou a reautenticação com Google chegou sem idToken. */
         const val MISSING_ID_TOKEN = "missing-id-token"
 
-        /**
-         * Credencial recusada: senha errada, credencial vencida ou usuário inexistente ou
-         * desativado, sem distinguir os casos para não revelar se o e-mail tem conta.
-         */
+        /** Credencial recusada: senha errada, ou credencial malformada ou vencida. */
         const val INVALID_CREDENTIAL = "invalid-credential"
 
         /** A reautenticação usou uma conta diferente da sessão atual. */

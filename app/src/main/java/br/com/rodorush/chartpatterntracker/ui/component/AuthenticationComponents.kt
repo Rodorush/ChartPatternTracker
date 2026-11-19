@@ -210,7 +210,14 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
                     } else {
                         Toast.makeText(
                             context,
-                            context.getString(authErrorMessage(error, fallback = R.string.login_error)),
+                            // Sem e-mail nem senha digitados, a credencial recusada fica no genérico.
+                            context.getString(
+                                authErrorMessage(
+                                    error,
+                                    fallback = R.string.login_error,
+                                    invalidCredential = R.string.login_error
+                                )
+                            ),
                             Toast.LENGTH_SHORT
                         ).show()
                     }

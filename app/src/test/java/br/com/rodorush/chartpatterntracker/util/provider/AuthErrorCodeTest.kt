@@ -25,19 +25,8 @@ class AuthErrorCodeTest {
     }
 
     @Test
-    fun `usuario inexistente ou desativado vira INVALID_CREDENTIAL`() {
-        // Mesmo texto da senha errada, para não revelar se o e-mail tem conta.
-        assertEquals(AuthProvider.INVALID_CREDENTIAL, firebaseAuthErrorCode("ERROR_USER_NOT_FOUND"))
-        assertEquals(AuthProvider.INVALID_CREDENTIAL, firebaseAuthErrorCode("ERROR_USER_DISABLED"))
-    }
-
-    @Test
     fun `email ja usado vira EMAIL_IN_USE`() {
         assertEquals(AuthProvider.EMAIL_IN_USE, firebaseAuthErrorCode("ERROR_EMAIL_ALREADY_IN_USE"))
-        assertEquals(
-            AuthProvider.EMAIL_IN_USE,
-            firebaseAuthErrorCode("ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL")
-        )
     }
 
     @Test
@@ -46,6 +35,21 @@ class AuthErrorCodeTest {
         // "senha incorreta" para uma senha nova fraca ou um e-mail novo malformado.
         assertNull(firebaseAuthErrorCode("ERROR_WEAK_PASSWORD"))
         assertNull(firebaseAuthErrorCode("ERROR_INVALID_EMAIL"))
+    }
+
+    @Test
+    fun `conta desativada ou inexistente nao vira INVALID_CREDENTIAL`() {
+        // Chegam também em operações do Perfil que não pedem senha, como trocar o nome com a
+        // conta desativada no console; lá, INVALID_CREDENTIAL diria "senha incorreta".
+        assertNull(firebaseAuthErrorCode("ERROR_USER_DISABLED"))
+        assertNull(firebaseAuthErrorCode("ERROR_USER_NOT_FOUND"))
+    }
+
+    @Test
+    fun `conta com outro provedor nao vira EMAIL_IN_USE`() {
+        // No login com Google, o texto de e-mail já usado, escrito para o cadastro, não diz
+        // como entrar; fica o genérico do login.
+        assertNull(firebaseAuthErrorCode("ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"))
     }
 
     @Test

@@ -68,7 +68,8 @@ class MockAuthProvider(
             sendEmailVerificationCalls++
             onResult(true, null)
         } else {
-            onResult(false, AuthProvider.INVALID_CREDENTIAL)
+            // Como no FirebaseAuthProvider, e-mail malformado fica sem código.
+            onResult(false, null)
         }
     }
 

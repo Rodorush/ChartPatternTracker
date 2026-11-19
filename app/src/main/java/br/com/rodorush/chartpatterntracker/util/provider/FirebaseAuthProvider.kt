@@ -33,17 +33,14 @@ internal fun authErrorCode(e: Exception?): String? = when (e) {
  * pelo `errorCode`, e não pela subclasse, porque a subclasse junta casos que a tela separa: a
  * `FirebaseAuthInvalidCredentialsException` carrega a senha errada, o e-mail malformado e, pela
  * subclasse `FirebaseAuthWeakPasswordException`, a senha fraca. Na reautenticação do Perfil,
- * credencial recusada vira "senha incorreta", texto que não serve para os outros dois, que ficam
- * sem código e caem no texto genérico da operação.
+ * credencial recusada vira "senha incorreta". Por isso só a credencial recusada vira
+ * [AuthProvider.INVALID_CREDENTIAL]: senha fraca, e-mail malformado, conta desativada ou
+ * inexistente e conta com outro provedor ficam sem código e caem no texto genérico da operação.
  */
 internal fun firebaseAuthErrorCode(errorCode: String): String? = when (errorCode) {
     "ERROR_USER_MISMATCH" -> AuthProvider.USER_MISMATCH
-    "ERROR_INVALID_CREDENTIAL",
-    "ERROR_WRONG_PASSWORD",
-    "ERROR_USER_NOT_FOUND",
-    "ERROR_USER_DISABLED" -> AuthProvider.INVALID_CREDENTIAL
-    "ERROR_EMAIL_ALREADY_IN_USE",
-    "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" -> AuthProvider.EMAIL_IN_USE
+    "ERROR_INVALID_CREDENTIAL", "ERROR_WRONG_PASSWORD" -> AuthProvider.INVALID_CREDENTIAL
+    "ERROR_EMAIL_ALREADY_IN_USE" -> AuthProvider.EMAIL_IN_USE
     else -> null
 }
 
