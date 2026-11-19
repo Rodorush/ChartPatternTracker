@@ -41,9 +41,12 @@ import br.com.rodorush.chartpatterntracker.util.LegalUrls
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.RuntimeExecutionException
+import com.google.android.gms.tasks.Task
 
 private const val TAG = "AuthenticationComponents"
 
@@ -145,9 +148,9 @@ fun LegalAgreementText(
 /**
  * Cria e lembra o fluxo de Google Sign-In (opções + client + launcher) e devolve a ação
  * que dispara o intent. Em sucesso chama [onSuccess]; em falha mostra um toast genérico
- * ([R.string.login_error]) e registra a [ApiException] com o `statusCode` em `Log.e`, o que
- * em release vira evento no Crashlytics. O cancelamento (fechar o seletor de contas, ou o
- * retorno sem intent) fica só em `Log.i`, sem a exceção, para não poluir o Crashlytics.
+ * ([R.string.login_error]). O retorno do seletor é triado por [readGoogleSignInResult]: a
+ * falha real vai para `Log.e` com a exceção, o que em release vira evento no Crashlytics;
+ * o cancelamento e o login já em andamento ficam só em `Log.i`, sem a exceção.
  * A navegação fica a cargo do caller (via [onSuccess]), mantendo
  * o componente livre de dependência de tela/Activity. Reaproveitado por Login e Cadastro.
  */
@@ -165,44 +168,88 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        try {
-            val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                .getResult(ApiException::class.java)
-            authProvider.signInWithGoogle(account?.idToken) { success, error ->
-                if (success) {
-                    onSuccess()
-                } else {
-                    Toast.makeText(
-                        context,
-                        error ?: context.getString(R.string.login_error),
-                        Toast.LENGTH_SHORT
-                    ).show()
+        val outcome = readGoogleSignInResult(
+            GoogleSignIn.getSignedInAccountFromIntent(result.data),
+            hasIntent = result.data != null
+        )
+        when (outcome) {
+            is GoogleSignInOutcome.Account ->
+                authProvider.signInWithGoogle(outcome.idToken) { success, error ->
+                    if (success) {
+                        onSuccess()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            error ?: context.getString(R.string.login_error),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
-            }
-        } catch (e: ApiException) {
-            if (isGoogleSignInCancelled(hasIntent = result.data != null, statusCode = e.statusCode)) {
+            is GoogleSignInOutcome.NotAnError -> {
                 Log.i(
                     TAG,
-                    "Login com Google cancelado (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
+                    "Login com Google interrompido sem erro (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
-            } else {
-                Log.e(TAG, "Falha no login com Google", e, "googleSignInStatusCode" to e.statusCode)
+                Toast.makeText(context, context.getString(R.string.login_error), Toast.LENGTH_SHORT).show()
             }
-            Toast.makeText(context, context.getString(R.string.login_error), Toast.LENGTH_SHORT).show()
+            is GoogleSignInOutcome.Failure -> {
+                Log.e(TAG, "Falha no login com Google", outcome.error, "googleSignInStatusCode" to outcome.statusCode)
+                Toast.makeText(context, context.getString(R.string.login_error), Toast.LENGTH_SHORT).show()
+            }
         }
     }
     return { launcher.launch(client.signInIntent) }
 }
 
+/** Retorno do seletor do Google Sign-In, já triado entre conta, interrupção sem erro e falha. */
+internal sealed interface GoogleSignInOutcome {
+    /** Conta escolhida. O [idToken] vem nulo quando o `WEB_CLIENT_ID` não é o client Web. */
+    data class Account(val idToken: String?) : GoogleSignInOutcome
+
+    /** Cancelamento ou login já em andamento: vai para `Log.i`, fora do Crashlytics. */
+    data class NotAnError(val statusCode: Int) : GoogleSignInOutcome
+
+    /**
+     * Falha real, que vai para `Log.e` com [error]. O [statusCode] fica nulo quando a falha
+     * não é `ApiException` e, portanto, não traz status do Google.
+     */
+    data class Failure(val error: Exception, val statusCode: Int?) : GoogleSignInOutcome
+}
+
 /**
- * Diz se a falha do seletor do Google Sign-In foi cancelamento do usuário, e não erro.
- * Conta como cancelamento o status 12501 e o retorno sem intent, que não traz status do
- * Google porque o seletor fechou sem resposta. A falha de configuração (SHA-1, client ID)
- * volta com intent e não conta. Usada no login e na reautenticação do Perfil, para que o
- * cancelamento fique fora do Crashlytics nos dois.
+ * Lê o retorno do seletor do Google Sign-In sem deixar exceção escapar. A falha que não é
+ * `ApiException` chega embrulhada em [RuntimeExecutionException] e vira [GoogleSignInOutcome.Failure],
+ * em vez de fechar o app. Usada no login e na reautenticação do Perfil.
+ *
+ * @param task a task de `GoogleSignIn.getSignedInAccountFromIntent`, que já nasce completa.
+ * @param hasIntent se o seletor devolveu intent (`ActivityResult.data != null`).
+ */
+internal fun readGoogleSignInResult(
+    task: Task<GoogleSignInAccount>,
+    hasIntent: Boolean
+): GoogleSignInOutcome =
+    try {
+        GoogleSignInOutcome.Account(task.getResult(ApiException::class.java)?.idToken)
+    } catch (e: ApiException) {
+        if (isExpectedGoogleSignInFailure(hasIntent = hasIntent, statusCode = e.statusCode)) {
+            GoogleSignInOutcome.NotAnError(e.statusCode)
+        } else {
+            GoogleSignInOutcome.Failure(e, e.statusCode)
+        }
+    } catch (e: RuntimeExecutionException) {
+        GoogleSignInOutcome.Failure(e, null)
+    }
+
+/**
+ * Diz se a falha do seletor do Google Sign-In é interrupção esperada, e não erro. Conta o
+ * cancelamento (status 12501, ou retorno sem intent, que não traz status do Google porque o
+ * seletor fechou sem resposta) e o login já em andamento (12502, do toque duplo no botão).
+ * A falha de configuração (SHA-1, client ID) volta com intent e não conta.
  *
  * @param hasIntent se o seletor devolveu intent (`ActivityResult.data != null`).
  * @param statusCode o `statusCode` da `ApiException`.
  */
-internal fun isGoogleSignInCancelled(hasIntent: Boolean, statusCode: Int): Boolean =
-    !hasIntent || statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED
+internal fun isExpectedGoogleSignInFailure(hasIntent: Boolean, statusCode: Int): Boolean =
+    !hasIntent ||
+        statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED ||
+        statusCode == GoogleSignInStatusCodes.SIGN_IN_CURRENTLY_IN_PROGRESS

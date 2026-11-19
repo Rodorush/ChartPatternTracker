@@ -40,7 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
-import br.com.rodorush.chartpatterntracker.ui.component.isGoogleSignInCancelled
+import br.com.rodorush.chartpatterntracker.ui.component.GoogleSignInOutcome
+import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
@@ -51,7 +52,6 @@ import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.Upd
 import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 
 private const val TAG = "ProfileScreen"
 
@@ -111,27 +111,36 @@ fun ProfileScreen(
     val googleReauthLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        val outcome = readGoogleSignInResult(
+            GoogleSignIn.getSignedInAccountFromIntent(result.data),
+            hasIntent = result.data != null
+        )
         // O idToken nulo segue para a ViewModel e encerra a operação com erro; aqui só se
         // registra a causa, que lá não chega: o cancelamento também vira idToken nulo.
-        val idToken = try {
-            task.getResult(ApiException::class.java)?.idToken.also {
+        val idToken = when (outcome) {
+            is GoogleSignInOutcome.Account -> outcome.idToken.also {
                 if (it == null) {
                     // Conta selecionada sem idToken indica configuração errada (WEB_CLIENT_ID).
                     // Com Throwable, para virar evento no Crashlytics.
                     Log.w(TAG, "Reautenticação com Google sem idToken", IllegalStateException("idToken nulo"))
                 }
             }
-        } catch (e: ApiException) {
-            if (isGoogleSignInCancelled(hasIntent = result.data != null, statusCode = e.statusCode)) {
+            is GoogleSignInOutcome.NotAnError -> {
                 Log.i(
                     TAG,
-                    "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
+                    "Reautenticação com Google interrompida sem erro (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
-            } else {
-                Log.e(TAG, "Falha na reautenticação com Google", e, "googleSignInStatusCode" to e.statusCode)
+                null
             }
-            null
+            is GoogleSignInOutcome.Failure -> {
+                Log.e(
+                    TAG,
+                    "Falha na reautenticação com Google",
+                    outcome.error,
+                    "googleSignInStatusCode" to outcome.statusCode
+                )
+                null
+            }
         }
         when (pendingReauthOp) {
             ReauthOp.DELETE -> authViewModel.reauthenticateAndDeleteWithGoogle(idToken, authProvider)
