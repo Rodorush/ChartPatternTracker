@@ -2,20 +2,50 @@ package br.com.rodorush.chartpatterntracker.util.provider
 
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.customlogs.Log
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
 
 /**
- * Erro que as operações que exigem sessão recente devolvem a quem chama. A sessão antiga é
- * reconhecida pelo tipo da exceção e vira [AuthProvider.REQUIRES_RECENT_LOGIN], porque a
- * mensagem do Firebase é texto livre em inglês e não serve de contrato. As demais falhas
- * seguem com a mensagem crua.
+ * Traduz a exceção do Firebase no código de erro do [AuthProvider] que vai a quem chama. Sessão
+ * antiga, rede e excesso de tentativas são reconhecidos pelo tipo; as demais falhas da
+ * autenticação, pelo `errorCode` ([firebaseAuthErrorCode]). A mensagem do Firebase é texto
+ * livre em inglês e não serve de contrato.
+ *
+ * @return o código, ou `null` para a falha sem código conhecido, que a tela mostra com o texto
+ *   genérico da operação.
  */
-internal fun sensitiveOperationError(e: Exception?): String? =
-    if (e is FirebaseAuthRecentLoginRequiredException) AuthProvider.REQUIRES_RECENT_LOGIN else e?.message
+internal fun authErrorCode(e: Exception?): String? = when (e) {
+    is FirebaseAuthRecentLoginRequiredException -> AuthProvider.REQUIRES_RECENT_LOGIN
+    is FirebaseAuthException -> firebaseAuthErrorCode(e.errorCode)
+    is FirebaseNetworkException -> AuthProvider.NETWORK
+    is FirebaseTooManyRequestsException -> AuthProvider.TOO_MANY_REQUESTS
+    else -> null
+}
+
+/**
+ * Traduz o `errorCode` de uma `FirebaseAuthException` no código do [AuthProvider]. A triagem é
+ * pelo `errorCode`, e não pela subclasse, porque a subclasse junta casos que a tela separa: a
+ * `FirebaseAuthInvalidCredentialsException` carrega a senha errada, o e-mail malformado e, pela
+ * subclasse `FirebaseAuthWeakPasswordException`, a senha fraca. Na reautenticação do Perfil,
+ * credencial recusada vira "senha incorreta", texto que não serve para os outros dois, que ficam
+ * sem código e caem no texto genérico da operação.
+ */
+internal fun firebaseAuthErrorCode(errorCode: String): String? = when (errorCode) {
+    "ERROR_USER_MISMATCH" -> AuthProvider.USER_MISMATCH
+    "ERROR_INVALID_CREDENTIAL",
+    "ERROR_WRONG_PASSWORD",
+    "ERROR_USER_NOT_FOUND",
+    "ERROR_USER_DISABLED" -> AuthProvider.INVALID_CREDENTIAL
+    "ERROR_EMAIL_ALREADY_IN_USE",
+    "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" -> AuthProvider.EMAIL_IN_USE
+    else -> null
+}
 
 class FirebaseAuthProvider : AuthProvider {
     private val auth = FirebaseAuth.getInstance()
@@ -30,7 +60,7 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -74,7 +104,7 @@ class FirebaseAuthProvider : AuthProvider {
                         onResult(true, null)
                     }
                 } else {
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -84,7 +114,7 @@ class FirebaseAuthProvider : AuthProvider {
             // Com Throwable, para virar evento no Crashlytics: idToken nulo indica
             // configuração errada (WEB_CLIENT_ID), não falha do usuário.
             Log.w(TAG, "signInWithGoogle: idToken nulo", IllegalStateException("idToken nulo"))
-            onResult(false, "ID Token nulo ou inválido.")
+            onResult(false, AuthProvider.MISSING_ID_TOKEN)
             return
         }
 
@@ -95,7 +125,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "signInWithGoogle: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -108,7 +138,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun sendEmailVerification(onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         user.sendEmailVerification()
@@ -117,7 +147,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "sendEmailVerification: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -125,7 +155,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun reloadCurrentUser(onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         user.reload()
@@ -134,7 +164,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "reloadCurrentUser: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -146,7 +176,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "sendPasswordResetEmail: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -154,7 +184,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         user.delete()
@@ -163,7 +193,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     logSensitiveFailure("deleteCurrentUser", task.exception)
-                    onResult(false, sensitiveOperationError(task.exception))
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -175,7 +205,7 @@ class FirebaseAuthProvider : AuthProvider {
         val user = auth.currentUser
         val email = user?.email
         if (user == null || email == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         val credential = EmailAuthProvider.getCredential(email, password)
@@ -185,19 +215,19 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "reauthenticateWithPassword: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
 
     override fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
         if (idToken == null) {
-            onResult(false, "ID Token nulo ou inválido.")
+            onResult(false, AuthProvider.MISSING_ID_TOKEN)
             return
         }
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         val credential = GoogleAuthProvider.getCredential(idToken, null)
@@ -207,7 +237,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "reauthenticateWithGoogle: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -215,7 +245,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         user.updatePassword(newPassword)
@@ -224,7 +254,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     logSensitiveFailure("updatePassword", task.exception)
-                    onResult(false, sensitiveOperationError(task.exception))
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -232,7 +262,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun verifyBeforeUpdateEmail(newEmail: String, onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         user.verifyBeforeUpdateEmail(newEmail)
@@ -241,7 +271,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     logSensitiveFailure("verifyBeforeUpdateEmail", task.exception)
-                    onResult(false, sensitiveOperationError(task.exception))
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }
@@ -249,7 +279,7 @@ class FirebaseAuthProvider : AuthProvider {
     override fun updateDisplayName(displayName: String, onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user == null) {
-            onResult(false, "no_current_user")
+            onResult(false, AuthProvider.NO_CURRENT_USER)
             return
         }
         val request = userProfileChangeRequest { this.displayName = displayName }
@@ -259,7 +289,7 @@ class FirebaseAuthProvider : AuthProvider {
                     onResult(true, null)
                 } else {
                     Log.w(TAG, "updateDisplayName: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, authErrorCode(task.exception))
                 }
             }
     }

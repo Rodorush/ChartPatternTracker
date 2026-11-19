@@ -38,6 +38,7 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.SignInInputField
 import br.com.rodorush.chartpatterntracker.ui.component.SocialSignInButton
+import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
 import br.com.rodorush.chartpatterntracker.ui.component.rememberGoogleSignInLauncher
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
@@ -134,15 +135,9 @@ fun LoginScreen(
                             onNavigateToVerifyEmail()
                         }
                     } else {
-                        val errorMessage = when {
-                            error?.contains("The supplied auth credential is incorrect") == true -> context.getString(
-                                R.string.invalid_email_password
-                            )
-
-                            else -> {
-                                context.getString(R.string.login_error)
-                            }
-                        }
+                        val errorMessage = context.getString(
+                            authErrorMessage(error, fallback = R.string.login_error)
+                        )
                         Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                     }
                 }

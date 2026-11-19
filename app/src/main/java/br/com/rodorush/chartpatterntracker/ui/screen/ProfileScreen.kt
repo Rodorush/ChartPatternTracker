@@ -42,6 +42,7 @@ import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.GoogleSignInOutcome
+import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
 import br.com.rodorush.chartpatterntracker.ui.component.launchGoogleAccountChooser
 import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
@@ -106,6 +107,15 @@ fun ProfileScreen(
         deleteStatus == DeleteAccountStatus.Deleting ||
         openingGoogleChooser
 
+    // Devolve a operação pendente de reautenticação ao repouso, sem aviso na tela.
+    fun resetPendingStatus() {
+        when (pendingReauthOp) {
+            ReauthOp.DELETE -> authViewModel.resetDeleteAccountStatus()
+            ReauthOp.PASSWORD -> authViewModel.resetUpdatePasswordStatus()
+            ReauthOp.EMAIL -> authViewModel.resetUpdateEmailStatus()
+        }
+    }
+
     // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
     // um idToken fresco e retoma a operação pendente.
     val scope = rememberCoroutineScope()
@@ -123,8 +133,8 @@ fun ProfileScreen(
             GoogleSignIn.getSignedInAccountFromIntent(result.data),
             hasIntent = result.data != null
         )
-        // O idToken nulo segue para a ViewModel e encerra a operação com erro; aqui só se
-        // registra a causa, que lá não chega: o cancelamento também vira idToken nulo.
+        // Na falha, o idToken nulo segue para a ViewModel e encerra a operação com erro; aqui só
+        // se registra a causa, que lá não chega. O cancelamento não chega à ViewModel.
         val idToken = when (outcome) {
             is GoogleSignInOutcome.Account -> outcome.idToken.also {
                 if (it == null) {
@@ -134,11 +144,14 @@ fun ProfileScreen(
                 }
             }
             is GoogleSignInOutcome.Cancelled -> {
+                // Fechar o seletor é escolha do usuário, não erro: a operação pendente volta ao
+                // repouso sem aviso, como no Cancelar do diálogo de reautenticação.
                 Log.i(
                     TAG,
                     "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
-                null
+                resetPendingStatus()
+                return@rememberLauncherForActivityResult
             }
             GoogleSignInOutcome.InProgress -> {
                 // O seletor aberto antes retoma a operação pendente. Encerrar a operação aqui
@@ -168,12 +181,15 @@ fun ProfileScreen(
     fun toast(resId: Int) =
         Toast.makeText(context, context.getString(resId), Toast.LENGTH_LONG).show()
 
-    fun toastError(message: String?) =
-        Toast.makeText(
-            context,
-            message ?: context.getString(R.string.network_error),
-            Toast.LENGTH_LONG
-        ).show()
+    // A reautenticação do Perfil só pede a senha; por isso a credencial recusada é "senha incorreta".
+    fun toastError(code: String?) =
+        toast(
+            authErrorMessage(
+                code,
+                fallback = R.string.auth_error_generic,
+                invalidCredential = R.string.auth_error_wrong_password
+            )
+        )
 
     LaunchedEffect(nameStatus) {
         when (val s = nameStatus) {
@@ -538,13 +554,6 @@ fun ProfileScreen(
 
     // --- Diálogo de reauth (compartilhado entre delete/senha/e-mail) ---
     if (showReauthDialog) {
-        fun resetPendingStatus() {
-            when (pendingReauthOp) {
-                ReauthOp.DELETE -> authViewModel.resetDeleteAccountStatus()
-                ReauthOp.PASSWORD -> authViewModel.resetUpdatePasswordStatus()
-                ReauthOp.EMAIL -> authViewModel.resetUpdateEmailStatus()
-            }
-        }
         AlertDialog(
             onDismissRequest = {
                 showReauthDialog = false
