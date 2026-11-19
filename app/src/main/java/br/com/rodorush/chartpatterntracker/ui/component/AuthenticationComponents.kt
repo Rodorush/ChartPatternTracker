@@ -47,6 +47,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Task
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.tasks.await
 
 private const val TAG = "AuthenticationComponents"
 
@@ -270,3 +274,32 @@ internal fun readGoogleSignInResult(
  */
 internal fun isGoogleSignInCancelled(hasIntent: Boolean, statusCode: Int): Boolean =
     !hasIntent || statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED
+
+/**
+ * Desconecta a conta do client do Google Sign-In e só então chama [launch], que abre o seletor.
+ * Com uma conta já conectada no client, o `signInIntent` a devolve sem mostrar o seletor: na
+ * reautenticação, a operação seguiria sem o dono escolher a conta. Por isso, se o [signOut]
+ * falha, o seletor não é aberto. Cancelar a coroutine durante o [signOut] também impede o
+ * [launch], o que protege o launcher da tela que saiu da composição. O client fica desconectado
+ * mesmo quando o usuário cancela o seletor; a sessão do Firebase não muda, e nenhum fluxo do app
+ * lê a conta guardada no client.
+ *
+ * @param signOut o `signOut` do mesmo `GoogleSignInClient` cujo `signInIntent` o [launch] abre.
+ * @return `null` quando o seletor foi aberto; a falha do [signOut] quando não foi.
+ */
+internal suspend fun launchGoogleAccountChooser(
+    signOut: () -> Task<Void>,
+    launch: () -> Unit
+): Exception? {
+    try {
+        signOut().await()
+    } catch (e: CancellationException) {
+        // Relança o cancelamento da coroutine; a task do signOut cancelada é só uma falha.
+        currentCoroutineContext().ensureActive()
+        return e
+    } catch (e: Exception) {
+        return e
+    }
+    launch()
+    return null
+}

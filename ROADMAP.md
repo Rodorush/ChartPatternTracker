@@ -212,7 +212,7 @@ Plano detalhado para quando NF-03 entrar em prioridade. Sub-itens são independe
 `updatePassword`, `verifyBeforeUpdateEmail` e `delete` exigem **sessão recente** (`requires-recent-login`). Se a sessão expirou, é preciso reautenticar antes:
 
 - **E-mail/senha**: `EmailAuthProvider.getCredential(email, password)` → `user.reauthenticate(credential)`.
-- **Google**: relançar `GoogleSignInClient` para obter `idToken` novo → `GoogleAuthProvider.getCredential(idToken, null)` → `user.reauthenticate(credential)`.
+- **Google**: `signOut()` do `GoogleSignInClient` e só então o `signInIntent`, para obter `idToken` novo → `GoogleAuthProvider.getCredential(idToken, null)` → `user.reauthenticate(credential)`. Sem o `signOut`, o client devolve a conta já conectada sem mostrar o seletor, e a reautenticação passa sem nenhuma interação. Se o `signOut` falha, o seletor não abre (`launchGoogleAccountChooser`).
 
 Centralizar como helpers no `AuthProvider`:
 

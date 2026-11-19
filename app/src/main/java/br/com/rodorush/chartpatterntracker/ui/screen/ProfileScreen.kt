@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.GoogleSignInOutcome
+import br.com.rodorush.chartpatterntracker.ui.component.launchGoogleAccountChooser
 import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
@@ -52,6 +54,7 @@ import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.Upd
 import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import kotlinx.coroutines.launch
 
 private const val TAG = "ProfileScreen"
 
@@ -93,14 +96,19 @@ fun ProfileScreen(
     var newEmail by remember { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
     var pendingReauthOp by remember { mutableStateOf(ReauthOp.DELETE) }
+    // Do Confirmar até o seletor do Google abrir, enquanto o signOut corre. Sem esse estado em
+    // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor.
+    var openingGoogleChooser by remember { mutableStateOf(false) }
 
     val isBusy = nameStatus is UpdateNameStatus.Updating ||
         passwordStatus is UpdatePasswordStatus.Updating ||
         emailStatus is UpdateEmailStatus.Updating ||
-        deleteStatus == DeleteAccountStatus.Deleting
+        deleteStatus == DeleteAccountStatus.Deleting ||
+        openingGoogleChooser
 
-    // Reauth via Google (mesmo padrão de LoginScreen/SettingsScreen): relança o
-    // Sign-In para obter um idToken fresco e retoma a operação pendente.
+    // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
+    // um idToken fresco e retoma a operação pendente.
+    val scope = rememberCoroutineScope()
     val googleSignInClient = remember {
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(BuildConfig.WEB_CLIENT_ID)
@@ -561,9 +569,25 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
+                    if (openingGoogleChooser) return@TextButton
                     showReauthDialog = false
                     if (isGoogle) {
-                        googleReauthLauncher.launch(googleSignInClient.signInIntent)
+                        openingGoogleChooser = true
+                        scope.launch {
+                            try {
+                                val failure = launchGoogleAccountChooser(
+                                    signOut = { googleSignInClient.signOut() },
+                                    launch = { googleReauthLauncher.launch(googleSignInClient.signInIntent) }
+                                )
+                                if (failure != null) {
+                                    Log.e(TAG, "Falha ao desconectar a conta do Google antes da reautenticação", failure)
+                                    resetPendingStatus()
+                                    toast(R.string.login_error)
+                                }
+                            } finally {
+                                openingGoogleChooser = false
+                            }
+                        }
                     } else {
                         when (pendingReauthOp) {
                             ReauthOp.DELETE ->
