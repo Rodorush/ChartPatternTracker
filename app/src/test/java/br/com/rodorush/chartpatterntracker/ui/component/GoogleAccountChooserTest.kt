@@ -65,10 +65,14 @@ class GoogleAccountChooserTest {
     @Test
     fun `coroutine cancelada durante o signOut nao abre o seletor`() = runTest {
         // A tela saiu da composição enquanto o signOut corria: o launcher dela já não vale.
+        // A função também não pode devolver: se devolvesse a CancellationException como falha,
+        // o Perfil já fora da composição a registraria como erro.
         val signOut = TaskCompletionSource<Void>()
         var launched = false
+        var returned = false
         val job = launch {
             launchGoogleAccountChooser(signOut = { signOut.task }, launch = { launched = true })
+            returned = true
         }
         runCurrent()
 
@@ -76,7 +80,7 @@ class GoogleAccountChooserTest {
         signOut.setResult(null)
         job.join()
 
-        assertTrue(job.isCancelled)
+        assertFalse(returned)
         assertFalse(launched)
     }
 }
