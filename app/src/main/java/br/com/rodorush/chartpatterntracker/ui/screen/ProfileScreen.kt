@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.component.isGoogleSignInCancelled
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
@@ -47,9 +48,12 @@ import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.Del
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdateEmailStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdateNameStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdatePasswordStatus
+import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+
+private const val TAG = "ProfileScreen"
 
 /** Operação destrutiva pendente quando o Firebase exige sessão recente. */
 private enum class ReauthOp { DELETE, PASSWORD, EMAIL }
@@ -111,6 +115,15 @@ fun ProfileScreen(
         val idToken = try {
             task.getResult(ApiException::class.java)?.idToken
         } catch (e: ApiException) {
+            // O idToken nulo segue para a ViewModel, que avisa o usuário; aqui só se registra a causa.
+            if (isGoogleSignInCancelled(result, e)) {
+                Log.i(
+                    TAG,
+                    "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
+                )
+            } else {
+                Log.e(TAG, "Falha na reautenticação com Google", e, "googleSignInStatusCode" to e.statusCode)
+            }
             null
         }
         when (pendingReauthOp) {
