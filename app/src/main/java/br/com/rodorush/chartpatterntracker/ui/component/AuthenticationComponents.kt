@@ -39,9 +39,13 @@ import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.util.LegalUrls
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
+import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
+
+private const val TAG = "AuthenticationComponents"
 
 @Composable
 fun SignInInputField(
@@ -141,7 +145,10 @@ fun LegalAgreementText(
 /**
  * Cria e lembra o fluxo de Google Sign-In (opções + client + launcher) e devolve a ação
  * que dispara o intent. Em sucesso chama [onSuccess]; em falha mostra um toast genérico
- * ([R.string.login_error]). A navegação fica a cargo do caller (via [onSuccess]), mantendo
+ * ([R.string.login_error]) e registra a [ApiException] com o `statusCode` em `Log.e`, o que
+ * em release vira evento no Crashlytics. O cancelamento (fechar o seletor de contas, ou o
+ * retorno sem intent) fica só em `Log.i`, sem a exceção, para não poluir o Crashlytics.
+ * A navegação fica a cargo do caller (via [onSuccess]), mantendo
  * o componente livre de dependência de tela/Activity. Reaproveitado por Login e Cadastro.
  */
 @Composable
@@ -173,6 +180,16 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
                 }
             }
         } catch (e: ApiException) {
+            // Sem intent de retorno não há status do Google: o seletor fechou sem resposta.
+            // A falha de configuração (SHA-1, client ID) volta com intent e cai no Log.e.
+            if (result.data == null || e.statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
+                Log.i(
+                    TAG,
+                    "Login com Google cancelado (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
+                )
+            } else {
+                Log.e(TAG, "Falha no login com Google", e, "googleSignInStatusCode" to e.statusCode)
+            }
             Toast.makeText(context, context.getString(R.string.login_error), Toast.LENGTH_SHORT).show()
         }
     }
