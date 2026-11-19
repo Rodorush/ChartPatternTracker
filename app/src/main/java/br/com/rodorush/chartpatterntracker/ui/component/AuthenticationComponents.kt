@@ -180,9 +180,7 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
                 }
             }
         } catch (e: ApiException) {
-            // Sem intent de retorno não há status do Google: o seletor fechou sem resposta.
-            // A falha de configuração (SHA-1, client ID) volta com intent e cai no Log.e.
-            if (result.data == null || e.statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
+            if (isGoogleSignInCancelled(hasIntent = result.data != null, statusCode = e.statusCode)) {
                 Log.i(
                     TAG,
                     "Login com Google cancelado (resultCode=${result.resultCode}, statusCode=${e.statusCode})"
@@ -195,3 +193,16 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
     }
     return { launcher.launch(client.signInIntent) }
 }
+
+/**
+ * Diz se a falha do seletor do Google Sign-In foi cancelamento do usuário, e não erro.
+ * Conta como cancelamento o status 12501 e o retorno sem intent, que não traz status do
+ * Google porque o seletor fechou sem resposta. A falha de configuração (SHA-1, client ID)
+ * volta com intent e não conta. Usada no login e na reautenticação do Perfil, para que o
+ * cancelamento fique fora do Crashlytics nos dois.
+ *
+ * @param hasIntent se o seletor devolveu intent (`ActivityResult.data != null`).
+ * @param statusCode o `statusCode` da `ApiException`.
+ */
+internal fun isGoogleSignInCancelled(hasIntent: Boolean, statusCode: Int): Boolean =
+    !hasIntent || statusCode == GoogleSignInStatusCodes.SIGN_IN_CANCELLED
