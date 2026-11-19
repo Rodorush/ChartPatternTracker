@@ -4,8 +4,18 @@ import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.customlogs.Log
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
+
+/**
+ * Erro que as operações que exigem sessão recente devolvem a quem chama. A sessão antiga é
+ * reconhecida pelo tipo da exceção e vira [AuthProvider.REQUIRES_RECENT_LOGIN], porque a
+ * mensagem do Firebase é texto livre em inglês e não serve de contrato. As demais falhas
+ * seguem com a mensagem crua.
+ */
+internal fun sensitiveOperationError(e: Exception?): String? =
+    if (e is FirebaseAuthRecentLoginRequiredException) AuthProvider.REQUIRES_RECENT_LOGIN else e?.message
 
 class FirebaseAuthProvider : AuthProvider {
     private val auth = FirebaseAuth.getInstance()
@@ -152,9 +162,8 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    // Mensagem propagada crua: a ViewModel detecta requires-recent-login.
                     Log.w(TAG, "deleteCurrentUser: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, sensitiveOperationError(task.exception))
                 }
             }
     }
@@ -214,9 +223,8 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    // Mensagem crua: a ViewModel detecta requires-recent-login.
                     Log.w(TAG, "updatePassword: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, sensitiveOperationError(task.exception))
                 }
             }
     }
@@ -232,9 +240,8 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    // Mensagem crua: a ViewModel detecta requires-recent-login.
                     Log.w(TAG, "verifyBeforeUpdateEmail: falha", task.exception)
-                    onResult(false, task.exception?.message)
+                    onResult(false, sensitiveOperationError(task.exception))
                 }
             }
     }

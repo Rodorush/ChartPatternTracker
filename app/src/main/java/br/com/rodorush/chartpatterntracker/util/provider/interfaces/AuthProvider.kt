@@ -12,7 +12,7 @@ interface AuthProvider {
     fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit)
 
     // Exclusão de conta (NF-03e) — exige sessão recente; em falha por
-    // requires-recent-login, reautenticar antes de retentar.
+    // REQUIRES_RECENT_LOGIN, reautenticar antes de retentar.
     fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit)
     fun reauthenticateWithPassword(password: String, onResult: (Boolean, String?) -> Unit)
     fun reauthenticateWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit)
@@ -30,4 +30,12 @@ interface AuthProvider {
     fun currentUserEmail(): String?
     fun currentUserDisplayName(): String?
     fun currentUserProviderId(): String?
+
+    companion object {
+        /**
+         * Erro que [deleteCurrentUser], [updatePassword] e [verifyBeforeUpdateEmail] devolvem
+         * quando a sessão é antiga demais para a operação: quem chama reautentica e retenta.
+         */
+        const val REQUIRES_RECENT_LOGIN = "requires-recent-login"
+    }
 }

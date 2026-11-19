@@ -337,11 +337,8 @@ class AuthenticationViewModel(
         _updateEmailStatus.value = UpdateEmailStatus.Idle
     }
 
-    private fun requiresRecentLogin(error: String?): Boolean {
-        val message = error ?: return false
-        return message.contains("requires-recent-login", ignoreCase = true) ||
-            message.contains("RECENT_LOGIN", ignoreCase = true)
-    }
+    private fun requiresRecentLogin(error: String?): Boolean =
+        error == AuthProvider.REQUIRES_RECENT_LOGIN
 
     override fun onCleared() {
         cooldownJob?.cancel()
