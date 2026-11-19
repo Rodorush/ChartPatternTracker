@@ -125,12 +125,18 @@ fun ProfileScreen(
                     Log.w(TAG, "Reautenticação com Google sem idToken", IllegalStateException("idToken nulo"))
                 }
             }
-            is GoogleSignInOutcome.NotAnError -> {
+            is GoogleSignInOutcome.Cancelled -> {
                 Log.i(
                     TAG,
-                    "Reautenticação com Google interrompida sem erro (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
+                    "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
                 null
+            }
+            GoogleSignInOutcome.InProgress -> {
+                // O seletor aberto antes retoma a operação pendente. Encerrar a operação aqui
+                // mostraria erro e, com o retorno do outro, a repetiria.
+                Log.i(TAG, "Reautenticação com Google já em andamento")
+                return@rememberLauncherForActivityResult
             }
             is GoogleSignInOutcome.Failure -> {
                 Log.e(
