@@ -280,7 +280,9 @@ internal fun isGoogleSignInCancelled(hasIntent: Boolean, statusCode: Int): Boole
  * Com uma conta já conectada no client, o `signInIntent` a devolve sem mostrar o seletor: na
  * reautenticação, a operação seguiria sem o dono escolher a conta. Por isso, se o [signOut]
  * falha, o seletor não é aberto. Cancelar a coroutine durante o [signOut] também impede o
- * [launch], o que protege o launcher da tela que saiu da composição.
+ * [launch], o que protege o launcher da tela que saiu da composição. O client fica desconectado
+ * mesmo quando o usuário cancela o seletor; a sessão do Firebase não muda, e nenhum fluxo do app
+ * lê a conta guardada no client.
  *
  * @param signOut o `signOut` do mesmo `GoogleSignInClient` cujo `signInIntent` o [launch] abre.
  * @return `null` quando o seletor foi aberto; a falha do [signOut] quando não foi.

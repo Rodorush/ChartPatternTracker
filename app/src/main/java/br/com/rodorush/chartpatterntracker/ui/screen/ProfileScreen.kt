@@ -96,11 +96,15 @@ fun ProfileScreen(
     var newEmail by remember { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
     var pendingReauthOp by remember { mutableStateOf(ReauthOp.DELETE) }
+    // Do Confirmar até o seletor do Google abrir, enquanto o signOut corre. Sem esse estado em
+    // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor.
+    var openingGoogleChooser by remember { mutableStateOf(false) }
 
     val isBusy = nameStatus is UpdateNameStatus.Updating ||
         passwordStatus is UpdatePasswordStatus.Updating ||
         emailStatus is UpdateEmailStatus.Updating ||
-        deleteStatus == DeleteAccountStatus.Deleting
+        deleteStatus == DeleteAccountStatus.Deleting ||
+        openingGoogleChooser
 
     // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
     // um idToken fresco e retoma a operação pendente.
@@ -565,17 +569,23 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
+                    if (openingGoogleChooser) return@TextButton
                     showReauthDialog = false
                     if (isGoogle) {
+                        openingGoogleChooser = true
                         scope.launch {
-                            val failure = launchGoogleAccountChooser(
-                                signOut = { googleSignInClient.signOut() },
-                                launch = { googleReauthLauncher.launch(googleSignInClient.signInIntent) }
-                            )
-                            if (failure != null) {
-                                Log.e(TAG, "Falha ao desconectar a conta do Google antes da reautenticação", failure)
-                                resetPendingStatus()
-                                toast(R.string.login_error)
+                            try {
+                                val failure = launchGoogleAccountChooser(
+                                    signOut = { googleSignInClient.signOut() },
+                                    launch = { googleReauthLauncher.launch(googleSignInClient.signInIntent) }
+                                )
+                                if (failure != null) {
+                                    Log.e(TAG, "Falha ao desconectar a conta do Google antes da reautenticação", failure)
+                                    resetPendingStatus()
+                                    toast(R.string.login_error)
+                                }
+                            } finally {
+                                openingGoogleChooser = false
                             }
                         }
                     } else {
