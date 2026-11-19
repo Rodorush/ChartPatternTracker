@@ -162,7 +162,7 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    Log.w(TAG, "deleteCurrentUser: falha", task.exception)
+                    logSensitiveFailure("deleteCurrentUser", task.exception)
                     onResult(false, sensitiveOperationError(task.exception))
                 }
             }
@@ -223,7 +223,7 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    Log.w(TAG, "updatePassword: falha", task.exception)
+                    logSensitiveFailure("updatePassword", task.exception)
                     onResult(false, sensitiveOperationError(task.exception))
                 }
             }
@@ -240,7 +240,7 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
-                    Log.w(TAG, "verifyBeforeUpdateEmail: falha", task.exception)
+                    logSensitiveFailure("verifyBeforeUpdateEmail", task.exception)
                     onResult(false, sensitiveOperationError(task.exception))
                 }
             }
@@ -276,6 +276,20 @@ class FirebaseAuthProvider : AuthProvider {
         auth.currentUser?.providerData
             ?.firstOrNull { it.providerId != "firebase" }
             ?.providerId
+
+    /**
+     * Registra a falha de uma operação que exige sessão recente. A sessão antiga é caminho
+     * esperado, porque o app pede reautenticação. Por isso ela fica em `Log.i`, sem a exceção,
+     * para não gerar evento no Crashlytics a cada tentativa. As demais falhas seguem em `Log.w`
+     * com a exceção.
+     */
+    private fun logSensitiveFailure(operation: String, e: Exception?) {
+        if (e is FirebaseAuthRecentLoginRequiredException) {
+            Log.i(TAG, "$operation: sessão antiga, pede reautenticação")
+        } else {
+            Log.w(TAG, "$operation: falha", e)
+        }
+    }
 
     private companion object {
         const val TAG = "FirebaseAuthProvider"
