@@ -107,7 +107,7 @@ class MockAuthProvider(
     override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
         deleteCalls++
         when {
-            deleteRequiresRecentLogin -> onResult(false, "requires-recent-login")
+            deleteRequiresRecentLogin -> onResult(false, AuthProvider.REQUIRES_RECENT_LOGIN)
             deleteSucceeds -> {
                 email = null
                 verified = false
@@ -144,7 +144,7 @@ class MockAuthProvider(
     override fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
         updatePasswordCalls++
         when {
-            updatePasswordRequiresRecentLogin -> onResult(false, "requires-recent-login")
+            updatePasswordRequiresRecentLogin -> onResult(false, AuthProvider.REQUIRES_RECENT_LOGIN)
             updatePasswordSucceeds -> onResult(true, null)
             else -> onResult(false, "update_failed")
         }
@@ -154,7 +154,7 @@ class MockAuthProvider(
         verifyBeforeUpdateEmailCalls++
         lastNewEmail = newEmail
         when {
-            updateEmailRequiresRecentLogin -> onResult(false, "requires-recent-login")
+            updateEmailRequiresRecentLogin -> onResult(false, AuthProvider.REQUIRES_RECENT_LOGIN)
             updateEmailSucceeds -> onResult(true, null)
             else -> onResult(false, "update_failed")
         }
