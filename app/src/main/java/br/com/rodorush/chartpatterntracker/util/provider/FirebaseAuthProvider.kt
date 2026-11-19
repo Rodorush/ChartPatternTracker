@@ -71,6 +71,7 @@ class FirebaseAuthProvider : AuthProvider {
 
     override fun signInWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
         if (idToken == null) {
+            Log.w(TAG, "signInWithGoogle: idToken nulo")
             onResult(false, "ID Token nulo ou inválido.")
             return
         }
@@ -81,6 +82,7 @@ class FirebaseAuthProvider : AuthProvider {
                 if (task.isSuccessful) {
                     onResult(true, null)
                 } else {
+                    Log.w(TAG, "signInWithGoogle: falha", task.exception)
                     onResult(false, task.exception?.message)
                 }
             }
