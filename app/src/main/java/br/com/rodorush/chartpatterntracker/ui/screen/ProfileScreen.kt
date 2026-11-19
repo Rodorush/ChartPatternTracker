@@ -592,7 +592,7 @@ fun ProfileScreen(
                                 if (failure != null) {
                                     Log.e(TAG, "Falha ao desconectar a conta do Google antes da reautenticação", failure)
                                     resetPendingStatus()
-                                    toast(R.string.login_error)
+                                    toast(R.string.auth_error_generic)
                                 }
                             } finally {
                                 openingGoogleChooser = false
