@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.GoogleSignInOutcome
+import br.com.rodorush.chartpatterntracker.ui.component.launchGoogleAccountChooser
 import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
@@ -52,6 +54,7 @@ import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.Upd
 import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import kotlinx.coroutines.launch
 
 private const val TAG = "ProfileScreen"
 
@@ -99,8 +102,9 @@ fun ProfileScreen(
         emailStatus is UpdateEmailStatus.Updating ||
         deleteStatus == DeleteAccountStatus.Deleting
 
-    // Reauth via Google (mesmo padrão de LoginScreen/SettingsScreen): relança o
-    // Sign-In para obter um idToken fresco e retoma a operação pendente.
+    // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
+    // um idToken fresco e retoma a operação pendente.
+    val scope = rememberCoroutineScope()
     val googleSignInClient = remember {
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(BuildConfig.WEB_CLIENT_ID)
@@ -563,7 +567,17 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     showReauthDialog = false
                     if (isGoogle) {
-                        googleReauthLauncher.launch(googleSignInClient.signInIntent)
+                        scope.launch {
+                            val failure = launchGoogleAccountChooser(
+                                signOut = { googleSignInClient.signOut() },
+                                launch = { googleReauthLauncher.launch(googleSignInClient.signInIntent) }
+                            )
+                            if (failure != null) {
+                                Log.e(TAG, "Falha ao desconectar a conta do Google antes da reautenticação", failure)
+                                resetPendingStatus()
+                                toast(R.string.login_error)
+                            }
+                        }
                     } else {
                         when (pendingReauthOp) {
                             ReauthOp.DELETE ->
