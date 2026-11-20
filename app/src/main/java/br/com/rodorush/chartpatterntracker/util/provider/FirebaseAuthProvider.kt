@@ -299,10 +299,34 @@ class FirebaseAuthProvider : AuthProvider {
 
     override fun currentUserDisplayName(): String? = auth.currentUser?.displayName
 
-    override fun currentUserProviderId(): String? =
-        auth.currentUser?.providerData
-            ?.firstOrNull { it.providerId != "firebase" }
-            ?.providerId
+    override fun currentUserProviderIds(): List<String> =
+        auth.currentUser?.providerData.orEmpty()
+            .map { it.providerId }
+            .filter { it != FIREBASE_PROVIDER }
+
+    override fun currentSignInProvider(onResult: (String?) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            onResult(null)
+            return
+        }
+        // O provedor vem da claim sign_in_provider do token. Com o token vencido, getIdToken
+        // precisa de rede; sem ela, quem chama decide pelos provedores vinculados.
+        user.getIdToken(false)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(task.result?.signInProvider)
+                } else {
+                    val e = task.exception
+                    if (e is FirebaseNetworkException) {
+                        Log.i(TAG, "currentSignInProvider: sem rede para ler o token")
+                    } else {
+                        Log.w(TAG, "currentSignInProvider: falha", e)
+                    }
+                    onResult(null)
+                }
+            }
+    }
 
     /**
      * Registra a falha de uma operação que exige sessão recente. A sessão antiga é caminho
@@ -320,5 +344,8 @@ class FirebaseAuthProvider : AuthProvider {
 
     private companion object {
         const val TAG = "FirebaseAuthProvider"
+
+        // O providerData inclui uma entrada do próprio Firebase, que não é provedor de login.
+        const val FIREBASE_PROVIDER = "firebase"
     }
 }

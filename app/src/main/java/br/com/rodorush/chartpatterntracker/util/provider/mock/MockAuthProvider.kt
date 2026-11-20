@@ -6,7 +6,9 @@ class MockAuthProvider(
     private var verified: Boolean = false,
     private var email: String? = null,
     private var displayName: String? = null,
-    private var providerId: String? = "password",
+    private var providerIds: List<String> = listOf(AuthProvider.PASSWORD_PROVIDER),
+    // Com mais de um provedor vinculado, a ordem não diz por qual a sessão foi aberta.
+    private var signInProvider: String? = providerIds.singleOrNull(),
     private var sendVerificationSucceeds: Boolean = true,
     private var reloadFlipsToVerified: Boolean = true,
     private var sendPasswordResetSucceeds: Boolean = true,
@@ -50,6 +52,8 @@ class MockAuthProvider(
     ) {
         if (email == "test@example.com" && password == "password") {
             this.email = email
+            if (AuthProvider.PASSWORD_PROVIDER !in providerIds) providerIds = providerIds + AuthProvider.PASSWORD_PROVIDER
+            this.signInProvider = AuthProvider.PASSWORD_PROVIDER
             onResult(true, null)
         } else {
             onResult(false, AuthProvider.INVALID_CREDENTIAL)
@@ -75,7 +79,8 @@ class MockAuthProvider(
 
     override fun signInWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
         if (idToken == "mock_token") {
-            this.providerId = "google.com"
+            if (AuthProvider.GOOGLE_PROVIDER !in providerIds) providerIds = providerIds + AuthProvider.GOOGLE_PROVIDER
+            this.signInProvider = AuthProvider.GOOGLE_PROVIDER
             this.verified = true
             onResult(true, null)
         } else {
@@ -126,6 +131,7 @@ class MockAuthProvider(
         if (reauthSucceeds) {
             // Sessão renovada: as operações sensíveis não exigem mais login recente.
             clearRecentLoginFlags()
+            signInProvider = AuthProvider.PASSWORD_PROVIDER
             onResult(true, null)
         } else {
             onResult(false, AuthProvider.INVALID_CREDENTIAL)
@@ -136,6 +142,7 @@ class MockAuthProvider(
         reauthCalls++
         if (reauthSucceeds && idToken != null) {
             clearRecentLoginFlags()
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
             onResult(true, null)
         } else {
             onResult(false, if (idToken == null) AuthProvider.MISSING_ID_TOKEN else AuthProvider.INVALID_CREDENTIAL)
@@ -185,7 +192,13 @@ class MockAuthProvider(
 
     override fun currentUserDisplayName(): String? = displayName
 
-    override fun currentUserProviderId(): String? = providerId
+    override fun currentUserProviderIds(): List<String> = providerIds
+
+    override fun currentSignInProvider(onResult: (String?) -> Unit) = onResult(signInProvider)
+
+    fun setSignInProviderForTest(value: String?) {
+        signInProvider = value
+    }
 
     fun setVerifiedForTest(value: Boolean) {
         verified = value

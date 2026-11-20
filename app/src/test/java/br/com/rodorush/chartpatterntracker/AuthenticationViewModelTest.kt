@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker
 
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.DeleteAccountStatus
@@ -19,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -376,5 +378,77 @@ class AuthenticationViewModelTest {
         vm.reauthAndUpdateEmailWithPassword("wrong", "new@example.com", provider)
 
         assertTrue(vm.updateEmailStatus.value is UpdateEmailStatus.Error)
+    }
+
+    @Test
+    fun `loadSessionProvider exposes the provider of the current session`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(
+            email = "user@example.com",
+            providerIds = listOf(AuthProvider.PASSWORD_PROVIDER, AuthProvider.GOOGLE_PROVIDER),
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
+        )
+        val vm = newViewModel()
+        advanceUntilIdle()
+        assertNull(vm.sessionProvider.value)
+
+        vm.loadSessionProvider(provider)
+
+        assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
+    }
+
+    @Test
+    fun `requires-recent-login re-reads the session provider before RequiresReauth`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(
+            email = "user@example.com",
+            providerIds = listOf(AuthProvider.PASSWORD_PROVIDER, AuthProvider.GOOGLE_PROVIDER),
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
+        ).apply {
+            setUpdateEmailRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateEmail("new@example.com", provider)
+
+        assertEquals(UpdateEmailStatus.RequiresReauth, vm.updateEmailStatus.value)
+        assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
+    }
+
+    @Test
+    fun `a failed session provider read keeps the previous value`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(
+            email = "user@example.com",
+            providerIds = listOf(AuthProvider.PASSWORD_PROVIDER, AuthProvider.GOOGLE_PROVIDER),
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
+        ).apply {
+            setDeleteRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+        vm.loadSessionProvider(provider)
+
+        provider.setSignInProviderForTest(null)
+        vm.deleteAccount(provider)
+
+        assertEquals(DeleteAccountStatus.RequiresReauth, vm.deleteAccountStatus.value)
+        assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
+    }
+
+    @Test
+    fun `updatePassword with requires-recent-login re-reads the session provider`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(
+            email = "user@example.com",
+            providerIds = listOf(AuthProvider.PASSWORD_PROVIDER, AuthProvider.GOOGLE_PROVIDER),
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
+        ).apply {
+            setUpdatePasswordRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updatePassword("newpass123", provider)
+
+        assertEquals(UpdatePasswordStatus.RequiresReauth, vm.updatePasswordStatus.value)
+        assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
     }
 }
