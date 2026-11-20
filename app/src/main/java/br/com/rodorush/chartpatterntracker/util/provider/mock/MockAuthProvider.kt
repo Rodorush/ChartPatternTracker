@@ -131,6 +131,7 @@ class MockAuthProvider(
         if (reauthSucceeds) {
             // Sessão renovada: as operações sensíveis não exigem mais login recente.
             clearRecentLoginFlags()
+            signInProvider = AuthProvider.PASSWORD_PROVIDER
             onResult(true, null)
         } else {
             onResult(false, AuthProvider.INVALID_CREDENTIAL)
@@ -141,6 +142,7 @@ class MockAuthProvider(
         reauthCalls++
         if (reauthSucceeds && idToken != null) {
             clearRecentLoginFlags()
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
             onResult(true, null)
         } else {
             onResult(false, if (idToken == null) AuthProvider.MISSING_ID_TOKEN else AuthProvider.INVALID_CREDENTIAL)

@@ -114,8 +114,9 @@ fun ProfileScreen(
     // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor sem operação restaurada não
     // faz nada, em vez de seguir uma operação que o usuário não pediu, como excluir a conta.
     var pendingReauthOp by rememberSaveable { mutableStateOf<ReauthOp?>(null) }
-    // Método do diálogo de reautenticação, fixado ao abri-lo (ver openReauthDialog).
-    var dialogReauthMethod by remember { mutableStateOf(ReauthMethod.PASSWORD) }
+    // Método do diálogo de reautenticação, fixado ao abri-lo (ver openReauthDialog). Salvo para o
+    // aviso de credencial recusada, depois do seletor do Google, sair certo com a Activity recriada.
+    var dialogReauthMethod by rememberSaveable { mutableStateOf(ReauthMethod.PASSWORD) }
     // Do Confirmar até o retorno do seletor do Google, passando pelo signOut. Sem esse estado em
     // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor, e um
     // segundo Confirmar abriria outro seletor. Sem rememberSaveable, para não ficar preso se a

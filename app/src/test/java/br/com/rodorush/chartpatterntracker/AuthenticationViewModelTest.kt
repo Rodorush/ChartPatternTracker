@@ -433,4 +433,22 @@ class AuthenticationViewModelTest {
         assertEquals(DeleteAccountStatus.RequiresReauth, vm.deleteAccountStatus.value)
         assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
     }
+
+    @Test
+    fun `updatePassword with requires-recent-login re-reads the session provider`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(
+            email = "user@example.com",
+            providerIds = listOf(AuthProvider.PASSWORD_PROVIDER, AuthProvider.GOOGLE_PROVIDER),
+            signInProvider = AuthProvider.GOOGLE_PROVIDER
+        ).apply {
+            setUpdatePasswordRequiresRecentLogin(true)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updatePassword("newpass123", provider)
+
+        assertEquals(UpdatePasswordStatus.RequiresReauth, vm.updatePasswordStatus.value)
+        assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
+    }
 }

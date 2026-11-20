@@ -213,7 +213,7 @@ Plano detalhado para quando NF-03 entrar em prioridade. Sub-itens são independe
 
 - **E-mail/senha**: `EmailAuthProvider.getCredential(email, password)` → `user.reauthenticate(credential)`.
 - **Google**: `signOut()` do `GoogleSignInClient` e só então o `signInIntent`, para obter `idToken` novo → `GoogleAuthProvider.getCredential(idToken, null)` → `user.reauthenticate(credential)`. Sem o `signOut`, o client devolve a conta já conectada sem mostrar o seletor, e a reautenticação passa sem nenhuma interação. Se o `signOut` falha, o seletor não abre (`launchGoogleAccountChooser`).
-- **Senha e Google vinculados**: a reautenticação segue o provedor com que o usuário entrou, lido da claim `sign_in_provider` do token (`GetTokenResult.signInProvider`). Sem esse provedor, vale a senha (`resolveReauthMethod`). A ordem do `providerData` não diz por qual provedor a sessão foi aberta.
+- **Senha e Google vinculados**: a reautenticação segue o provedor com que o usuário entrou, lido da claim `sign_in_provider` do token (`GetTokenResult.signInProvider`). Sem esse provedor, vale a senha quando está vinculada e, senão, o Google (`resolveReauthMethod`). A troca de senha é a exceção: reautentica sempre pela senha atual, digitada no próprio diálogo. A ordem do `providerData` não diz por qual provedor a sessão foi aberta.
 
 Centralizar como helpers no `AuthProvider`:
 
