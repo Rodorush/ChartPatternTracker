@@ -97,15 +97,17 @@ fun ProfileScreen(
     var newEmail by remember { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
     var pendingReauthOp by remember { mutableStateOf(ReauthOp.DELETE) }
-    // Do Confirmar até o seletor do Google abrir, enquanto o signOut corre. Sem esse estado em
-    // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor.
-    var openingGoogleChooser by remember { mutableStateOf(false) }
+    // Do Confirmar até o retorno do seletor do Google, passando pelo signOut. Sem esse estado em
+    // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor, e um
+    // segundo Confirmar abriria outro seletor. Sem rememberSaveable, para não ficar preso se a
+    // Activity for recriada com o seletor aberto.
+    var googleChooserActive by remember { mutableStateOf(false) }
 
     val isBusy = nameStatus is UpdateNameStatus.Updating ||
         passwordStatus is UpdatePasswordStatus.Updating ||
         emailStatus is UpdateEmailStatus.Updating ||
         deleteStatus == DeleteAccountStatus.Deleting ||
-        openingGoogleChooser
+        googleChooserActive
 
     // Devolve a operação pendente de reautenticação ao repouso, sem aviso na tela.
     fun resetPendingStatus() {
@@ -129,6 +131,8 @@ fun ProfileScreen(
     val googleReauthLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        // O seletor fechou: daqui em diante, o status da operação retomada mantém o isBusy.
+        googleChooserActive = false
         val outcome = readGoogleSignInResult(
             GoogleSignIn.getSignedInAccountFromIntent(result.data),
             hasIntent = result.data != null
@@ -579,23 +583,27 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    if (openingGoogleChooser) return@TextButton
+                    if (googleChooserActive) return@TextButton
                     showReauthDialog = false
                     if (isGoogle) {
-                        openingGoogleChooser = true
+                        googleChooserActive = true
                         scope.launch {
+                            // Com o seletor aberto, quem solta a trava é o retorno dele, no
+                            // googleReauthLauncher; aqui, só quando o seletor não abriu.
+                            var chooserLaunched = false
                             try {
                                 val failure = launchGoogleAccountChooser(
                                     signOut = { googleSignInClient.signOut() },
                                     launch = { googleReauthLauncher.launch(googleSignInClient.signInIntent) }
                                 )
+                                chooserLaunched = failure == null
                                 if (failure != null) {
                                     Log.e(TAG, "Falha ao desconectar a conta do Google antes da reautenticação", failure)
                                     resetPendingStatus()
                                     toast(R.string.auth_error_generic)
                                 }
                             } finally {
-                                openingGoogleChooser = false
+                                if (!chooserLaunched) googleChooserActive = false
                             }
                         }
                     } else {

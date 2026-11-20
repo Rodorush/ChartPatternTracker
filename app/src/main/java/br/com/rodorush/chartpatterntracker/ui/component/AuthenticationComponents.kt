@@ -17,7 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -179,8 +182,11 @@ internal fun authErrorMessage(
  * mostra um toast pelo [authErrorMessage], com [R.string.login_error] como texto genérico.
  * O retorno do seletor é triado por [readGoogleSignInResult]: a falha real vai para `Log.e`
  * com a exceção, o que em release vira evento no Crashlytics; o cancelamento fica só em
- * `Log.i`, sem a exceção e sem aviso na tela, e o login já em andamento (toque duplo)
- * é ignorado, porque o seletor aberto antes conclui o fluxo.
+ * `Log.i`, sem a exceção e sem aviso na tela, e o login já em andamento (seletor aberto por
+ * outro caminho) é ignorado, porque o seletor aberto antes conclui o fluxo.
+ * Um seletor por vez: do toque até o retorno do seletor e, com conta escolhida, até a
+ * resposta do Firebase, a ação ignora novos toques. Sem a trava, cada toque rápido abriria um
+ * seletor, e um toque durante o login no Firebase poderia chamar [onSuccess] de novo.
  * A navegação fica a cargo do caller (via [onSuccess]), mantendo
  * o componente livre de dependência de tela/Activity. Reaproveitado por Login e Cadastro.
  */
@@ -195,6 +201,8 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
             .build()
     }
     val client = remember { GoogleSignIn.getClient(context, options) }
+    // Sem rememberSaveable: com a Activity recriada, a trava volta a false e nunca fica presa.
+    var signInActive by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -202,9 +210,12 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
             GoogleSignIn.getSignedInAccountFromIntent(result.data),
             hasIntent = result.data != null
         )
+        // Com conta escolhida, a trava segue até a resposta do Firebase; nos demais, sai aqui.
+        if (outcome !is GoogleSignInOutcome.Account) signInActive = false
         when (outcome) {
             is GoogleSignInOutcome.Account ->
                 authProvider.signInWithGoogle(outcome.idToken) { success, error ->
+                    signInActive = false
                     if (success) {
                         onSuccess()
                     } else {
@@ -236,7 +247,16 @@ fun rememberGoogleSignInLauncher(onSuccess: () -> Unit): () -> Unit {
             }
         }
     }
-    return { launcher.launch(client.signInIntent) }
+    // Os toques chegam em sequência na thread principal, e a leitura é do estado na hora do
+    // toque: o segundo toque já vê a trava, sem esperar recomposição.
+    return {
+        if (signInActive) {
+            Log.i(TAG, "Login com Google já em andamento: toque ignorado")
+        } else {
+            signInActive = true
+            launcher.launch(client.signInIntent)
+        }
+    }
 }
 
 /**
@@ -254,8 +274,9 @@ internal sealed interface GoogleSignInOutcome {
     data class Cancelled(val statusCode: Int) : GoogleSignInOutcome
 
     /**
-     * Status 12502: outro seletor já está aberto, em geral por toque duplo no botão. O retorno
-     * desse outro seletor conclui o fluxo, então este deve ser ignorado pela tela.
+     * Status 12502: outro seletor já está aberto. A tela trava o próprio botão enquanto o
+     * seletor dela está aberto, então este vem de um seletor aberto por outro caminho. O retorno
+     * desse outro seletor conclui o fluxo, e este deve ser ignorado pela tela.
      */
     data object InProgress : GoogleSignInOutcome
 
