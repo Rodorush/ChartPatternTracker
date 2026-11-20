@@ -213,6 +213,7 @@ Plano detalhado para quando NF-03 entrar em prioridade. Sub-itens são independe
 
 - **E-mail/senha**: `EmailAuthProvider.getCredential(email, password)` → `user.reauthenticate(credential)`.
 - **Google**: `signOut()` do `GoogleSignInClient` e só então o `signInIntent`, para obter `idToken` novo → `GoogleAuthProvider.getCredential(idToken, null)` → `user.reauthenticate(credential)`. Sem o `signOut`, o client devolve a conta já conectada sem mostrar o seletor, e a reautenticação passa sem nenhuma interação. Se o `signOut` falha, o seletor não abre (`launchGoogleAccountChooser`).
+- **Senha e Google vinculados**: a reautenticação segue o provedor com que o usuário entrou, lido da claim `sign_in_provider` do token (`GetTokenResult.signInProvider`). Sem esse provedor, vale a senha (`resolveReauthMethod`). A ordem do `providerData` não diz por qual provedor a sessão foi aberta.
 
 Centralizar como helpers no `AuthProvider`:
 
@@ -275,9 +276,9 @@ Action URL fica como **handler padrão do Firebase** (mesmo do NF-21). Templates
 
 ### 12.7 Provedores Google: o que esconder
 
-Usuários Google (provider `google.com`) **não têm senha local** — `updatePassword` e `sendPasswordResetEmail` falham silenciosamente para eles. Em `ProfileScreen`:
+Contas só com Google (provider `google.com`, sem `password` vinculado) **não têm senha local** — `updatePassword` e `sendPasswordResetEmail` falham silenciosamente para elas. Em `ProfileScreen`:
 
-- Esconder "Alterar senha".
+- Esconder "Alterar senha" e "Alterar e-mail". Com senha e Google vinculados, os dois aparecem, porque a conta tem senha.
 - Para alterar e-mail/nome, recomendar via conta Google (link externo). Tecnicamente é possível chamar `verifyBeforeUpdateEmail` mesmo em conta Google, mas vira um e-mail/senha manual — comportamento confuso. Adiar até decidirmos UX.
 - "Excluir conta" continua disponível (com reauth via Google).
 

@@ -6,7 +6,8 @@ class MockAuthProvider(
     private var verified: Boolean = false,
     private var email: String? = null,
     private var displayName: String? = null,
-    private var providerId: String? = "password",
+    private var providerIds: List<String> = listOf(AuthProvider.PASSWORD_PROVIDER),
+    private var signInProvider: String? = providerIds.firstOrNull(),
     private var sendVerificationSucceeds: Boolean = true,
     private var reloadFlipsToVerified: Boolean = true,
     private var sendPasswordResetSucceeds: Boolean = true,
@@ -50,6 +51,7 @@ class MockAuthProvider(
     ) {
         if (email == "test@example.com" && password == "password") {
             this.email = email
+            this.signInProvider = AuthProvider.PASSWORD_PROVIDER
             onResult(true, null)
         } else {
             onResult(false, AuthProvider.INVALID_CREDENTIAL)
@@ -75,7 +77,8 @@ class MockAuthProvider(
 
     override fun signInWithGoogle(idToken: String?, onResult: (Boolean, String?) -> Unit) {
         if (idToken == "mock_token") {
-            this.providerId = "google.com"
+            if (AuthProvider.GOOGLE_PROVIDER !in providerIds) providerIds = providerIds + AuthProvider.GOOGLE_PROVIDER
+            this.signInProvider = AuthProvider.GOOGLE_PROVIDER
             this.verified = true
             onResult(true, null)
         } else {
@@ -185,7 +188,9 @@ class MockAuthProvider(
 
     override fun currentUserDisplayName(): String? = displayName
 
-    override fun currentUserProviderId(): String? = providerId
+    override fun currentUserProviderIds(): List<String> = providerIds
+
+    override fun currentSignInProvider(onResult: (String?) -> Unit) = onResult(signInProvider)
 
     fun setVerifiedForTest(value: Boolean) {
         verified = value

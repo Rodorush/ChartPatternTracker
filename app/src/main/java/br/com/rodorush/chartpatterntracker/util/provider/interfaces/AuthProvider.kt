@@ -34,9 +34,31 @@ interface AuthProvider {
     fun currentUserId(): String?
     fun currentUserEmail(): String?
     fun currentUserDisplayName(): String?
-    fun currentUserProviderId(): String?
+
+    /**
+     * Provedores vinculados à conta da sessão ([PASSWORD_PROVIDER], [GOOGLE_PROVIDER]), lidos da
+     * sessão local, sem rede. Uma conta pode ter mais de um; a ordem não diz por qual o usuário
+     * entrou (ver [currentSignInProvider]).
+     *
+     * @return lista vazia sem sessão.
+     */
+    fun currentUserProviderIds(): List<String>
+
+    /**
+     * Provedor pelo qual a sessão atual foi aberta ou reautenticada pela última vez, como
+     * [PASSWORD_PROVIDER] ou [GOOGLE_PROVIDER]. Pode precisar de rede para renovar o token.
+     *
+     * @param onResult recebe `null` sem sessão ou quando o provedor não pôde ser lido.
+     */
+    fun currentSignInProvider(onResult: (String?) -> Unit)
 
     companion object {
+        /** Provedor de e-mail e senha. */
+        const val PASSWORD_PROVIDER = "password"
+
+        /** Provedor Google. */
+        const val GOOGLE_PROVIDER = "google.com"
+
         /**
          * Erro que [deleteCurrentUser], [updatePassword] e [verifyBeforeUpdateEmail] devolvem
          * quando a sessão é antiga demais para a operação: quem chama reautentica e retenta.

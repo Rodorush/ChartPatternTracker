@@ -66,6 +66,9 @@ class AuthenticationViewModel(
         data class Error(val message: String?) : UpdateEmailStatus()
     }
 
+    /** Como o Perfil pede a reautenticação de uma operação sensível (ver [resolveReauthMethod]). */
+    enum class ReauthMethod { PASSWORD, GOOGLE }
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
@@ -92,6 +95,14 @@ class AuthenticationViewModel(
 
     private val _updateEmailStatus = MutableStateFlow<UpdateEmailStatus>(UpdateEmailStatus.Idle)
     val updateEmailStatus = _updateEmailStatus.asStateFlow()
+
+    private val _sessionProvider = MutableStateFlow<String?>(null)
+
+    /**
+     * Provedor pelo qual a sessão atual foi aberta, carregado por [loadSessionProvider]. Fica
+     * `null` até a leitura terminar, e também quando ela falha.
+     */
+    val sessionProvider = _sessionProvider.asStateFlow()
 
     private var cooldownJob: Job? = null
 
@@ -340,6 +351,14 @@ class AuthenticationViewModel(
     private fun requiresRecentLogin(error: String?): Boolean =
         error == AuthProvider.REQUIRES_RECENT_LOGIN
 
+    /** Lê o provedor da sessão atual para [sessionProvider]. */
+    fun loadSessionProvider(authProvider: AuthProvider) {
+        authProvider.currentSignInProvider { provider ->
+            Log.d(TAG, "Provedor da sessão: $provider")
+            _sessionProvider.value = provider
+        }
+    }
+
     override fun onCleared() {
         cooldownJob?.cancel()
         super.onCleared()
@@ -348,5 +367,31 @@ class AuthenticationViewModel(
     private companion object {
         const val TAG = "AuthenticationViewModel"
         const val COOLDOWN_SECONDS = 60
+    }
+}
+
+/**
+ * Decide como pedir a reautenticação. Vale o provedor com que o usuário abriu a sessão, desde que
+ * ainda esteja vinculado: uma conta com senha e Google pode ter entrado por qualquer um dos dois.
+ * Sem esse provedor (leitura pendente ou falha), a senha tem preferência quando está vinculada.
+ *
+ * @param signInProvider o provedor da sessão ([AuthProvider.currentSignInProvider]), ou `null`
+ *   quando não é conhecido.
+ * @param linkedProviders os provedores vinculados ([AuthProvider.currentUserProviderIds]).
+ */
+internal fun resolveReauthMethod(
+    signInProvider: String?,
+    linkedProviders: List<String>
+): AuthenticationViewModel.ReauthMethod {
+    val hasPassword = AuthProvider.PASSWORD_PROVIDER in linkedProviders
+    val hasGoogle = AuthProvider.GOOGLE_PROVIDER in linkedProviders
+    return when {
+        signInProvider == AuthProvider.GOOGLE_PROVIDER && hasGoogle ->
+            AuthenticationViewModel.ReauthMethod.GOOGLE
+        signInProvider == AuthProvider.PASSWORD_PROVIDER && hasPassword ->
+            AuthenticationViewModel.ReauthMethod.PASSWORD
+        hasPassword -> AuthenticationViewModel.ReauthMethod.PASSWORD
+        hasGoogle -> AuthenticationViewModel.ReauthMethod.GOOGLE
+        else -> AuthenticationViewModel.ReauthMethod.PASSWORD
     }
 }

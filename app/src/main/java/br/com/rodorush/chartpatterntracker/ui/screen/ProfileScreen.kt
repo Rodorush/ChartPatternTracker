@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,12 +47,15 @@ import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
 import br.com.rodorush.chartpatterntracker.ui.component.launchGoogleAccountChooser
 import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
+import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.DeleteAccountStatus
+import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.ReauthMethod
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdateEmailStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdateNameStatus
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel.UpdatePasswordStatus
+import br.com.rodorush.chartpatterntracker.viewmodel.resolveReauthMethod
 import br.com.rodorush.customlogs.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -75,8 +79,15 @@ fun ProfileScreen(
 
     val email = authProvider.currentUserEmail()
     val displayName = authProvider.currentUserDisplayName()
-    val providerId = authProvider.currentUserProviderId()
-    val isGoogle = providerId == "google.com"
+    // Uma conta pode ter senha e Google vinculados. As opções de senha e e-mail seguem a senha
+    // vinculada; a reautenticação segue o provedor com que o usuário entrou.
+    val linkedProviders = authProvider.currentUserProviderIds()
+    val hasPassword = AuthProvider.PASSWORD_PROVIDER in linkedProviders
+    val googleOnly = AuthProvider.GOOGLE_PROVIDER in linkedProviders && !hasPassword
+    val sessionProvider by authViewModel.sessionProvider.collectAsState()
+    val reauthWithGoogle = resolveReauthMethod(sessionProvider, linkedProviders) == ReauthMethod.GOOGLE
+    // "Entrada via": o provedor da sessão; até a leitura terminar, o primeiro vinculado.
+    val providerLabel = sessionProvider ?: linkedProviders.firstOrNull()
 
     val nameStatus by authViewModel.updateNameStatus.collectAsState()
     val passwordStatus by authViewModel.updatePasswordStatus.collectAsState()
@@ -92,11 +103,17 @@ fun ProfileScreen(
 
     var nameInput by remember { mutableStateOf(displayName.orEmpty()) }
     var currentPassword by remember { mutableStateOf("") }
+    // Sem rememberSaveable, para a senha não ir ao estado salvo da Activity. A troca de senha não
+    // chega à reautenticação com Google: o diálogo dela já reautentica pela senha atual.
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var newEmail by remember { mutableStateOf("") }
+    // Salvo para o retorno do seletor do Google retomar a troca de e-mail com o endereço digitado,
+    // mesmo com a Activity recriada enquanto o seletor estava aberto.
+    var newEmail by rememberSaveable { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
-    var pendingReauthOp by remember { mutableStateOf(ReauthOp.DELETE) }
+    // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor sem operação restaurada não
+    // faz nada, em vez de seguir uma operação que o usuário não pediu, como excluir a conta.
+    var pendingReauthOp by rememberSaveable { mutableStateOf<ReauthOp?>(null) }
     // Do Confirmar até o retorno do seletor do Google, passando pelo signOut. Sem esse estado em
     // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor, e um
     // segundo Confirmar abriria outro seletor. Sem rememberSaveable, para não ficar preso se a
@@ -115,6 +132,7 @@ fun ProfileScreen(
             ReauthOp.DELETE -> authViewModel.resetDeleteAccountStatus()
             ReauthOp.PASSWORD -> authViewModel.resetUpdatePasswordStatus()
             ReauthOp.EMAIL -> authViewModel.resetUpdateEmailStatus()
+            null -> Unit
         }
     }
 
@@ -179,22 +197,32 @@ fun ProfileScreen(
                 authViewModel.reauthAndUpdatePasswordWithGoogle(idToken, newPassword, authProvider)
             ReauthOp.EMAIL ->
                 authViewModel.reauthAndUpdateEmailWithGoogle(idToken, newEmail, authProvider)
+            null -> Log.w(
+                TAG,
+                "Retorno do seletor do Google sem operação pendente",
+                IllegalStateException("pendingReauthOp nulo")
+            )
         }
     }
 
     fun toast(resId: Int) =
         Toast.makeText(context, context.getString(resId), Toast.LENGTH_LONG).show()
 
-    // Na conta com senha, a credencial recusada vem da reautenticação, que só pede a senha. Na
-    // conta Google não há senha digitada, e o texto fica o genérico.
-    fun toastError(code: String?) =
+    // A credencial recusada vem da reautenticação. Pela senha, o texto é "senha incorreta"; pelo
+    // Google não há senha digitada, e o texto fica o genérico. A troca de senha sempre reautentica
+    // pela senha atual, e as demais operações, pelo método da sessão.
+    fun toastError(code: String?, passwordReauth: Boolean = !reauthWithGoogle) =
         toast(
             authErrorMessage(
                 code,
                 fallback = R.string.auth_error_generic,
-                invalidCredential = if (isGoogle) R.string.auth_error_generic else R.string.auth_error_wrong_password
+                invalidCredential = if (passwordReauth) R.string.auth_error_wrong_password else R.string.auth_error_generic
             )
         )
+
+    LaunchedEffect(Unit) {
+        authViewModel.loadSessionProvider(authProvider)
+    }
 
     LaunchedEffect(nameStatus) {
         when (val s = nameStatus) {
@@ -224,7 +252,7 @@ fun ProfileScreen(
                 showReauthDialog = true
             }
             is UpdatePasswordStatus.Error -> {
-                toastError(s.message)
+                toastError(s.message, passwordReauth = true)
                 authViewModel.resetUpdatePasswordStatus()
             }
             else -> Unit
@@ -312,9 +340,9 @@ fun ProfileScreen(
                 if (!displayName.isNullOrBlank()) {
                     Text(text = displayName, style = MaterialTheme.typography.bodyLarge)
                 }
-                if (providerId != null) {
+                if (providerLabel != null) {
                     Text(
-                        text = stringResource(R.string.profile_provider_label, providerId),
+                        text = stringResource(R.string.profile_provider_label, providerLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -332,8 +360,8 @@ fun ProfileScreen(
             Text(stringResource(R.string.change_name_title))
         }
 
-        if (isGoogle) {
-            // Senha e e-mail são geridos pela conta Google (§12.7).
+        if (googleOnly) {
+            // Sem senha vinculada, senha e e-mail são geridos pela conta Google (§12.7).
             Text(
                 text = stringResource(R.string.profile_google_managed_note),
                 style = MaterialTheme.typography.bodyMedium,
@@ -567,7 +595,7 @@ fun ProfileScreen(
             },
             title = { Text(stringResource(R.string.reauth_required)) },
             text = {
-                if (isGoogle) {
+                if (reauthWithGoogle) {
                     Text(stringResource(R.string.reauth_with_google))
                 } else {
                     OutlinedTextField(
@@ -585,7 +613,7 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     if (googleChooserActive) return@TextButton
                     showReauthDialog = false
-                    if (isGoogle) {
+                    if (reauthWithGoogle) {
                         googleChooserActive = true
                         scope.launch {
                             // Com o seletor aberto, quem solta a trava é o retorno dele, no
@@ -614,6 +642,7 @@ fun ProfileScreen(
                                 authViewModel.reauthAndUpdatePasswordWithPassword(reauthPassword, newPassword, authProvider)
                             ReauthOp.EMAIL ->
                                 authViewModel.reauthAndUpdateEmailWithPassword(reauthPassword, newEmail, authProvider)
+                            null -> Unit
                         }
                         reauthPassword = ""
                     }
@@ -636,8 +665,7 @@ fun ProfileScreenPreview() {
     AuthProviderWrapper(
         authProvider = MockAuthProvider(
             email = "preview@example.com",
-            displayName = "Preview User",
-            providerId = "password"
+            displayName = "Preview User"
         )
     ) {
         ProfileScreen(onNavigateBack = {}, onAccountDeleted = {})
