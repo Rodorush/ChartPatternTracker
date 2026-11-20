@@ -186,7 +186,9 @@ internal fun authErrorMessage(
  * outro caminho) é ignorado, porque o seletor aberto antes conclui o fluxo.
  * Um seletor por vez: do toque até o retorno do seletor e, com conta escolhida, até a
  * resposta do Firebase, a ação ignora novos toques. Sem a trava, cada toque rápido abriria um
- * seletor, e um toque durante o login no Firebase poderia chamar [onSuccess] de novo.
+ * seletor, e um toque durante o login no Firebase poderia chamar [onSuccess] de novo. A trava
+ * vive na composição: se a Activity for recriada (tema, idioma) com o login no Firebase em
+ * curso, ela volta a false, e um toque nessa janela inicia outro login.
  * A navegação fica a cargo do caller (via [onSuccess]), mantendo
  * o componente livre de dependência de tela/Activity. Reaproveitado por Login e Cadastro.
  */
