@@ -85,9 +85,9 @@ fun ProfileScreen(
     val hasPassword = AuthProvider.PASSWORD_PROVIDER in linkedProviders
     val googleOnly = AuthProvider.GOOGLE_PROVIDER in linkedProviders && !hasPassword
     val sessionProvider by authViewModel.sessionProvider.collectAsState()
-    val reauthWithGoogle = resolveReauthMethod(sessionProvider, linkedProviders) == ReauthMethod.GOOGLE
-    // "Entrada via": o provedor da sessão; até a leitura terminar, o primeiro vinculado.
-    val providerLabel = sessionProvider ?: linkedProviders.firstOrNull()
+    // "Entrada via": o provedor da sessão. Sem ele, só o vinculado único, porque a ordem dos
+    // vinculados não diz por qual o usuário entrou.
+    val providerLabel = sessionProvider ?: linkedProviders.singleOrNull()
 
     val nameStatus by authViewModel.updateNameStatus.collectAsState()
     val passwordStatus by authViewModel.updatePasswordStatus.collectAsState()
@@ -104,7 +104,7 @@ fun ProfileScreen(
     var nameInput by remember { mutableStateOf(displayName.orEmpty()) }
     var currentPassword by remember { mutableStateOf("") }
     // Sem rememberSaveable, para a senha não ir ao estado salvo da Activity. A troca de senha não
-    // chega à reautenticação com Google: o diálogo dela já reautentica pela senha atual.
+    // passa pelo seletor do Google (ver openReauthDialog), então nada a retoma depois dele.
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     // Salvo para o retorno do seletor do Google retomar a troca de e-mail com o endereço digitado,
@@ -114,6 +114,8 @@ fun ProfileScreen(
     // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor sem operação restaurada não
     // faz nada, em vez de seguir uma operação que o usuário não pediu, como excluir a conta.
     var pendingReauthOp by rememberSaveable { mutableStateOf<ReauthOp?>(null) }
+    // Método do diálogo de reautenticação, fixado ao abri-lo (ver openReauthDialog).
+    var dialogReauthMethod by remember { mutableStateOf(ReauthMethod.PASSWORD) }
     // Do Confirmar até o retorno do seletor do Google, passando pelo signOut. Sem esse estado em
     // isBusy, outro botão do Perfil trocaria pendingReauthOp antes do retorno do seletor, e um
     // segundo Confirmar abriria outro seletor. Sem rememberSaveable, para não ficar preso se a
@@ -193,15 +195,17 @@ fun ProfileScreen(
         }
         when (pendingReauthOp) {
             ReauthOp.DELETE -> authViewModel.reauthenticateAndDeleteWithGoogle(idToken, authProvider)
-            ReauthOp.PASSWORD ->
-                authViewModel.reauthAndUpdatePasswordWithGoogle(idToken, newPassword, authProvider)
             ReauthOp.EMAIL ->
                 authViewModel.reauthAndUpdateEmailWithGoogle(idToken, newEmail, authProvider)
-            null -> Log.w(
-                TAG,
-                "Retorno do seletor do Google sem operação pendente",
-                IllegalStateException("pendingReauthOp nulo")
-            )
+            // A troca de senha não abre o seletor, e sem operação restaurada não há o que retomar.
+            ReauthOp.PASSWORD, null -> {
+                Log.w(
+                    TAG,
+                    "Retorno do seletor do Google sem operação de Google pendente",
+                    IllegalStateException("pendingReauthOp=$pendingReauthOp")
+                )
+                resetPendingStatus()
+            }
         }
     }
 
@@ -210,8 +214,8 @@ fun ProfileScreen(
 
     // A credencial recusada vem da reautenticação. Pela senha, o texto é "senha incorreta"; pelo
     // Google não há senha digitada, e o texto fica o genérico. A troca de senha sempre reautentica
-    // pela senha atual, e as demais operações, pelo método da sessão.
-    fun toastError(code: String?, passwordReauth: Boolean = !reauthWithGoogle) =
+    // pela senha; as demais operações, pelo método do diálogo.
+    fun toastError(code: String?, passwordReauth: Boolean = dialogReauthMethod == ReauthMethod.PASSWORD) =
         toast(
             authErrorMessage(
                 code,
@@ -219,6 +223,19 @@ fun ProfileScreen(
                 invalidCredential = if (passwordReauth) R.string.auth_error_wrong_password else R.string.auth_error_generic
             )
         )
+
+    // O método fica fixo enquanto o diálogo está aberto. Ele vem do provedor da sessão, que a
+    // ViewModel relê antes de pedir a reautenticação. A troca de senha usa sempre a senha, que o
+    // usuário acabou de digitar, e não passa pelo seletor do Google.
+    fun openReauthDialog(op: ReauthOp) {
+        pendingReauthOp = op
+        dialogReauthMethod = if (op == ReauthOp.PASSWORD) {
+            ReauthMethod.PASSWORD
+        } else {
+            resolveReauthMethod(authViewModel.sessionProvider.value, linkedProviders)
+        }
+        showReauthDialog = true
+    }
 
     LaunchedEffect(Unit) {
         authViewModel.loadSessionProvider(authProvider)
@@ -247,10 +264,7 @@ fun ProfileScreen(
                 confirmPassword = ""
                 authViewModel.resetUpdatePasswordStatus()
             }
-            is UpdatePasswordStatus.RequiresReauth -> {
-                pendingReauthOp = ReauthOp.PASSWORD
-                showReauthDialog = true
-            }
+            is UpdatePasswordStatus.RequiresReauth -> openReauthDialog(ReauthOp.PASSWORD)
             is UpdatePasswordStatus.Error -> {
                 toastError(s.message, passwordReauth = true)
                 authViewModel.resetUpdatePasswordStatus()
@@ -282,10 +296,7 @@ fun ProfileScreen(
                 newEmail = ""
                 authViewModel.resetUpdateEmailStatus()
             }
-            is UpdateEmailStatus.RequiresReauth -> {
-                pendingReauthOp = ReauthOp.EMAIL
-                showReauthDialog = true
-            }
+            is UpdateEmailStatus.RequiresReauth -> openReauthDialog(ReauthOp.EMAIL)
             is UpdateEmailStatus.Error -> {
                 toastError(s.message)
                 authViewModel.resetUpdateEmailStatus()
@@ -300,10 +311,7 @@ fun ProfileScreen(
                 authViewModel.resetDeleteAccountStatus()
                 onAccountDeleted()
             }
-            is DeleteAccountStatus.RequiresReauth -> {
-                pendingReauthOp = ReauthOp.DELETE
-                showReauthDialog = true
-            }
+            is DeleteAccountStatus.RequiresReauth -> openReauthDialog(ReauthOp.DELETE)
             is DeleteAccountStatus.Error -> {
                 toastError(s.message)
                 authViewModel.resetDeleteAccountStatus()
@@ -595,7 +603,7 @@ fun ProfileScreen(
             },
             title = { Text(stringResource(R.string.reauth_required)) },
             text = {
-                if (reauthWithGoogle) {
+                if (dialogReauthMethod == ReauthMethod.GOOGLE) {
                     Text(stringResource(R.string.reauth_with_google))
                 } else {
                     OutlinedTextField(
@@ -613,7 +621,7 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     if (googleChooserActive) return@TextButton
                     showReauthDialog = false
-                    if (reauthWithGoogle) {
+                    if (dialogReauthMethod == ReauthMethod.GOOGLE) {
                         googleChooserActive = true
                         scope.launch {
                             // Com o seletor aberto, quem solta a trava é o retorno dele, no

@@ -7,7 +7,8 @@ class MockAuthProvider(
     private var email: String? = null,
     private var displayName: String? = null,
     private var providerIds: List<String> = listOf(AuthProvider.PASSWORD_PROVIDER),
-    private var signInProvider: String? = providerIds.firstOrNull(),
+    // Com mais de um provedor vinculado, a ordem não diz por qual a sessão foi aberta.
+    private var signInProvider: String? = providerIds.singleOrNull(),
     private var sendVerificationSucceeds: Boolean = true,
     private var reloadFlipsToVerified: Boolean = true,
     private var sendPasswordResetSucceeds: Boolean = true,
@@ -51,6 +52,7 @@ class MockAuthProvider(
     ) {
         if (email == "test@example.com" && password == "password") {
             this.email = email
+            if (AuthProvider.PASSWORD_PROVIDER !in providerIds) providerIds = providerIds + AuthProvider.PASSWORD_PROVIDER
             this.signInProvider = AuthProvider.PASSWORD_PROVIDER
             onResult(true, null)
         } else {
@@ -191,6 +193,10 @@ class MockAuthProvider(
     override fun currentUserProviderIds(): List<String> = providerIds
 
     override fun currentSignInProvider(onResult: (String?) -> Unit) = onResult(signInProvider)
+
+    fun setSignInProviderForTest(value: String?) {
+        signInProvider = value
+    }
 
     fun setVerifiedForTest(value: Boolean) {
         verified = value

@@ -99,8 +99,9 @@ class AuthenticationViewModel(
     private val _sessionProvider = MutableStateFlow<String?>(null)
 
     /**
-     * Provedor pelo qual a sessão atual foi aberta, carregado por [loadSessionProvider]. Fica
-     * `null` até a leitura terminar, e também quando ela falha.
+     * Provedor pelo qual a sessão atual foi aberta, carregado por [loadSessionProvider] e relido
+     * antes de cada pedido de reautenticação. Fica `null` até a primeira leitura com sucesso; uma
+     * leitura que falha mantém o valor anterior.
      */
     val sessionProvider = _sessionProvider.asStateFlow()
 
@@ -186,8 +187,9 @@ class AuthenticationViewModel(
         authProvider.deleteCurrentUser { success, error ->
             when {
                 success -> _deleteAccountStatus.value = DeleteAccountStatus.Deleted
-                requiresRecentLogin(error) ->
+                requiresRecentLogin(error) -> readSessionProvider(authProvider) {
                     _deleteAccountStatus.value = DeleteAccountStatus.RequiresReauth
+                }
                 else -> {
                     Log.w(TAG, "deleteAccount falhou: $error")
                     _deleteAccountStatus.value = DeleteAccountStatus.Error(error)
@@ -249,8 +251,9 @@ class AuthenticationViewModel(
         authProvider.updatePassword(newPassword) { success, error ->
             when {
                 success -> _updatePasswordStatus.value = UpdatePasswordStatus.Updated
-                requiresRecentLogin(error) ->
+                requiresRecentLogin(error) -> readSessionProvider(authProvider) {
                     _updatePasswordStatus.value = UpdatePasswordStatus.RequiresReauth
+                }
                 else -> {
                     Log.w(TAG, "updatePassword falhou: $error")
                     _updatePasswordStatus.value = UpdatePasswordStatus.Error(error)
@@ -275,22 +278,6 @@ class AuthenticationViewModel(
         }
     }
 
-    fun reauthAndUpdatePasswordWithGoogle(
-        idToken: String?,
-        newPassword: String,
-        authProvider: AuthProvider
-    ) {
-        _updatePasswordStatus.value = UpdatePasswordStatus.Updating
-        authProvider.reauthenticateWithGoogle(idToken) { success, error ->
-            if (success) {
-                updatePassword(newPassword, authProvider)
-            } else {
-                Log.w(TAG, "reauthenticateWithGoogle (updatePassword) falhou: $error")
-                _updatePasswordStatus.value = UpdatePasswordStatus.Error(error)
-            }
-        }
-    }
-
     fun resetUpdatePasswordStatus() {
         _updatePasswordStatus.value = UpdatePasswordStatus.Idle
     }
@@ -302,8 +289,9 @@ class AuthenticationViewModel(
         authProvider.verifyBeforeUpdateEmail(newEmail) { success, error ->
             when {
                 success -> _updateEmailStatus.value = UpdateEmailStatus.VerificationSent
-                requiresRecentLogin(error) ->
+                requiresRecentLogin(error) -> readSessionProvider(authProvider) {
                     _updateEmailStatus.value = UpdateEmailStatus.RequiresReauth
+                }
                 else -> {
                     Log.w(TAG, "updateEmail falhou: $error")
                     _updateEmailStatus.value = UpdateEmailStatus.Error(error)
@@ -352,10 +340,18 @@ class AuthenticationViewModel(
         error == AuthProvider.REQUIRES_RECENT_LOGIN
 
     /** Lê o provedor da sessão atual para [sessionProvider]. */
-    fun loadSessionProvider(authProvider: AuthProvider) {
+    fun loadSessionProvider(authProvider: AuthProvider) = readSessionProvider(authProvider) {}
+
+    /**
+     * Lê o provedor da sessão e então chama [then]. Antes de pedir reautenticação, a releitura
+     * acompanha uma reautenticação anterior, que muda o provedor da sessão, e uma leitura que
+     * falhou na abertura da tela. Durante ela, o status da operação segue em andamento.
+     */
+    private fun readSessionProvider(authProvider: AuthProvider, then: () -> Unit) {
         authProvider.currentSignInProvider { provider ->
             Log.d(TAG, "Provedor da sessão: $provider")
-            _sessionProvider.value = provider
+            if (provider != null) _sessionProvider.value = provider
+            then()
         }
     }
 
