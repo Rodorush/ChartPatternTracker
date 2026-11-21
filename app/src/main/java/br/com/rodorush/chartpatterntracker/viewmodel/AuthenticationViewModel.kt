@@ -129,9 +129,14 @@ class AuthenticationViewModel(
         }
     }
 
+    /**
+     * Reenvia o e-mail de verificação; o sucesso arma o cooldown, que bloqueia o reenvio seguinte.
+     * Com um envio já em andamento, a chamada é ignorada: um segundo toque no Reenviar antes de o
+     * Firebase responder mandaria o e-mail duas vezes.
+     */
     fun sendVerificationEmail(authProvider: AuthProvider) {
         if (_resendCooldownSeconds.value > 0) return
-        _verificationStatus.value = VerificationStatus.Sending
+        if (!_verificationStatus.tryBegin(VerificationStatus.Sending)) return ignored("sendVerificationEmail")
         authProvider.sendEmailVerification { success, error ->
             if (success) {
                 _verificationStatus.value = VerificationStatus.Sent
@@ -165,9 +170,14 @@ class AuthenticationViewModel(
         _verificationStatus.value = VerificationStatus.Idle
     }
 
+    /**
+     * Envia ao [email] o link de redefinição de senha; o sucesso arma o cooldown, que bloqueia o
+     * envio seguinte. Com um envio já em andamento, a chamada é ignorada: um segundo toque antes de
+     * o Firebase responder mandaria o e-mail duas vezes.
+     */
     fun sendPasswordReset(email: String, authProvider: AuthProvider) {
         if (_resendCooldownSeconds.value > 0) return
-        _resetPasswordStatus.value = ResetPasswordStatus.Sending
+        if (!_resetPasswordStatus.tryBegin(ResetPasswordStatus.Sending)) return ignored("sendPasswordReset")
         authProvider.sendPasswordResetEmail(email) { success, error ->
             if (success) {
                 _resetPasswordStatus.value = ResetPasswordStatus.Sent
