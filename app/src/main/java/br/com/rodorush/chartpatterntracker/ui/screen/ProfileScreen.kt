@@ -139,6 +139,14 @@ fun ProfileScreen(
         }
     }
 
+    // Os campos de senha são mascarados: o que sobra de uma tentativa somaria, sem o usuário ver,
+    // ao que ele digitar na próxima. Por isso limpam em todo fim de troca, com sucesso ou erro.
+    fun clearPasswordFields() {
+        currentPassword = ""
+        newPassword = ""
+        confirmPassword = ""
+    }
+
     // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
     // um idToken fresco e retoma a operação pendente.
     val scope = rememberCoroutineScope()
@@ -260,14 +268,13 @@ fun ProfileScreen(
         when (val s = passwordStatus) {
             is UpdatePasswordStatus.Updated -> {
                 toast(R.string.password_updated)
-                currentPassword = ""
-                newPassword = ""
-                confirmPassword = ""
+                clearPasswordFields()
                 authViewModel.resetUpdatePasswordStatus()
             }
             is UpdatePasswordStatus.RequiresReauth -> openReauthDialog(ReauthOp.PASSWORD)
             is UpdatePasswordStatus.Error -> {
                 toastError(s.message, passwordReauth = true)
+                clearPasswordFields()
                 authViewModel.resetUpdatePasswordStatus()
             }
             else -> Unit
@@ -455,11 +462,6 @@ fun ProfileScreen(
         // então só quem sabe a senha vigente consegue alterá-la.
         val canSubmit = currentPassword.isNotBlank() &&
             newPassword.length >= MIN_PASSWORD_LENGTH && newPassword == confirmPassword
-        fun clearPasswordFields() {
-            currentPassword = ""
-            newPassword = ""
-            confirmPassword = ""
-        }
         AlertDialog(
             onDismissRequest = {
                 showPasswordDialog = false
