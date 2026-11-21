@@ -108,7 +108,8 @@ fun ProfileScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     // Salvo para o retorno do seletor do Google retomar a troca de e-mail com o endereço digitado,
-    // mesmo com a Activity recriada enquanto o seletor estava aberto.
+    // mesmo com a Activity recriada enquanto o seletor estava aberto. Limpo no envio do link e no
+    // cancelamento; depois de um erro, fica no campo para a nova tentativa.
     var newEmail by rememberSaveable { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
     // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor sem operação restaurada não
@@ -137,6 +138,25 @@ fun ProfileScreen(
             ReauthOp.EMAIL -> authViewModel.resetUpdateEmailStatus()
             null -> Unit
         }
+    }
+
+    // Os campos de senha são mascarados: o que sobra de uma tentativa somaria, sem o usuário ver,
+    // ao que ele digitar na próxima. Por isso limpam em todo fim de troca, com sucesso ou erro.
+    fun clearPasswordFields() {
+        currentPassword = ""
+        newPassword = ""
+        confirmPassword = ""
+    }
+
+    // O usuário desistiu da operação pendente: volta ao repouso e descarta o que digitou para ela.
+    // Um erro não passa por aqui: o e-mail fica no campo para a nova tentativa.
+    fun cancelPendingOp() {
+        when (pendingReauthOp) {
+            ReauthOp.EMAIL -> newEmail = ""
+            ReauthOp.PASSWORD -> clearPasswordFields()
+            ReauthOp.DELETE, null -> Unit
+        }
+        resetPendingStatus()
     }
 
     // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
@@ -175,7 +195,7 @@ fun ProfileScreen(
                     TAG,
                     "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
-                resetPendingStatus()
+                cancelPendingOp()
                 return@rememberLauncherForActivityResult
             }
             GoogleSignInOutcome.InProgress -> {
@@ -260,14 +280,13 @@ fun ProfileScreen(
         when (val s = passwordStatus) {
             is UpdatePasswordStatus.Updated -> {
                 toast(R.string.password_updated)
-                currentPassword = ""
-                newPassword = ""
-                confirmPassword = ""
+                clearPasswordFields()
                 authViewModel.resetUpdatePasswordStatus()
             }
             is UpdatePasswordStatus.RequiresReauth -> openReauthDialog(ReauthOp.PASSWORD)
             is UpdatePasswordStatus.Error -> {
                 toastError(s.message, passwordReauth = true)
+                clearPasswordFields()
                 authViewModel.resetUpdatePasswordStatus()
             }
             else -> Unit
@@ -455,11 +474,6 @@ fun ProfileScreen(
         // então só quem sabe a senha vigente consegue alterá-la.
         val canSubmit = currentPassword.isNotBlank() &&
             newPassword.length >= MIN_PASSWORD_LENGTH && newPassword == confirmPassword
-        fun clearPasswordFields() {
-            currentPassword = ""
-            newPassword = ""
-            confirmPassword = ""
-        }
         AlertDialog(
             onDismissRequest = {
                 showPasswordDialog = false
@@ -600,7 +614,7 @@ fun ProfileScreen(
             onDismissRequest = {
                 showReauthDialog = false
                 reauthPassword = ""
-                resetPendingStatus()
+                cancelPendingOp()
             },
             title = { Text(stringResource(R.string.reauth_required)) },
             text = {
@@ -661,7 +675,7 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     showReauthDialog = false
                     reauthPassword = ""
-                    resetPendingStatus()
+                    cancelPendingOp()
                 }) { Text(stringResource(R.string.cancel)) }
             }
         )
