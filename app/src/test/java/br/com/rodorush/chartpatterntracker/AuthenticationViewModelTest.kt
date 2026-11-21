@@ -521,6 +521,12 @@ class AuthenticationViewModelTest {
 
         assertEquals(0, mock.reauthCalls)
         assertEquals(1, provider.deleteCallbacks.size)
+        // A chamada ignorada não mexe no status, que mantém o Perfil ocupado.
+        assertEquals(DeleteAccountStatus.Deleting, vm.deleteAccountStatus.value)
+
+        provider.deleteCallbacks.single()(true, null)
+
+        assertEquals(DeleteAccountStatus.Deleted, vm.deleteAccountStatus.value)
     }
 
     @Test
