@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -16,8 +17,9 @@ class DeviceCredentialTest {
     fun `aparelho sem bloqueio segue sem abrir a tela`() {
         val events = mutableListOf<String>()
 
-        val failure = requestDeviceCredential<String>(
-            intent = null,
+        val failure = requestDeviceCredential(
+            deviceSecure = false,
+            createIntent = { events += "createIntent"; "intent" },
             launch = { events += "launch" },
             proceed = { events += "proceed" }
         )
@@ -31,7 +33,8 @@ class DeviceCredentialTest {
         val events = mutableListOf<String>()
 
         val failure = requestDeviceCredential(
-            intent = "intent",
+            deviceSecure = true,
+            createIntent = { "intent" },
             launch = { events += "launch:$it" },
             proceed = { events += "proceed" }
         )
@@ -41,13 +44,32 @@ class DeviceCredentialTest {
     }
 
     @Test
+    fun `aparelho com bloqueio sem intent devolve a falha e nao segue`() {
+        // Tratar o intent nulo como aparelho sem bloqueio faria a operação sem a credencial.
+        var launched = false
+        var proceeded = false
+
+        val failure = requestDeviceCredential<String>(
+            deviceSecure = true,
+            createIntent = { null },
+            launch = { launched = true },
+            proceed = { proceeded = true }
+        )
+
+        assertTrue(failure is IllegalStateException)
+        assertFalse(launched)
+        assertFalse(proceeded)
+    }
+
+    @Test
     fun `tela que nao abre devolve a falha e nao segue`() {
         // Seguir mesmo assim faria a operação sem a credencial num aparelho que tem bloqueio.
         val cause = IllegalStateException("tela de credencial ausente")
         var proceeded = false
 
         val failure = requestDeviceCredential(
-            intent = "intent",
+            deviceSecure = true,
+            createIntent = { "intent" },
             launch = { throw cause },
             proceed = { proceeded = true }
         )

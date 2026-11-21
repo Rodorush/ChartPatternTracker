@@ -46,6 +46,7 @@ import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.GoogleSignInOutcome
 import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
 import br.com.rodorush.chartpatterntracker.ui.component.deviceCredentialIntent
+import br.com.rodorush.chartpatterntracker.ui.component.isDeviceSecure
 import br.com.rodorush.chartpatterntracker.ui.component.launchGoogleAccountChooser
 import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
 import br.com.rodorush.chartpatterntracker.ui.component.requestDeviceCredential
@@ -280,20 +281,25 @@ fun ProfileScreen(
     // Pede o bloqueio de tela do aparelho antes de excluir a conta ou alterar o e-mail, inclusive
     // na sessão recente, em que o Firebase não pede reautenticação.
     fun confirmDeviceCredentialThen(op: ReauthOp) {
+        // Um segundo toque antes de o diálogo sumir abriria outra tela e repetiria a operação.
+        if (credentialPromptActive) return
         pendingReauthOp = op
         val description = when (op) {
             ReauthOp.DELETE -> R.string.device_credential_delete_description
             else -> R.string.device_credential_email_description
         }
-        val intent = deviceCredentialIntent(
-            context,
-            title = context.getString(R.string.device_credential_title),
-            description = context.getString(description)
-        )
-        if (intent == null) Log.i(TAG, "Aparelho sem bloqueio de tela; segue sem a credencial (op=$op)")
-        credentialPromptActive = intent != null
+        val deviceSecure = isDeviceSecure(context)
+        if (!deviceSecure) Log.i(TAG, "Aparelho sem bloqueio de tela; segue sem a credencial (op=$op)")
+        credentialPromptActive = deviceSecure
         val failure = requestDeviceCredential(
-            intent,
+            deviceSecure = deviceSecure,
+            createIntent = {
+                deviceCredentialIntent(
+                    context,
+                    title = context.getString(R.string.device_credential_title),
+                    description = context.getString(description)
+                )
+            },
             launch = { credentialLauncher.launch(it) },
             proceed = { runCredentialConfirmedOp() }
         )
@@ -301,6 +307,7 @@ fun ProfileScreen(
             credentialPromptActive = false
             Log.e(TAG, "Falha ao abrir a credencial do aparelho", failure, "op" to op.name)
             resetPendingStatus()
+            pendingReauthOp = null
             toast(R.string.auth_error_generic)
         }
     }
