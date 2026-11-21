@@ -451,4 +451,180 @@ class AuthenticationViewModelTest {
         assertEquals(UpdatePasswordStatus.RequiresReauth, vm.updatePasswordStatus.value)
         assertEquals(AuthProvider.GOOGLE_PROVIDER, vm.sessionProvider.value)
     }
+
+    // --- Chamada repetida com a operação em andamento (segundo toque antes de o diálogo sumir) ---
+
+    @Test
+    fun `deleteAccount repeated while the first is pending calls Firebase once`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+        vm.deleteAccount(provider)
+
+        assertEquals(1, provider.deleteCallbacks.size)
+        assertEquals(DeleteAccountStatus.Deleting, vm.deleteAccountStatus.value)
+
+        provider.deleteCallbacks.single()(true, null)
+
+        assertEquals(DeleteAccountStatus.Deleted, vm.deleteAccountStatus.value)
+    }
+
+    @Test
+    fun `deleteAccount after a failed attempt calls Firebase again`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+        provider.deleteCallbacks.single()(false, null)
+        assertTrue(vm.deleteAccountStatus.value is DeleteAccountStatus.Error)
+
+        vm.deleteAccount(provider)
+
+        assertEquals(2, provider.deleteCallbacks.size)
+        assertEquals(DeleteAccountStatus.Deleting, vm.deleteAccountStatus.value)
+    }
+
+    @Test
+    fun `reauthenticate and delete repeated while pending reauthenticates once and deletes once`() =
+        runTest(dispatcher) {
+            val provider = HeldAuthProvider()
+            val vm = newViewModel()
+            advanceUntilIdle()
+
+            vm.reauthenticateAndDeleteWithPassword("password", provider)
+            vm.reauthenticateAndDeleteWithPassword("password", provider)
+            vm.deleteAccount(provider)
+
+            assertEquals(1, provider.reauthCallbacks.size)
+            assertTrue(provider.deleteCallbacks.isEmpty())
+
+            // A continuação da reautenticação não passa pela trava.
+            provider.reauthCallbacks.single()(true, null)
+            assertEquals(1, provider.deleteCallbacks.size)
+
+            provider.deleteCallbacks.single()(true, null)
+            assertEquals(DeleteAccountStatus.Deleted, vm.deleteAccountStatus.value)
+        }
+
+    @Test
+    fun `reauthenticate with Google and delete is ignored while a delete is pending`() = runTest(dispatcher) {
+        val mock = MockAuthProvider(email = "user@example.com")
+        val provider = HeldAuthProvider(mock)
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.deleteAccount(provider)
+        vm.reauthenticateAndDeleteWithGoogle("id-token", provider)
+
+        assertEquals(0, mock.reauthCalls)
+        assertEquals(1, provider.deleteCallbacks.size)
+    }
+
+    @Test
+    fun `updateEmail repeated while the first is pending sends the link once`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updateEmail("new@example.com", provider)
+        vm.updateEmail("new@example.com", provider)
+
+        assertEquals(1, provider.emailCallbacks.size)
+        assertEquals(UpdateEmailStatus.Updating, vm.updateEmailStatus.value)
+
+        provider.emailCallbacks.single()(true, null)
+
+        assertEquals(UpdateEmailStatus.VerificationSent, vm.updateEmailStatus.value)
+    }
+
+    @Test
+    fun `reauthenticate and updateEmail repeated while pending reauthenticates once and sends once`() =
+        runTest(dispatcher) {
+            val mock = MockAuthProvider(email = "user@example.com")
+            val provider = HeldAuthProvider(mock)
+            val vm = newViewModel()
+            advanceUntilIdle()
+
+            vm.reauthAndUpdateEmailWithPassword("password", "new@example.com", provider)
+            vm.reauthAndUpdateEmailWithPassword("password", "new@example.com", provider)
+            vm.reauthAndUpdateEmailWithGoogle("id-token", "new@example.com", provider)
+
+            assertEquals(1, provider.reauthCallbacks.size)
+            assertEquals(0, mock.reauthCalls)
+
+            provider.reauthCallbacks.single()(true, null)
+            assertEquals(1, provider.emailCallbacks.size)
+
+            provider.emailCallbacks.single()(true, null)
+            assertEquals(UpdateEmailStatus.VerificationSent, vm.updateEmailStatus.value)
+        }
+
+    @Test
+    fun `updatePassword repeated while the first is pending calls Firebase once`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.updatePassword("newpass123", provider)
+        vm.updatePassword("newpass123", provider)
+
+        assertEquals(1, provider.passwordCallbacks.size)
+        assertEquals(UpdatePasswordStatus.Updating, vm.updatePasswordStatus.value)
+
+        provider.passwordCallbacks.single()(true, null)
+
+        assertEquals(UpdatePasswordStatus.Updated, vm.updatePasswordStatus.value)
+    }
+
+    @Test
+    fun `reauthenticate and updatePassword repeated while pending reauthenticates once and updates once`() =
+        runTest(dispatcher) {
+            val provider = HeldAuthProvider()
+            val vm = newViewModel()
+            advanceUntilIdle()
+
+            vm.reauthAndUpdatePasswordWithPassword("current", "newpass123", provider)
+            vm.reauthAndUpdatePasswordWithPassword("current", "newpass123", provider)
+
+            assertEquals(1, provider.reauthCallbacks.size)
+
+            provider.reauthCallbacks.single()(true, null)
+            assertEquals(1, provider.passwordCallbacks.size)
+
+            provider.passwordCallbacks.single()(true, null)
+            assertEquals(UpdatePasswordStatus.Updated, vm.updatePasswordStatus.value)
+        }
+}
+
+/**
+ * Guarda o callback da exclusão, das trocas de e-mail e de senha e da reautenticação por senha,
+ * sem responder, para o teste ver a operação em andamento; o [MockAuthProvider] responde na hora.
+ * O resto, inclusive a reautenticação pelo Google, vem do [delegate].
+ */
+private class HeldAuthProvider(
+    delegate: AuthProvider = MockAuthProvider(email = "user@example.com")
+) : AuthProvider by delegate {
+    val deleteCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+    val emailCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+    val passwordCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+    val reauthCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+
+    override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
+        deleteCallbacks += onResult
+    }
+
+    override fun verifyBeforeUpdateEmail(newEmail: String, onResult: (Boolean, String?) -> Unit) {
+        emailCallbacks += onResult
+    }
+
+    override fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        passwordCallbacks += onResult
+    }
+
+    override fun reauthenticateWithPassword(password: String, onResult: (Boolean, String?) -> Unit) {
+        reauthCallbacks += onResult
+    }
 }
