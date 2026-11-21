@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -650,12 +651,34 @@ class AuthenticationViewModelTest {
         vm.sendVerificationEmail(provider)
 
         assertEquals(1, provider.verificationCallbacks.size)
-        assertEquals(VerificationStatus.Sending, vm.verificationStatus.value)
+        assertTrue(vm.isSendingVerification.value)
 
         provider.verificationCallbacks.single()(true, null)
 
         assertEquals(VerificationStatus.Sent, vm.verificationStatus.value)
         assertEquals(60, vm.resendCooldownSeconds.value)
+        assertFalse(vm.isSendingVerification.value)
+    }
+
+    @Test
+    fun `checkVerified during a pending send does not release the send lock`() = runTest(dispatcher) {
+        val mock = MockAuthProvider(email = "user@example.com").apply {
+            setReloadFlipsToVerified(false)
+        }
+        val provider = HeldAuthProvider(mock)
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendVerificationEmail(provider)
+        // Volta do app de e-mail (ON_RESUME) antes de o Firebase responder; a tela zera o status.
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.NotYetVerified, vm.verificationStatus.value)
+        vm.resetVerificationStatus()
+
+        vm.sendVerificationEmail(provider)
+
+        assertEquals(1, provider.verificationCallbacks.size)
+        assertTrue(vm.isSendingVerification.value)
     }
 
     @Test
@@ -667,11 +690,12 @@ class AuthenticationViewModelTest {
         vm.sendVerificationEmail(provider)
         provider.verificationCallbacks.single()(false, null)
         assertTrue(vm.verificationStatus.value is VerificationStatus.SendError)
+        assertFalse(vm.isSendingVerification.value)
 
         vm.sendVerificationEmail(provider)
 
         assertEquals(2, provider.verificationCallbacks.size)
-        assertEquals(VerificationStatus.Sending, vm.verificationStatus.value)
+        assertTrue(vm.isSendingVerification.value)
     }
 }
 

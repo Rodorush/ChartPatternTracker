@@ -20,7 +20,6 @@ class AuthenticationViewModel(
 
     sealed class VerificationStatus {
         data object Idle : VerificationStatus()
-        data object Sending : VerificationStatus()
         data object Sent : VerificationStatus()
         data class SendError(val message: String?) : VerificationStatus()
         data object Verified : VerificationStatus()
@@ -82,6 +81,15 @@ class AuthenticationViewModel(
     private val _isCheckingVerification = MutableStateFlow(false)
     val isCheckingVerification = _isCheckingVerification.asStateFlow()
 
+    private val _isSendingVerification = MutableStateFlow(false)
+
+    /**
+     * `true` enquanto o envio do e-mail de verificação espera o Firebase. Fica fora de
+     * [verificationStatus] porque o [checkVerified] grava naquele status e liberaria a trava do
+     * envio no meio do caminho.
+     */
+    val isSendingVerification = _isSendingVerification.asStateFlow()
+
     private val _resetPasswordStatus = MutableStateFlow<ResetPasswordStatus>(ResetPasswordStatus.Idle)
     val resetPasswordStatus = _resetPasswordStatus.asStateFlow()
 
@@ -132,11 +140,11 @@ class AuthenticationViewModel(
     /**
      * Reenvia o e-mail de verificação; o sucesso arma o cooldown, que bloqueia o reenvio seguinte.
      * Com um envio já em andamento, a chamada é ignorada: um segundo toque no Reenviar antes de o
-     * Firebase responder mandaria o e-mail duas vezes.
+     * Firebase responder mandaria o e-mail duas vezes. O andamento fica em [isSendingVerification].
      */
     fun sendVerificationEmail(authProvider: AuthProvider) {
         if (_resendCooldownSeconds.value > 0) return
-        if (!_verificationStatus.tryBegin(VerificationStatus.Sending)) return ignored("sendVerificationEmail")
+        if (!_isSendingVerification.tryBegin(true)) return ignored("sendVerificationEmail")
         authProvider.sendEmailVerification { success, error ->
             if (success) {
                 _verificationStatus.value = VerificationStatus.Sent
@@ -145,6 +153,8 @@ class AuthenticationViewModel(
                 Log.w(TAG, "sendVerificationEmail falhou: $error")
                 _verificationStatus.value = VerificationStatus.SendError(error)
             }
+            // Solta a trava só depois de armar o cooldown, para não abrir uma brecha entre os dois.
+            _isSendingVerification.value = false
         }
     }
 
