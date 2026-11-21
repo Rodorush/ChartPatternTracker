@@ -190,8 +190,9 @@ class AuthenticationViewModel(
         if (!_resetPasswordStatus.tryBegin(ResetPasswordStatus.Sending)) return ignored("sendPasswordReset")
         authProvider.sendPasswordResetEmail(email) { success, error ->
             if (success) {
-                _resetPasswordStatus.value = ResetPasswordStatus.Sent
+                // Arma o cooldown antes de o Sent soltar a trava, como no sendVerificationEmail.
                 armResendCooldown()
+                _resetPasswordStatus.value = ResetPasswordStatus.Sent
             } else {
                 Log.w(TAG, "sendPasswordReset falhou: $error")
                 _resetPasswordStatus.value = ResetPasswordStatus.Error(error)
