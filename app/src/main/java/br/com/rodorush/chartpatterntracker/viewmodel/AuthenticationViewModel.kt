@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
 
 class AuthenticationViewModel(
@@ -182,8 +183,19 @@ class AuthenticationViewModel(
         _resetPasswordStatus.value = ResetPasswordStatus.Idle
     }
 
+    /**
+     * Exclui a conta logada. Com uma exclusão já em andamento, por esta entrada ou pelas de
+     * reautenticação, a chamada é ignorada: um segundo toque no Excluir antes de o diálogo sumir
+     * chamaria o Firebase de novo.
+     */
     fun deleteAccount(authProvider: AuthProvider) {
-        _deleteAccountStatus.value = DeleteAccountStatus.Deleting
+        if (!_deleteAccountStatus.tryBegin(DeleteAccountStatus.Deleting)) return ignored("deleteAccount")
+        runDeleteAccount(authProvider)
+    }
+
+    // Corpo da exclusão, sem a trava: a continuação da reautenticação chega aqui com o status já em
+    // Deleting.
+    private fun runDeleteAccount(authProvider: AuthProvider) {
         authProvider.deleteCurrentUser { success, error ->
             when {
                 success -> _deleteAccountStatus.value = DeleteAccountStatus.Deleted
@@ -198,11 +210,14 @@ class AuthenticationViewModel(
         }
     }
 
+    /** Reautentica pela senha e exclui a conta; ignorada como [deleteAccount]. */
     fun reauthenticateAndDeleteWithPassword(password: String, authProvider: AuthProvider) {
-        _deleteAccountStatus.value = DeleteAccountStatus.Deleting
+        if (!_deleteAccountStatus.tryBegin(DeleteAccountStatus.Deleting)) {
+            return ignored("reauthenticateAndDeleteWithPassword")
+        }
         authProvider.reauthenticateWithPassword(password) { success, error ->
             if (success) {
-                deleteAccount(authProvider)
+                runDeleteAccount(authProvider)
             } else {
                 Log.w(TAG, "reauthenticateWithPassword falhou: $error")
                 _deleteAccountStatus.value = DeleteAccountStatus.Error(error)
@@ -210,11 +225,14 @@ class AuthenticationViewModel(
         }
     }
 
+    /** Reautentica pelo Google e exclui a conta; ignorada como [deleteAccount]. */
     fun reauthenticateAndDeleteWithGoogle(idToken: String?, authProvider: AuthProvider) {
-        _deleteAccountStatus.value = DeleteAccountStatus.Deleting
+        if (!_deleteAccountStatus.tryBegin(DeleteAccountStatus.Deleting)) {
+            return ignored("reauthenticateAndDeleteWithGoogle")
+        }
         authProvider.reauthenticateWithGoogle(idToken) { success, error ->
             if (success) {
-                deleteAccount(authProvider)
+                runDeleteAccount(authProvider)
             } else {
                 Log.w(TAG, "reauthenticateWithGoogle falhou: $error")
                 _deleteAccountStatus.value = DeleteAccountStatus.Error(error)
@@ -246,8 +264,18 @@ class AuthenticationViewModel(
 
     // --- NF-03b: alterar senha (exige sessão recente) ---
 
+    /**
+     * Troca a senha da conta logada. Com uma troca já em andamento, por esta entrada ou pela de
+     * reautenticação, a chamada é ignorada: um segundo toque no Salvar antes de o diálogo sumir
+     * chamaria o Firebase de novo.
+     */
     fun updatePassword(newPassword: String, authProvider: AuthProvider) {
-        _updatePasswordStatus.value = UpdatePasswordStatus.Updating
+        if (!_updatePasswordStatus.tryBegin(UpdatePasswordStatus.Updating)) return ignored("updatePassword")
+        runUpdatePassword(newPassword, authProvider)
+    }
+
+    // Corpo da troca, sem a trava, pelo mesmo motivo de runDeleteAccount.
+    private fun runUpdatePassword(newPassword: String, authProvider: AuthProvider) {
         authProvider.updatePassword(newPassword) { success, error ->
             when {
                 success -> _updatePasswordStatus.value = UpdatePasswordStatus.Updated
@@ -262,15 +290,18 @@ class AuthenticationViewModel(
         }
     }
 
+    /** Reautentica pela senha atual e troca a senha; ignorada como [updatePassword]. */
     fun reauthAndUpdatePasswordWithPassword(
         currentPassword: String,
         newPassword: String,
         authProvider: AuthProvider
     ) {
-        _updatePasswordStatus.value = UpdatePasswordStatus.Updating
+        if (!_updatePasswordStatus.tryBegin(UpdatePasswordStatus.Updating)) {
+            return ignored("reauthAndUpdatePasswordWithPassword")
+        }
         authProvider.reauthenticateWithPassword(currentPassword) { success, error ->
             if (success) {
-                updatePassword(newPassword, authProvider)
+                runUpdatePassword(newPassword, authProvider)
             } else {
                 Log.w(TAG, "reauthenticateWithPassword (updatePassword) falhou: $error")
                 _updatePasswordStatus.value = UpdatePasswordStatus.Error(error)
@@ -284,8 +315,18 @@ class AuthenticationViewModel(
 
     // --- NF-03c: alterar e-mail via verifyBeforeUpdateEmail (exige sessão recente) ---
 
+    /**
+     * Envia ao [newEmail] o link que confirma a troca de e-mail. Com uma troca já em andamento, por
+     * esta entrada ou pelas de reautenticação, a chamada é ignorada: um segundo toque no Salvar antes
+     * de o diálogo sumir enviaria o link duas vezes.
+     */
     fun updateEmail(newEmail: String, authProvider: AuthProvider) {
-        _updateEmailStatus.value = UpdateEmailStatus.Updating
+        if (!_updateEmailStatus.tryBegin(UpdateEmailStatus.Updating)) return ignored("updateEmail")
+        runUpdateEmail(newEmail, authProvider)
+    }
+
+    // Corpo da troca, sem a trava, pelo mesmo motivo de runDeleteAccount.
+    private fun runUpdateEmail(newEmail: String, authProvider: AuthProvider) {
         authProvider.verifyBeforeUpdateEmail(newEmail) { success, error ->
             when {
                 success -> _updateEmailStatus.value = UpdateEmailStatus.VerificationSent
@@ -300,15 +341,18 @@ class AuthenticationViewModel(
         }
     }
 
+    /** Reautentica pela senha e envia o link da troca de e-mail; ignorada como [updateEmail]. */
     fun reauthAndUpdateEmailWithPassword(
         currentPassword: String,
         newEmail: String,
         authProvider: AuthProvider
     ) {
-        _updateEmailStatus.value = UpdateEmailStatus.Updating
+        if (!_updateEmailStatus.tryBegin(UpdateEmailStatus.Updating)) {
+            return ignored("reauthAndUpdateEmailWithPassword")
+        }
         authProvider.reauthenticateWithPassword(currentPassword) { success, error ->
             if (success) {
-                updateEmail(newEmail, authProvider)
+                runUpdateEmail(newEmail, authProvider)
             } else {
                 Log.w(TAG, "reauthenticateWithPassword (updateEmail) falhou: $error")
                 _updateEmailStatus.value = UpdateEmailStatus.Error(error)
@@ -316,15 +360,18 @@ class AuthenticationViewModel(
         }
     }
 
+    /** Reautentica pelo Google e envia o link da troca de e-mail; ignorada como [updateEmail]. */
     fun reauthAndUpdateEmailWithGoogle(
         idToken: String?,
         newEmail: String,
         authProvider: AuthProvider
     ) {
-        _updateEmailStatus.value = UpdateEmailStatus.Updating
+        if (!_updateEmailStatus.tryBegin(UpdateEmailStatus.Updating)) {
+            return ignored("reauthAndUpdateEmailWithGoogle")
+        }
         authProvider.reauthenticateWithGoogle(idToken) { success, error ->
             if (success) {
-                updateEmail(newEmail, authProvider)
+                runUpdateEmail(newEmail, authProvider)
             } else {
                 Log.w(TAG, "reauthenticateWithGoogle (updateEmail) falhou: $error")
                 _updateEmailStatus.value = UpdateEmailStatus.Error(error)
@@ -338,6 +385,18 @@ class AuthenticationViewModel(
 
     private fun requiresRecentLogin(error: String?): Boolean =
         error == AuthProvider.REQUIRES_RECENT_LOGIN
+
+    /**
+     * Marca a operação como em andamento ([inProgress]) e devolve `true`; devolve `false` se ela
+     * já estava, para a chamada repetida ser ignorada. A troca é atômica: a trava não depende de os
+     * toques e os callbacks do Firebase rodarem na mesma thread.
+     */
+    private fun <T> MutableStateFlow<T>.tryBegin(inProgress: T): Boolean =
+        getAndUpdate { inProgress } != inProgress
+
+    private fun ignored(operation: String) {
+        Log.i(TAG, "$operation ignorada: a mesma operação já está em andamento")
+    }
 
     /** Lê o provedor da sessão atual para [sessionProvider]. */
     fun loadSessionProvider(authProvider: AuthProvider) = readSessionProvider(authProvider) {}
