@@ -149,7 +149,7 @@ fun ProfileScreen(
     }
 
     // O usuário desistiu da operação pendente: volta ao repouso e descarta o que digitou para ela.
-    // Num erro, quem chama é resetPendingStatus, e o e-mail fica no campo para a nova tentativa.
+    // Um erro não passa por aqui: o e-mail fica no campo para a nova tentativa.
     fun cancelPendingOp() {
         when (pendingReauthOp) {
             ReauthOp.EMAIL -> newEmail = ""
