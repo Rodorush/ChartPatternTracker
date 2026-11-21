@@ -49,6 +49,9 @@
     <string name="reauth_required">Confirm your identity</string>
     <string name="reauth_password_prompt">Current password</string>
     <string name="reauth_with_google">For your security, sign in again with your Google account to continue.</string>
+    <string name="device_credential_title">Confirm it\'s you</string>
+    <string name="device_credential_delete_description">Use your screen lock to delete your account.</string>
+    <string name="device_credential_email_description">Use your screen lock to change your email.</string>
     <string name="profile_provider_label">Signed in via %1$s</string>
     <string name="profile_google_managed_note">Your password and email are managed in your Google account (myaccount.google.com).</string>
     <string name="change_name_title">Change name</string>

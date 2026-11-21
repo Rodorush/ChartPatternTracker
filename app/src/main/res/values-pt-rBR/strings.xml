@@ -49,6 +49,9 @@
     <string name="reauth_required">Confirme sua identidade</string>
     <string name="reauth_password_prompt">Senha atual</string>
     <string name="reauth_with_google">Por segurança, entre novamente com sua conta Google para concluir.</string>
+    <string name="device_credential_title">Confirme que é você</string>
+    <string name="device_credential_delete_description">Use o bloqueio de tela para excluir a conta.</string>
+    <string name="device_credential_email_description">Use o bloqueio de tela para alterar o e-mail.</string>
     <string name="profile_provider_label">Entrada via %1$s</string>
     <string name="profile_google_managed_note">Sua senha e e-mail são gerenciados na sua conta Google (myaccount.google.com).</string>
     <string name="change_name_title">Alterar nome</string>

@@ -49,6 +49,9 @@
     <string name="reauth_required">Confirma tu identidad</string>
     <string name="reauth_password_prompt">Contraseña actual</string>
     <string name="reauth_with_google">Por seguridad, vuelve a iniciar sesión con tu cuenta de Google para continuar.</string>
+    <string name="device_credential_title">Confirma que eres tú</string>
+    <string name="device_credential_delete_description">Usa el bloqueo de pantalla para eliminar la cuenta.</string>
+    <string name="device_credential_email_description">Usa el bloqueo de pantalla para cambiar el correo.</string>
     <string name="profile_provider_label">Sesión iniciada con %1$s</string>
     <string name="profile_google_managed_note">Tu contraseña y correo se gestionan en tu cuenta de Google (myaccount.google.com).</string>
     <string name="change_name_title">Cambiar nombre</string>

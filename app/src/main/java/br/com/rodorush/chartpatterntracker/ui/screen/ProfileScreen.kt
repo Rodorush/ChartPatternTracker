@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.app.Activity
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,8 +45,10 @@ import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
 import br.com.rodorush.chartpatterntracker.ui.component.GoogleSignInOutcome
 import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
+import br.com.rodorush.chartpatterntracker.ui.component.deviceCredentialIntent
 import br.com.rodorush.chartpatterntracker.ui.component.launchGoogleAccountChooser
 import br.com.rodorush.chartpatterntracker.ui.component.readGoogleSignInResult
+import br.com.rodorush.chartpatterntracker.ui.component.requestDeviceCredential
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.interfaces.AuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
@@ -63,7 +66,10 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "ProfileScreen"
 
-/** Operação destrutiva pendente quando o Firebase exige sessão recente. */
+/**
+ * Operação sensível pendente: à espera da credencial do aparelho (exclusão e e-mail) ou da
+ * reautenticação, quando o Firebase exige sessão recente.
+ */
 private enum class ReauthOp { DELETE, PASSWORD, EMAIL }
 
 private const val MIN_PASSWORD_LENGTH = 6
@@ -112,8 +118,9 @@ fun ProfileScreen(
     // cancelamento; depois de um erro, fica no campo para a nova tentativa.
     var newEmail by rememberSaveable { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
-    // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor sem operação restaurada não
-    // faz nada, em vez de seguir uma operação que o usuário não pediu, como excluir a conta.
+    // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor ou da tela de credencial do
+    // aparelho sem operação restaurada não faz nada, em vez de seguir uma operação que o usuário não
+    // pediu, como excluir a conta.
     var pendingReauthOp by rememberSaveable { mutableStateOf<ReauthOp?>(null) }
     // Método do diálogo de reautenticação, fixado ao abri-lo (ver openReauthDialog). Salvo para o
     // aviso de credencial recusada, depois do seletor do Google, sair certo com a Activity recriada.
@@ -123,12 +130,16 @@ fun ProfileScreen(
     // segundo Confirmar abriria outro seletor. Sem rememberSaveable, para não ficar preso se a
     // Activity for recriada com o seletor aberto.
     var googleChooserActive by remember { mutableStateOf(false) }
+    // Do Confirmar ou Salvar até o retorno da tela de credencial do aparelho, pelo mesmo motivo e
+    // sem rememberSaveable, como o googleChooserActive.
+    var credentialPromptActive by remember { mutableStateOf(false) }
 
     val isBusy = nameStatus is UpdateNameStatus.Updating ||
         passwordStatus is UpdatePasswordStatus.Updating ||
         emailStatus is UpdateEmailStatus.Updating ||
         deleteStatus == DeleteAccountStatus.Deleting ||
-        googleChooserActive
+        googleChooserActive ||
+        credentialPromptActive
 
     // Devolve a operação pendente de reautenticação ao repouso, sem aviso na tela.
     fun resetPendingStatus() {
@@ -148,8 +159,9 @@ fun ProfileScreen(
         confirmPassword = ""
     }
 
-    // O usuário desistiu da operação pendente: volta ao repouso e descarta o que digitou para ela.
-    // Um erro não passa por aqui: o e-mail fica no campo para a nova tentativa.
+    // O usuário desistiu da operação pendente, na credencial do aparelho ou na reautenticação: volta
+    // ao repouso e descarta o que digitou para ela. Um erro não passa por aqui: o e-mail fica no
+    // campo para a nova tentativa.
     fun cancelPendingOp() {
         when (pendingReauthOp) {
             ReauthOp.EMAIL -> newEmail = ""
@@ -232,6 +244,66 @@ fun ProfileScreen(
 
     fun toast(resId: Int) =
         Toast.makeText(context, context.getString(resId), Toast.LENGTH_LONG).show()
+
+    // Segue com a operação pendente depois da credencial do aparelho, ou sem ela no aparelho sem
+    // bloqueio de tela. Se o Firebase pedir sessão recente, a reautenticação vem em seguida.
+    fun runCredentialConfirmedOp() {
+        when (pendingReauthOp) {
+            ReauthOp.DELETE -> authViewModel.deleteAccount(authProvider)
+            ReauthOp.EMAIL -> authViewModel.updateEmail(newEmail, authProvider)
+            // A troca de senha não pede a credencial, e sem operação restaurada não há o que seguir.
+            ReauthOp.PASSWORD, null -> {
+                Log.w(
+                    TAG,
+                    "Credencial do aparelho sem operação pendente que a peça",
+                    IllegalStateException("pendingReauthOp=$pendingReauthOp")
+                )
+                resetPendingStatus()
+            }
+        }
+    }
+
+    val credentialLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        credentialPromptActive = false
+        if (result.resultCode == Activity.RESULT_OK) {
+            runCredentialConfirmedOp()
+        } else {
+            // Voltar na tela do sistema é escolha do usuário, não erro: a operação volta ao
+            // repouso sem aviso, como no Cancelar dos diálogos.
+            Log.i(TAG, "Credencial do aparelho cancelada (resultCode=${result.resultCode}, op=$pendingReauthOp)")
+            cancelPendingOp()
+        }
+    }
+
+    // Pede o bloqueio de tela do aparelho antes de excluir a conta ou alterar o e-mail, inclusive
+    // na sessão recente, em que o Firebase não pede reautenticação.
+    fun confirmDeviceCredentialThen(op: ReauthOp) {
+        pendingReauthOp = op
+        val description = when (op) {
+            ReauthOp.DELETE -> R.string.device_credential_delete_description
+            else -> R.string.device_credential_email_description
+        }
+        val intent = deviceCredentialIntent(
+            context,
+            title = context.getString(R.string.device_credential_title),
+            description = context.getString(description)
+        )
+        if (intent == null) Log.i(TAG, "Aparelho sem bloqueio de tela; segue sem a credencial (op=$op)")
+        credentialPromptActive = intent != null
+        val failure = requestDeviceCredential(
+            intent,
+            launch = { credentialLauncher.launch(it) },
+            proceed = { runCredentialConfirmedOp() }
+        )
+        if (failure != null) {
+            credentialPromptActive = false
+            Log.e(TAG, "Falha ao abrir a credencial do aparelho", failure, "op" to op.name)
+            resetPendingStatus()
+            toast(R.string.auth_error_generic)
+        }
+    }
 
     // A credencial recusada vem da reautenticação. Pela senha, o texto é "senha incorreta"; pelo
     // Google não há senha digitada, e o texto fica o genérico. A troca de senha sempre reautentica
@@ -571,7 +643,7 @@ fun ProfileScreen(
                     onClick = {
                         showEmailDialog = false
                         newEmail = newEmail.trim()
-                        authViewModel.updateEmail(newEmail, authProvider)
+                        confirmDeviceCredentialThen(ReauthOp.EMAIL)
                     }
                 ) { Text(stringResource(R.string.save)) }
             },
@@ -592,7 +664,7 @@ fun ProfileScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
-                    authViewModel.deleteAccount(authProvider)
+                    confirmDeviceCredentialThen(ReauthOp.DELETE)
                 }) {
                     Text(
                         text = stringResource(R.string.delete_account_confirm),
