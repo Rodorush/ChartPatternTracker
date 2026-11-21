@@ -594,8 +594,10 @@ class AuthenticationViewModelTest {
 
             vm.reauthAndUpdatePasswordWithPassword("current", "newpass123", provider)
             vm.reauthAndUpdatePasswordWithPassword("current", "newpass123", provider)
+            vm.updatePassword("newpass123", provider)
 
             assertEquals(1, provider.reauthCallbacks.size)
+            assertTrue(provider.passwordCallbacks.isEmpty())
 
             provider.reauthCallbacks.single()(true, null)
             assertEquals(1, provider.passwordCallbacks.size)
