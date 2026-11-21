@@ -108,7 +108,8 @@ fun ProfileScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     // Salvo para o retorno do seletor do Google retomar a troca de e-mail com o endereço digitado,
-    // mesmo com a Activity recriada enquanto o seletor estava aberto.
+    // mesmo com a Activity recriada enquanto o seletor estava aberto. Limpo no envio do link e no
+    // cancelamento; depois de um erro, fica no campo para a nova tentativa.
     var newEmail by rememberSaveable { mutableStateOf("") }
     var reauthPassword by remember { mutableStateOf("") }
     // Salvo pelo mesmo motivo, e sem valor padrão: o retorno do seletor sem operação restaurada não
@@ -147,6 +148,17 @@ fun ProfileScreen(
         confirmPassword = ""
     }
 
+    // O usuário desistiu da operação pendente: volta ao repouso e descarta o que digitou para ela.
+    // Num erro, quem chama é resetPendingStatus, e o e-mail fica no campo para a nova tentativa.
+    fun cancelPendingOp() {
+        when (pendingReauthOp) {
+            ReauthOp.EMAIL -> newEmail = ""
+            ReauthOp.PASSWORD -> clearPasswordFields()
+            ReauthOp.DELETE, null -> Unit
+        }
+        resetPendingStatus()
+    }
+
     // Reauth via Google: abre o seletor de contas (ver launchGoogleAccountChooser) para obter
     // um idToken fresco e retoma a operação pendente.
     val scope = rememberCoroutineScope()
@@ -183,7 +195,7 @@ fun ProfileScreen(
                     TAG,
                     "Reautenticação com Google cancelada (resultCode=${result.resultCode}, statusCode=${outcome.statusCode})"
                 )
-                resetPendingStatus()
+                cancelPendingOp()
                 return@rememberLauncherForActivityResult
             }
             GoogleSignInOutcome.InProgress -> {
@@ -602,7 +614,7 @@ fun ProfileScreen(
             onDismissRequest = {
                 showReauthDialog = false
                 reauthPassword = ""
-                resetPendingStatus()
+                cancelPendingOp()
             },
             title = { Text(stringResource(R.string.reauth_required)) },
             text = {
@@ -663,7 +675,7 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     showReauthDialog = false
                     reauthPassword = ""
-                    resetPendingStatus()
+                    cancelPendingOp()
                 }) { Text(stringResource(R.string.cancel)) }
             }
         )
