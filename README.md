@@ -99,7 +99,7 @@ A varredura em três passos e o que ela devolve:
 
 ### Seleção de ativos
 - Listagem dinâmica de ativos da B3 via API **Brapi**.
-- Cache local (Room) e remoto (Firestore) de metadados (`shortName`, `longName`).
+- O nome de cada ativo é o `name` do `/quote/list`, o mesmo na seleção e nos resultados da varredura. Quando a Brapi devolve o ticker nesse campo, como na maioria dos BDRs, aparece só o ticker. O `shortName` da cotação individual vem igual ao ticker, por isso o app não o usa.
 - Logos carregados sob demanda (Coil).
 
 ### Timeframes
@@ -550,7 +550,6 @@ Os testes usam JUnit 4. Há infraestrutura para testes instrumentados (Espresso,
 
 - Algumas velas retornam com valor `0` da Brapi para certos ativos — em investigação.
 - Previews do Compose na IDE falham quando há fontes de dados externas envolvidas.
-- Algumas telas (ex.: `SelectAssetScreen`) ainda contêm chamadas Firestore inline — refatoração rastreada em `REFACT-04` no roadmap.
 
 A lista completa, com prioridades e itens planejados, está em [`ROADMAP.md`](ROADMAP.md).
 
