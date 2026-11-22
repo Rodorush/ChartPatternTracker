@@ -161,6 +161,13 @@ class AuthenticationViewModel(
         }
     }
 
+    /**
+     * Relê o usuário no Firebase e grava em [verificationStatus] se o e-mail já foi confirmado:
+     * [VerificationStatus.Verified], [VerificationStatus.NotYetVerified] ou, quando a releitura
+     * falha, [VerificationStatus.CheckError] com o código do [AuthProvider]. A tela chama em todo
+     * `ON_RESUME` e no "Já verifiquei"; com uma releitura em andamento ([isCheckingVerification]),
+     * a chamada é ignorada. Não mexe na trava do envio nem no cooldown.
+     */
     fun checkVerified(authProvider: AuthProvider) {
         if (_isCheckingVerification.value) return
         _isCheckingVerification.value = true

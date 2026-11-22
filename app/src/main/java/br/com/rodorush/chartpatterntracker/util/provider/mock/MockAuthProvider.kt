@@ -215,10 +215,10 @@ class MockAuthProvider(
         reloadFlipsToVerified = value
     }
 
-    /** Faz o `reloadCurrentUser` falhar com o [code] do [AuthProvider] (`null` = falha sem código). */
-    fun setReloadFails(code: String?) {
-        reloadSucceeds = false
-        reloadErrorCode = code
+    /** Com [value] `false`, o `reloadCurrentUser` falha com o [errorCode] do [AuthProvider]. */
+    fun setReloadSucceeds(value: Boolean, errorCode: String? = null) {
+        reloadSucceeds = value
+        reloadErrorCode = errorCode
     }
 
     fun setSendVerificationSucceeds(value: Boolean) {
