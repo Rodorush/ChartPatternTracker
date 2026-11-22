@@ -211,7 +211,6 @@ fun ScreeningResultsScreen(
                         result.asset.shortName.contains(q, ignoreCase = true) ||
                         result.asset.longName.contains(q, ignoreCase = true) ||
                         result.asset.name.contains(q, ignoreCase = true) ||
-                        result.displayShortName.contains(q, ignoreCase = true) ||
                         result.pattern.getLocalized("name").contains(q, ignoreCase = true)
                     }
                 }
@@ -254,9 +253,10 @@ fun ScreeningResultsScreen(
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    if (result.displayShortName.isNotBlank()) {
+                                    val assetName = result.asset.displayName
+                                    if (assetName.isNotEmpty()) {
                                         Text(
-                                            text = result.displayShortName,
+                                            text = assetName,
                                             style = MaterialTheme.typography.bodySmall,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
