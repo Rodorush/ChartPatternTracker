@@ -199,6 +199,27 @@ class AuthenticationViewModelTest {
     }
 
     @Test
+    fun `SessionLost is reported once when the resend and the reload both find the session ended`() = runTest(dispatcher) {
+        val mock = MockAuthProvider(email = "user@example.com").apply {
+            setReloadSucceeds(false, AuthProvider.INVALID_USER)
+        }
+        val provider = HeldAuthProvider(mock)
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        // Reenvio pendente e releitura com a sessão encerrada: a tela recebe o aviso e sai.
+        vm.sendVerificationEmail(provider)
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
+        vm.resetVerificationStatus()
+
+        // O reenvio responde depois, com a tela já saindo: um segundo aviso empilharia outro login.
+        provider.verificationCallbacks.single()(false, AuthProvider.INVALID_USER)
+        assertEquals(VerificationStatus.Idle, vm.verificationStatus.value)
+        assertFalse(vm.isSendingVerification.value)
+    }
+
+    @Test
     fun `checkVerified failure keeps a pending send locked and the cooldown armed`() = runTest(dispatcher) {
         val mock = MockAuthProvider(email = "user@example.com").apply {
             setReloadSucceeds(false)

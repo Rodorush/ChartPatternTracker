@@ -20,6 +20,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -55,7 +56,9 @@ fun VerifyEmailScreen(
     val isChecking by viewModel.isCheckingVerification.collectAsState()
     val isSending by viewModel.isSendingVerification.collectAsState()
 
-    val email = authProvider.currentUserEmail() ?: ""
+    // Lido uma vez: com a sessão encerrada, o Firebase pode limpar o usuário antes de a tela sair, e
+    // o texto ficaria sem o endereço durante a saída.
+    val email = remember(authProvider) { authProvider.currentUserEmail() ?: "" }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
