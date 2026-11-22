@@ -128,6 +128,46 @@ class AuthenticationViewModelTest {
     }
 
     @Test
+    fun `checkVerified reload failure emits CheckError with the code, not SendError`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReloadSucceeds(false, AuthProvider.NETWORK)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.checkVerified(provider)
+
+        assertEquals(VerificationStatus.CheckError(AuthProvider.NETWORK), vm.verificationStatus.value)
+        assertFalse(vm.isCheckingVerification.value)
+    }
+
+    @Test
+    fun `checkVerified failure keeps a pending send locked and the cooldown armed`() = runTest(dispatcher) {
+        val mock = MockAuthProvider(email = "user@example.com").apply {
+            setReloadSucceeds(false)
+        }
+        val provider = HeldAuthProvider(mock)
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        // Releitura falha com o envio ainda pendente: a trava do envio continua de pé.
+        vm.sendVerificationEmail(provider)
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.CheckError(null), vm.verificationStatus.value)
+        assertTrue(vm.isSendingVerification.value)
+
+        provider.verificationCallbacks.single()(true, null)
+        assertEquals(60, vm.resendCooldownSeconds.value)
+        vm.resetVerificationStatus()
+
+        // Releitura falha com o cooldown armado: ele não é zerado.
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.CheckError(null), vm.verificationStatus.value)
+        assertEquals(60, vm.resendCooldownSeconds.value)
+        assertFalse(vm.isSendingVerification.value)
+    }
+
+    @Test
     fun `sendPasswordReset success arms cooldown and emits Sent`() = runTest(dispatcher) {
         val provider = MockAuthProvider()
         val vm = newViewModel()

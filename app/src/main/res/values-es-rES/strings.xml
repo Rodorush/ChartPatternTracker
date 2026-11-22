@@ -111,6 +111,7 @@
     <string name="resend_cooldown">Reenviar en %1$ds</string>
     <string name="verify_email_check_again">Ya verifiqué</string>
     <string name="verify_email_send_error">No pudimos enviar el correo. Inténtalo de nuevo en unos instantes.</string>
+    <string name="verify_email_check_error">No pudimos comprobar la confirmación ahora. Inténtalo de nuevo en unos instantes.</string>
     <string name="verify_email_not_yet">Aún no detectamos la confirmación. Haz clic en el enlace del correo e inténtalo de nuevo.</string>
     <string name="verify_email_sent">Correo reenviado.</string>
     <string name="forgot_password_link">Olvidé mi contraseña</string>
