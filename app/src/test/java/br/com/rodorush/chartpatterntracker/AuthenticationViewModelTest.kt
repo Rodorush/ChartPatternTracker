@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -605,12 +606,104 @@ class AuthenticationViewModelTest {
             provider.passwordCallbacks.single()(true, null)
             assertEquals(UpdatePasswordStatus.Updated, vm.updatePasswordStatus.value)
         }
+
+    @Test
+    fun `sendPasswordReset repeated while the first is pending calls Firebase once`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendPasswordReset("user@example.com", provider)
+        vm.sendPasswordReset("user@example.com", provider)
+
+        assertEquals(1, provider.resetCallbacks.size)
+        assertEquals(ResetPasswordStatus.Sending, vm.resetPasswordStatus.value)
+
+        provider.resetCallbacks.single()(true, null)
+
+        assertEquals(ResetPasswordStatus.Sent, vm.resetPasswordStatus.value)
+        assertEquals(60, vm.resendCooldownSeconds.value)
+    }
+
+    @Test
+    fun `sendPasswordReset after a failed attempt calls Firebase again`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendPasswordReset("user@example.com", provider)
+        provider.resetCallbacks.single()(false, null)
+        assertTrue(vm.resetPasswordStatus.value is ResetPasswordStatus.Error)
+
+        vm.sendPasswordReset("user@example.com", provider)
+
+        assertEquals(2, provider.resetCallbacks.size)
+        assertEquals(ResetPasswordStatus.Sending, vm.resetPasswordStatus.value)
+    }
+
+    @Test
+    fun `sendVerificationEmail repeated while the first is pending sends once`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendVerificationEmail(provider)
+        vm.sendVerificationEmail(provider)
+
+        assertEquals(1, provider.verificationCallbacks.size)
+        assertTrue(vm.isSendingVerification.value)
+
+        provider.verificationCallbacks.single()(true, null)
+
+        assertEquals(VerificationStatus.Sent, vm.verificationStatus.value)
+        assertEquals(60, vm.resendCooldownSeconds.value)
+        assertFalse(vm.isSendingVerification.value)
+    }
+
+    @Test
+    fun `checkVerified during a pending send does not release the send lock`() = runTest(dispatcher) {
+        val mock = MockAuthProvider(email = "user@example.com").apply {
+            setReloadFlipsToVerified(false)
+        }
+        val provider = HeldAuthProvider(mock)
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendVerificationEmail(provider)
+        // Volta do app de e-mail (ON_RESUME) antes de o Firebase responder; a tela zera o status.
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.NotYetVerified, vm.verificationStatus.value)
+        vm.resetVerificationStatus()
+
+        vm.sendVerificationEmail(provider)
+
+        assertEquals(1, provider.verificationCallbacks.size)
+        assertTrue(vm.isSendingVerification.value)
+    }
+
+    @Test
+    fun `sendVerificationEmail after a failed attempt sends again`() = runTest(dispatcher) {
+        val provider = HeldAuthProvider()
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendVerificationEmail(provider)
+        provider.verificationCallbacks.single()(false, null)
+        assertTrue(vm.verificationStatus.value is VerificationStatus.SendError)
+        assertFalse(vm.isSendingVerification.value)
+
+        vm.sendVerificationEmail(provider)
+
+        assertEquals(2, provider.verificationCallbacks.size)
+        assertTrue(vm.isSendingVerification.value)
+    }
 }
 
 /**
- * Guarda o callback da exclusão, das trocas de e-mail e de senha e da reautenticação por senha,
- * sem responder, para o teste ver a operação em andamento; o [MockAuthProvider] responde na hora.
- * O resto, inclusive a reautenticação pelo Google, vem do [delegate].
+ * Guarda o callback da exclusão, das trocas de e-mail e de senha, da reautenticação por senha e
+ * dos envios da redefinição de senha e da verificação de e-mail, sem responder, para o teste ver a
+ * operação em andamento; o [MockAuthProvider] responde na hora. O resto, inclusive a reautenticação
+ * pelo Google, vem do [delegate].
  */
 private class HeldAuthProvider(
     delegate: AuthProvider = MockAuthProvider(email = "user@example.com")
@@ -619,6 +712,16 @@ private class HeldAuthProvider(
     val emailCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
     val passwordCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
     val reauthCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+    val resetCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+    val verificationCallbacks = mutableListOf<(Boolean, String?) -> Unit>()
+
+    override fun sendPasswordResetEmail(email: String, onResult: (Boolean, String?) -> Unit) {
+        resetCallbacks += onResult
+    }
+
+    override fun sendEmailVerification(onResult: (Boolean, String?) -> Unit) {
+        verificationCallbacks += onResult
+    }
 
     override fun deleteCurrentUser(onResult: (Boolean, String?) -> Unit) {
         deleteCallbacks += onResult

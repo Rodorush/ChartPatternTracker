@@ -52,6 +52,7 @@ fun VerifyEmailScreen(
     val cooldown by viewModel.resendCooldownSeconds.collectAsState()
     val status by viewModel.verificationStatus.collectAsState()
     val isChecking by viewModel.isCheckingVerification.collectAsState()
+    val isSending by viewModel.isSendingVerification.collectAsState()
 
     val email = authProvider.currentUserEmail() ?: ""
 
@@ -138,7 +139,7 @@ fun VerifyEmailScreen(
 
         OutlinedButton(
             onClick = { viewModel.sendVerificationEmail(authProvider) },
-            enabled = cooldown == 0 && status !is VerificationStatus.Sending,
+            enabled = cooldown == 0 && !isSending,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)

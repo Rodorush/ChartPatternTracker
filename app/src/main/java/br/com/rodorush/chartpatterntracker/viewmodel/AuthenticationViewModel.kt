@@ -20,7 +20,6 @@ class AuthenticationViewModel(
 
     sealed class VerificationStatus {
         data object Idle : VerificationStatus()
-        data object Sending : VerificationStatus()
         data object Sent : VerificationStatus()
         data class SendError(val message: String?) : VerificationStatus()
         data object Verified : VerificationStatus()
@@ -82,6 +81,15 @@ class AuthenticationViewModel(
     private val _isCheckingVerification = MutableStateFlow(false)
     val isCheckingVerification = _isCheckingVerification.asStateFlow()
 
+    private val _isSendingVerification = MutableStateFlow(false)
+
+    /**
+     * `true` enquanto o envio do e-mail de verificação espera o Firebase. Fica fora de
+     * [verificationStatus] porque o [checkVerified] grava naquele status e liberaria a trava do
+     * envio no meio do caminho.
+     */
+    val isSendingVerification = _isSendingVerification.asStateFlow()
+
     private val _resetPasswordStatus = MutableStateFlow<ResetPasswordStatus>(ResetPasswordStatus.Idle)
     val resetPasswordStatus = _resetPasswordStatus.asStateFlow()
 
@@ -129,9 +137,14 @@ class AuthenticationViewModel(
         }
     }
 
+    /**
+     * Reenvia o e-mail de verificação; o sucesso arma o cooldown, que bloqueia o reenvio seguinte.
+     * Com um envio já em andamento, a chamada é ignorada: um segundo toque no Reenviar antes de o
+     * Firebase responder mandaria o e-mail duas vezes. O andamento fica em [isSendingVerification].
+     */
     fun sendVerificationEmail(authProvider: AuthProvider) {
         if (_resendCooldownSeconds.value > 0) return
-        _verificationStatus.value = VerificationStatus.Sending
+        if (!_isSendingVerification.tryBegin(true)) return ignored("sendVerificationEmail")
         authProvider.sendEmailVerification { success, error ->
             if (success) {
                 _verificationStatus.value = VerificationStatus.Sent
@@ -140,6 +153,8 @@ class AuthenticationViewModel(
                 Log.w(TAG, "sendVerificationEmail falhou: $error")
                 _verificationStatus.value = VerificationStatus.SendError(error)
             }
+            // Solta a trava só depois de armar o cooldown, para não abrir uma brecha entre os dois.
+            _isSendingVerification.value = false
         }
     }
 
@@ -165,13 +180,19 @@ class AuthenticationViewModel(
         _verificationStatus.value = VerificationStatus.Idle
     }
 
+    /**
+     * Envia ao [email] o link de redefinição de senha; o sucesso arma o cooldown, que bloqueia o
+     * envio seguinte. Com um envio já em andamento, a chamada é ignorada: um segundo toque antes de
+     * o Firebase responder mandaria o e-mail duas vezes.
+     */
     fun sendPasswordReset(email: String, authProvider: AuthProvider) {
         if (_resendCooldownSeconds.value > 0) return
-        _resetPasswordStatus.value = ResetPasswordStatus.Sending
+        if (!_resetPasswordStatus.tryBegin(ResetPasswordStatus.Sending)) return ignored("sendPasswordReset")
         authProvider.sendPasswordResetEmail(email) { success, error ->
             if (success) {
-                _resetPasswordStatus.value = ResetPasswordStatus.Sent
+                // Arma o cooldown antes de o Sent soltar a trava, como no sendVerificationEmail.
                 armResendCooldown()
+                _resetPasswordStatus.value = ResetPasswordStatus.Sent
             } else {
                 Log.w(TAG, "sendPasswordReset falhou: $error")
                 _resetPasswordStatus.value = ResetPasswordStatus.Error(error)
