@@ -54,8 +54,6 @@ import br.com.rodorush.customlogs.Log
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
 
 private const val TAG = "SelectAssetsScreen"
 
@@ -93,9 +91,8 @@ fun SelectAssetsScreen(
     var searchText by remember { mutableStateOf("") }
     val filteredIndices = remember(searchText, assets) {
         assets.mapIndexedNotNull { index, asset ->
-            val displayName = if (asset.shortName.isNotEmpty()) asset.shortName else asset.name
             if (asset.ticker.contains(searchText, ignoreCase = true) ||
-                displayName.contains(searchText, ignoreCase = true)) index else null
+                asset.displayName.contains(searchText, ignoreCase = true)) index else null
         }
     }
     val allChecked by viewModel.allAssetsChecked.collectAsState()
@@ -220,22 +217,7 @@ fun SelectAssetsScreen(
             ) {
                 items(filteredIndices) { index ->
                     val asset = assets[index]
-                    val ticker = asset.ticker
-                    var rowDisplayName by remember(ticker) {
-                        mutableStateOf(if (asset.shortName.isNotEmpty()) asset.shortName else asset.name)
-                    }
-                    LaunchedEffect(ticker) {
-                        try {
-                            val db = FirebaseFirestore.getInstance()
-                            val doc = db.collection("assets").document(ticker).get().await()
-                            val cached = doc.getString("shortName")
-                            if (!cached.isNullOrBlank()) {
-                                rowDisplayName = cached
-                            }
-                        } catch (_: Exception) {
-                            // silencioso: mantém fallback
-                        }
-                    }
+                    val rowDisplayName = asset.displayName
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
