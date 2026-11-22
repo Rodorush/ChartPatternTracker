@@ -21,10 +21,14 @@ class AuthenticationViewModel(
     sealed class VerificationStatus {
         data object Idle : VerificationStatus()
         data object Sent : VerificationStatus()
-        data class SendError(val message: String?) : VerificationStatus()
+        /** Falha do envio no [sendVerificationEmail]; [code] é o código do [AuthProvider]. */
+        data class SendError(val code: String?) : VerificationStatus()
 
         /** Falha da releitura do usuário no [checkVerified], não do envio; [code] é o código do [AuthProvider]. */
         data class CheckError(val code: String?) : VerificationStatus()
+
+        /** A releitura ou o envio mostrou que a sessão acabou ([isSessionLost]); a tela sai para o login. */
+        data object SessionLost : VerificationStatus()
         data object Verified : VerificationStatus()
         data object NotYetVerified : VerificationStatus()
     }
@@ -144,6 +148,8 @@ class AuthenticationViewModel(
      * Reenvia o e-mail de verificação; o sucesso arma o cooldown, que bloqueia o reenvio seguinte.
      * Com um envio já em andamento, a chamada é ignorada: um segundo toque no Reenviar antes de o
      * Firebase responder mandaria o e-mail duas vezes. O andamento fica em [isSendingVerification].
+     * A falha grava [VerificationStatus.SendError] com o código do [AuthProvider], ou
+     * [VerificationStatus.SessionLost] quando ela mostra que a sessão acabou.
      */
     fun sendVerificationEmail(authProvider: AuthProvider) {
         if (_resendCooldownSeconds.value > 0) return
@@ -154,7 +160,11 @@ class AuthenticationViewModel(
                 armResendCooldown()
             } else {
                 Log.w(TAG, "sendVerificationEmail falhou: $error")
-                _verificationStatus.value = VerificationStatus.SendError(error)
+                _verificationStatus.value = if (isSessionLost(error)) {
+                    VerificationStatus.SessionLost
+                } else {
+                    VerificationStatus.SendError(error)
+                }
             }
             // Solta a trava só depois de armar o cooldown, para não abrir uma brecha entre os dois.
             _isSendingVerification.value = false
@@ -164,9 +174,11 @@ class AuthenticationViewModel(
     /**
      * Relê o usuário no Firebase e grava em [verificationStatus] se o e-mail já foi confirmado:
      * [VerificationStatus.Verified], [VerificationStatus.NotYetVerified] ou, quando a releitura
-     * falha, [VerificationStatus.CheckError] com o código do [AuthProvider]. A tela chama em todo
-     * `ON_RESUME` e no "Já verifiquei"; com uma releitura em andamento ([isCheckingVerification]),
-     * a chamada é ignorada. Não mexe na trava do envio nem no cooldown.
+     * falha, [VerificationStatus.CheckError] com o código do [AuthProvider]. A falha que mostra
+     * que a sessão acabou (conta apagada, desativada ou com a sessão revogada, ou sem usuário) grava
+     * [VerificationStatus.SessionLost], para a tela levar ao login em vez de pedir nova tentativa.
+     * A tela chama em todo `ON_RESUME` e no "Já verifiquei"; com uma releitura em andamento
+     * ([isCheckingVerification]), a chamada é ignorada. Não mexe na trava do envio nem no cooldown.
      */
     fun checkVerified(authProvider: AuthProvider) {
         if (_isCheckingVerification.value) return
@@ -175,7 +187,11 @@ class AuthenticationViewModel(
             _isCheckingVerification.value = false
             if (!success) {
                 Log.w(TAG, "checkVerified.reload falhou: $error")
-                _verificationStatus.value = VerificationStatus.CheckError(error)
+                _verificationStatus.value = if (isSessionLost(error)) {
+                    VerificationStatus.SessionLost
+                } else {
+                    VerificationStatus.CheckError(error)
+                }
                 return@reloadCurrentUser
             }
             _verificationStatus.value = if (authProvider.isEmailVerified()) {
@@ -416,6 +432,10 @@ class AuthenticationViewModel(
 
     private fun requiresRecentLogin(error: String?): Boolean =
         error == AuthProvider.REQUIRES_RECENT_LOGIN
+
+    /** A falha mostra que a sessão acabou: não há usuário, ou a conta não aceita mais operações. */
+    private fun isSessionLost(error: String?): Boolean =
+        error == AuthProvider.NO_CURRENT_USER || error == AuthProvider.INVALID_USER
 
     /**
      * Marca a operação como em andamento ([inProgress]) e devolve `true`; devolve `false` se ela

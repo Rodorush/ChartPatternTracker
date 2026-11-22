@@ -79,13 +79,20 @@ fun VerifyEmailScreen(
                 viewModel.resetVerificationStatus()
             }
             is VerificationStatus.SendError -> {
-                Toast.makeText(context, context.getString(R.string.verify_email_send_error), Toast.LENGTH_LONG).show()
+                val message = authErrorMessage(s.code, fallback = R.string.verify_email_send_error)
+                Toast.makeText(context, context.getString(message), Toast.LENGTH_LONG).show()
                 viewModel.resetVerificationStatus()
             }
             is VerificationStatus.CheckError -> {
                 val message = authErrorMessage(s.code, fallback = R.string.verify_email_check_error)
                 Toast.makeText(context, context.getString(message), Toast.LENGTH_LONG).show()
                 viewModel.resetVerificationStatus()
+            }
+            VerificationStatus.SessionLost -> {
+                // Mesmo caminho do Sair: o signOut não tem efeito se o Firebase já encerrou a sessão.
+                Toast.makeText(context, context.getString(R.string.verify_email_session_ended), Toast.LENGTH_LONG).show()
+                viewModel.resetVerificationStatus()
+                authProvider.logout { onLogout() }
             }
             else -> Unit
         }

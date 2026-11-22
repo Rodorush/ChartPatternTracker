@@ -38,11 +38,14 @@ class AuthErrorCodeTest {
     }
 
     @Test
-    fun `conta desativada ou inexistente nao vira INVALID_CREDENTIAL`() {
+    fun `conta desativada, inexistente ou com sessao revogada vira INVALID_USER`() {
         // Chegam também em operações do Perfil que não pedem senha, como trocar o nome com a
-        // conta desativada no console; lá, INVALID_CREDENTIAL diria "senha incorreta".
-        assertNull(firebaseAuthErrorCode("ERROR_USER_DISABLED"))
-        assertNull(firebaseAuthErrorCode("ERROR_USER_NOT_FOUND"))
+        // conta desativada no console; lá, INVALID_CREDENTIAL diria "senha incorreta". Com código
+        // próprio, a tela de verificação de e-mail reconhece o fim da sessão e leva ao login.
+        assertEquals(AuthProvider.INVALID_USER, firebaseAuthErrorCode("ERROR_USER_DISABLED"))
+        assertEquals(AuthProvider.INVALID_USER, firebaseAuthErrorCode("ERROR_USER_NOT_FOUND"))
+        assertEquals(AuthProvider.INVALID_USER, firebaseAuthErrorCode("ERROR_USER_TOKEN_EXPIRED"))
+        assertEquals(AuthProvider.INVALID_USER, firebaseAuthErrorCode("ERROR_INVALID_USER_TOKEN"))
     }
 
     @Test
