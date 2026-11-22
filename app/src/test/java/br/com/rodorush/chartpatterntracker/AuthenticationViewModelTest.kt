@@ -160,7 +160,7 @@ class AuthenticationViewModelTest {
         assertEquals(60, vm.resendCooldownSeconds.value)
         vm.resetVerificationStatus()
 
-        // Releitura falha com o cooldown armado: ele continua contando de onde estava.
+        // Releitura falha com o cooldown armado: ele não é zerado.
         vm.checkVerified(provider)
         assertEquals(VerificationStatus.CheckError(null), vm.verificationStatus.value)
         assertEquals(60, vm.resendCooldownSeconds.value)
