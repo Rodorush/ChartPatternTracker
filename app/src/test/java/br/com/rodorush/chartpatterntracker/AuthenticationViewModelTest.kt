@@ -199,7 +199,7 @@ class AuthenticationViewModelTest {
     }
 
     @Test
-    fun `SessionLost is reported once when the resend and the reload both find the session ended`() = runTest(dispatcher) {
+    fun `SessionLost overwritten before the screen reads it is reported again on the next check`() = runTest(dispatcher) {
         val mock = MockAuthProvider(email = "user@example.com").apply {
             setReloadSucceeds(false, AuthProvider.INVALID_USER)
         }
@@ -207,16 +207,19 @@ class AuthenticationViewModelTest {
         val vm = newViewModel()
         advanceUntilIdle()
 
-        // Reenvio pendente e releitura com a sessão encerrada: a tela recebe o aviso e sai.
+        // Reenvio pendente; a releitura acha a sessão encerrada.
         vm.sendVerificationEmail(provider)
         vm.checkVerified(provider)
         assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
+
+        // O reenvio responde com falha de rede antes de a tela ler o aviso e o sobrescreve.
+        provider.verificationCallbacks.single()(false, AuthProvider.NETWORK)
+        assertEquals(VerificationStatus.SendError(AuthProvider.NETWORK), vm.verificationStatus.value)
         vm.resetVerificationStatus()
 
-        // O reenvio responde depois, com a tela já saindo: um segundo aviso empilharia outro login.
-        provider.verificationCallbacks.single()(false, AuthProvider.INVALID_USER)
-        assertEquals(VerificationStatus.Idle, vm.verificationStatus.value)
-        assertFalse(vm.isSendingVerification.value)
+        // A releitura seguinte grava o aviso de novo: a tela não fica presa pedindo nova tentativa.
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
     }
 
     @Test

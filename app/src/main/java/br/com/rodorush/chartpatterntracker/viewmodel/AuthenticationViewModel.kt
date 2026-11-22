@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 
 class AuthenticationViewModel(
     private val cooldownTickMillis: Long = 1000L,
@@ -31,7 +30,8 @@ class AuthenticationViewModel(
 
         /**
          * A releitura ou o envio mostrou que a sessão acabou ([isSessionLost]); a tela sai para o
-         * login. Gravado uma vez só por ViewModel (ver [reportSessionLost]).
+         * login. Gravado a cada falha desse tipo: se outro status o sobrescrever antes de a tela
+         * lê-lo, a falha seguinte o grava de novo. A saída dupla é barrada no NavHost.
          */
         data object SessionLost : VerificationStatus()
         data object Verified : VerificationStatus()
@@ -128,8 +128,6 @@ class AuthenticationViewModel(
 
     private var cooldownJob: Job? = null
 
-    private val sessionLostReported = AtomicBoolean(false)
-
     init {
         getData()
     }
@@ -167,10 +165,10 @@ class AuthenticationViewModel(
                 armResendCooldown()
             } else {
                 Log.w(TAG, "sendVerificationEmail falhou: $error")
-                if (isSessionLost(error)) {
-                    reportSessionLost()
+                _verificationStatus.value = if (isSessionLost(error)) {
+                    VerificationStatus.SessionLost
                 } else {
-                    _verificationStatus.value = VerificationStatus.SendError(error)
+                    VerificationStatus.SendError(error)
                 }
             }
             // Solta a trava só depois de armar o cooldown, para não abrir uma brecha entre os dois.
@@ -194,10 +192,10 @@ class AuthenticationViewModel(
             _isCheckingVerification.value = false
             if (!success) {
                 Log.w(TAG, "checkVerified.reload falhou: $error")
-                if (isSessionLost(error)) {
-                    reportSessionLost()
+                _verificationStatus.value = if (isSessionLost(error)) {
+                    VerificationStatus.SessionLost
                 } else {
-                    _verificationStatus.value = VerificationStatus.CheckError(error)
+                    VerificationStatus.CheckError(error)
                 }
                 return@reloadCurrentUser
             }
@@ -443,16 +441,6 @@ class AuthenticationViewModel(
     /** A falha mostra que a sessão acabou: não há usuário, ou a conta não aceita mais operações. */
     private fun isSessionLost(error: String?): Boolean =
         error == AuthProvider.NO_CURRENT_USER || error == AuthProvider.INVALID_USER
-
-    /**
-     * Grava [VerificationStatus.SessionLost] só na primeira vez. Com o reenvio e a releitura
-     * falhando juntos, o segundo aviso chegaria com a tela já saindo para o login e a faria navegar
-     * de novo, empilhando um segundo login.
-     */
-    private fun reportSessionLost() {
-        if (!sessionLostReported.compareAndSet(false, true)) return
-        _verificationStatus.value = VerificationStatus.SessionLost
-    }
 
     /**
      * Marca a operação como em andamento ([inProgress]) e devolve `true`; devolve `false` se ela
