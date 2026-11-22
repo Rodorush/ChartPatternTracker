@@ -23,6 +23,9 @@ class MockAuthProvider(
     private var uid: String? = "mock-uid"
 ) : AuthProvider {
 
+    private var reloadSucceeds: Boolean = true
+    private var reloadErrorCode: String? = null
+
     var sendEmailVerificationCalls: Int = 0
         private set
 
@@ -100,6 +103,10 @@ class MockAuthProvider(
     }
 
     override fun reloadCurrentUser(onResult: (Boolean, String?) -> Unit) {
+        if (!reloadSucceeds) {
+            onResult(false, reloadErrorCode)
+            return
+        }
         if (reloadFlipsToVerified) verified = true
         onResult(true, null)
     }
@@ -206,6 +213,12 @@ class MockAuthProvider(
 
     fun setReloadFlipsToVerified(value: Boolean) {
         reloadFlipsToVerified = value
+    }
+
+    /** Faz o `reloadCurrentUser` falhar com o [code] do [AuthProvider] (`null` = falha sem código). */
+    fun setReloadFails(code: String?) {
+        reloadSucceeds = false
+        reloadErrorCode = code
     }
 
     fun setSendVerificationSucceeds(value: Boolean) {

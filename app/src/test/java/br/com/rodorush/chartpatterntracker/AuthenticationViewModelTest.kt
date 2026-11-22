@@ -128,6 +128,35 @@ class AuthenticationViewModelTest {
     }
 
     @Test
+    fun `checkVerified reload failure emits CheckError with the code, not SendError`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReloadFails(AuthProvider.NETWORK)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.checkVerified(provider)
+
+        assertEquals(VerificationStatus.CheckError(AuthProvider.NETWORK), vm.verificationStatus.value)
+        assertFalse(vm.isCheckingVerification.value)
+    }
+
+    @Test
+    fun `checkVerified failure does not touch the send lock nor the cooldown`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReloadFails(null)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.checkVerified(provider)
+
+        assertEquals(VerificationStatus.CheckError(null), vm.verificationStatus.value)
+        assertFalse(vm.isSendingVerification.value)
+        assertEquals(0, vm.resendCooldownSeconds.value)
+    }
+
+    @Test
     fun `sendPasswordReset success arms cooldown and emits Sent`() = runTest(dispatcher) {
         val provider = MockAuthProvider()
         val vm = newViewModel()

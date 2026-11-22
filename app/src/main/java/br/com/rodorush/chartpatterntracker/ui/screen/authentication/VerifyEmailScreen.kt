@@ -34,6 +34,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.rodorush.chartpatterntracker.R
 import br.com.rodorush.chartpatterntracker.ui.component.AuthProviderWrapper
+import br.com.rodorush.chartpatterntracker.ui.component.authErrorMessage
 import br.com.rodorush.chartpatterntracker.util.LocalAuthProvider
 import br.com.rodorush.chartpatterntracker.util.provider.mock.MockAuthProvider
 import br.com.rodorush.chartpatterntracker.viewmodel.AuthenticationViewModel
@@ -79,6 +80,11 @@ fun VerifyEmailScreen(
             }
             is VerificationStatus.SendError -> {
                 Toast.makeText(context, context.getString(R.string.verify_email_send_error), Toast.LENGTH_LONG).show()
+                viewModel.resetVerificationStatus()
+            }
+            is VerificationStatus.CheckError -> {
+                val message = authErrorMessage(s.code, fallback = R.string.verify_email_check_error)
+                Toast.makeText(context, context.getString(message), Toast.LENGTH_LONG).show()
                 viewModel.resetVerificationStatus()
             }
             else -> Unit

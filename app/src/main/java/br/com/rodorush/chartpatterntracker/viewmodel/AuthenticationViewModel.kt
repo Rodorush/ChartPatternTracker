@@ -22,6 +22,9 @@ class AuthenticationViewModel(
         data object Idle : VerificationStatus()
         data object Sent : VerificationStatus()
         data class SendError(val message: String?) : VerificationStatus()
+
+        /** Falha da releitura do usuário no [checkVerified], não do envio; [code] é o código do [AuthProvider]. */
+        data class CheckError(val code: String?) : VerificationStatus()
         data object Verified : VerificationStatus()
         data object NotYetVerified : VerificationStatus()
     }
@@ -165,7 +168,7 @@ class AuthenticationViewModel(
             _isCheckingVerification.value = false
             if (!success) {
                 Log.w(TAG, "checkVerified.reload falhou: $error")
-                _verificationStatus.value = VerificationStatus.SendError(error)
+                _verificationStatus.value = VerificationStatus.CheckError(error)
                 return@reloadCurrentUser
             }
             _verificationStatus.value = if (authProvider.isEmailVerified()) {
