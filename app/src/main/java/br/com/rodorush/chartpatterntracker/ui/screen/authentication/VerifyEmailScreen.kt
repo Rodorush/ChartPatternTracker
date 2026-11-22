@@ -56,8 +56,8 @@ fun VerifyEmailScreen(
     val isChecking by viewModel.isCheckingVerification.collectAsState()
     val isSending by viewModel.isSendingVerification.collectAsState()
 
-    // Lido uma vez: com a sessão encerrada, o Firebase pode limpar o usuário antes de a tela sair, e
-    // o texto ficaria sem o endereço durante a saída.
+    // Guardado na composição em vez de relido a cada recomposição: com a sessão encerrada, o
+    // Firebase pode limpar o usuário antes de a tela sair, e o texto ficaria sem o endereço.
     val email = remember(authProvider) { authProvider.currentUserEmail() ?: "" }
 
     DisposableEffect(lifecycleOwner) {
