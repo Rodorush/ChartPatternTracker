@@ -25,6 +25,7 @@ class MockAuthProvider(
 
     private var reloadSucceeds: Boolean = true
     private var reloadErrorCode: String? = null
+    private var sendVerificationErrorCode: String? = null
 
     var sendEmailVerificationCalls: Int = 0
         private set
@@ -99,7 +100,7 @@ class MockAuthProvider(
 
     override fun sendEmailVerification(onResult: (Boolean, String?) -> Unit) {
         sendEmailVerificationCalls++
-        if (sendVerificationSucceeds) onResult(true, null) else onResult(false, null)
+        if (sendVerificationSucceeds) onResult(true, null) else onResult(false, sendVerificationErrorCode)
     }
 
     override fun reloadCurrentUser(onResult: (Boolean, String?) -> Unit) {
@@ -221,8 +222,10 @@ class MockAuthProvider(
         reloadErrorCode = errorCode
     }
 
-    fun setSendVerificationSucceeds(value: Boolean) {
+    /** Com [value] `false`, o `sendEmailVerification` falha com o [errorCode] do [AuthProvider]. */
+    fun setSendVerificationSucceeds(value: Boolean, errorCode: String? = null) {
         sendVerificationSucceeds = value
+        sendVerificationErrorCode = errorCode
     }
 
     fun setSendPasswordResetSucceeds(value: Boolean) {

@@ -73,6 +73,35 @@ class AuthenticationViewModelTest {
     }
 
     @Test
+    fun `sendVerificationEmail failure carries the provider code in SendError`() = runTest(dispatcher) {
+        // A tela traduz o código pelo authErrorMessage: rede e excesso de tentativas têm aviso próprio.
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setSendVerificationSucceeds(false, AuthProvider.NETWORK)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendVerificationEmail(provider)
+
+        assertEquals(VerificationStatus.SendError(AuthProvider.NETWORK), vm.verificationStatus.value)
+    }
+
+    @Test
+    fun `sendVerificationEmail with an invalid session emits SessionLost and releases the lock`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setSendVerificationSucceeds(false, AuthProvider.INVALID_USER)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.sendVerificationEmail(provider)
+
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
+        assertFalse(vm.isSendingVerification.value)
+        assertEquals(0, vm.resendCooldownSeconds.value)
+    }
+
+    @Test
     fun `sendVerificationEmail is no-op while cooldown active`() = runTest(dispatcher) {
         val provider = MockAuthProvider(email = "user@example.com")
         val vm = newViewModel()
@@ -139,6 +168,58 @@ class AuthenticationViewModelTest {
 
         assertEquals(VerificationStatus.CheckError(AuthProvider.NETWORK), vm.verificationStatus.value)
         assertFalse(vm.isCheckingVerification.value)
+    }
+
+    @Test
+    fun `checkVerified with an invalid session emits SessionLost`() = runTest(dispatcher) {
+        // Conta apagada, desativada ou com a sessão revogada: tentar de novo não resolve.
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReloadSucceeds(false, AuthProvider.INVALID_USER)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.checkVerified(provider)
+
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
+        assertFalse(vm.isCheckingVerification.value)
+    }
+
+    @Test
+    fun `checkVerified without a current user emits SessionLost`() = runTest(dispatcher) {
+        val provider = MockAuthProvider(email = "user@example.com").apply {
+            setReloadSucceeds(false, AuthProvider.NO_CURRENT_USER)
+        }
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        vm.checkVerified(provider)
+
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
+    }
+
+    @Test
+    fun `SessionLost overwritten before the screen reads it is reported again on the next check`() = runTest(dispatcher) {
+        val mock = MockAuthProvider(email = "user@example.com").apply {
+            setReloadSucceeds(false, AuthProvider.INVALID_USER)
+        }
+        val provider = HeldAuthProvider(mock)
+        val vm = newViewModel()
+        advanceUntilIdle()
+
+        // Reenvio pendente; a releitura acha a sessão encerrada.
+        vm.sendVerificationEmail(provider)
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
+
+        // O reenvio responde com falha de rede antes de a tela ler o aviso e o sobrescreve.
+        provider.verificationCallbacks.single()(false, AuthProvider.NETWORK)
+        assertEquals(VerificationStatus.SendError(AuthProvider.NETWORK), vm.verificationStatus.value)
+        vm.resetVerificationStatus()
+
+        // A releitura seguinte grava o aviso de novo: a tela não fica presa pedindo nova tentativa.
+        vm.checkVerified(provider)
+        assertEquals(VerificationStatus.SessionLost, vm.verificationStatus.value)
     }
 
     @Test

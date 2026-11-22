@@ -68,6 +68,13 @@ interface AuthProvider {
         /** A operação pede usuário logado, e não há sessão. */
         const val NO_CURRENT_USER = "no-current-user"
 
+        /**
+         * A conta não aceita mais a operação: foi apagada, desativada ou teve a sessão revogada
+         * (senha ou e-mail trocados em outro lugar). Numa operação sobre a conta da sessão, quer
+         * dizer que a sessão acabou, e quem chama leva ao login.
+         */
+        const val INVALID_USER = "invalid-user"
+
         /** O login ou a reautenticação com Google chegou sem idToken. */
         const val MISSING_ID_TOKEN = "missing-id-token"
 

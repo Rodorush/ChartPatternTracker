@@ -66,8 +66,13 @@ fun AuthenticationNavHost(
                 VerifyEmailScreen(
                     onVerified = onSignedIn,
                     onLogout = {
-                        navController.navigate(ROUTE_LOGIN) {
-                            popUpTo(ROUTE_VERIFY_EMAIL) { inclusive = true }
+                        // Uma saída só: o Sair e o aviso de fim de sessão podem chegar os dois
+                        // durante a transição, e o segundo, sem a verificação na pilha para o
+                        // popUpTo, empilharia outro login.
+                        if (navController.currentDestination?.route == ROUTE_VERIFY_EMAIL) {
+                            navController.navigate(ROUTE_LOGIN) {
+                                popUpTo(ROUTE_VERIFY_EMAIL) { inclusive = true }
+                            }
                         }
                     }
                 )

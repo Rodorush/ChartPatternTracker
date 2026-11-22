@@ -20,6 +20,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -55,7 +56,9 @@ fun VerifyEmailScreen(
     val isChecking by viewModel.isCheckingVerification.collectAsState()
     val isSending by viewModel.isSendingVerification.collectAsState()
 
-    val email = authProvider.currentUserEmail() ?: ""
+    // Guardado na composição em vez de relido a cada recomposição: com a sessão encerrada, o
+    // Firebase pode limpar o usuário antes de a tela sair, e o texto ficaria sem o endereço.
+    val email = remember(authProvider) { authProvider.currentUserEmail() ?: "" }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -79,13 +82,20 @@ fun VerifyEmailScreen(
                 viewModel.resetVerificationStatus()
             }
             is VerificationStatus.SendError -> {
-                Toast.makeText(context, context.getString(R.string.verify_email_send_error), Toast.LENGTH_LONG).show()
+                val message = authErrorMessage(s.code, fallback = R.string.verify_email_send_error)
+                Toast.makeText(context, context.getString(message), Toast.LENGTH_LONG).show()
                 viewModel.resetVerificationStatus()
             }
             is VerificationStatus.CheckError -> {
                 val message = authErrorMessage(s.code, fallback = R.string.verify_email_check_error)
                 Toast.makeText(context, context.getString(message), Toast.LENGTH_LONG).show()
                 viewModel.resetVerificationStatus()
+            }
+            VerificationStatus.SessionLost -> {
+                // Mesmo caminho do Sair: o signOut não tem efeito se o Firebase já encerrou a sessão.
+                Toast.makeText(context, context.getString(R.string.verify_email_session_ended), Toast.LENGTH_LONG).show()
+                viewModel.resetVerificationStatus()
+                authProvider.logout { onLogout() }
             }
             else -> Unit
         }
