@@ -101,6 +101,7 @@ fun ProfileScreen(
     val emailStatus by authViewModel.updateEmailStatus.collectAsState()
     val deleteStatus by authViewModel.deleteAccountStatus.collectAsState()
     val resetStatus by authViewModel.resetPasswordStatus.collectAsState()
+    val cooldown by authViewModel.resendCooldownSeconds.collectAsState()
 
     var showNameDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
@@ -597,12 +598,23 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     if (email != null) {
-                        TextButton(onClick = {
-                            showPasswordDialog = false
-                            clearPasswordFields()
-                            authViewModel.sendPasswordReset(email, authProvider)
-                        }) {
-                            Text(stringResource(R.string.forgot_password_link))
+                        // A ViewModel ignora o envio durante o cooldown e com outro em andamento;
+                        // habilitado nesses casos, o link fecharia o diálogo sem e-mail nem aviso.
+                        TextButton(
+                            enabled = cooldown == 0 &&
+                                resetStatus !is AuthenticationViewModel.ResetPasswordStatus.Sending,
+                            onClick = {
+                                showPasswordDialog = false
+                                clearPasswordFields()
+                                authViewModel.sendPasswordReset(email, authProvider)
+                            }
+                        ) {
+                            val label = if (cooldown > 0) {
+                                stringResource(R.string.resend_cooldown, cooldown)
+                            } else {
+                                stringResource(R.string.forgot_password_link)
+                            }
+                            Text(label)
                         }
                     }
                 }
