@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -154,6 +155,15 @@ fun SelectTimeframesScreen(
                     }
                     IconButton(
                         onClick = {
+                            if (selected.isEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.select_at_least_one_timeframe),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                Log.d(TAG, "Buscar sem seleção")
+                                return@IconButton
+                            }
                             viewModel.updateSelectedTimeframes(selected)
                             viewModel.setAllTimeframesChecked(allChecked)
                             Log.d(
@@ -161,8 +171,7 @@ fun SelectTimeframesScreen(
                                 "Botão Buscar clicado, timeframes selecionados: ${selected.map { it.value }}"
                             )
                             onNextClick()
-                        },
-                        enabled = selected.isNotEmpty()
+                        }
                     ) {
                         Icon(
                             Icons.Default.Search,

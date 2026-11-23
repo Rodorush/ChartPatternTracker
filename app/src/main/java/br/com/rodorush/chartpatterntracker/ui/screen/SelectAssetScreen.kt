@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,6 +68,7 @@ fun SelectAssetsScreen(
     onChartClick: (String) -> Unit = {}
 ) {
     val assetsProvider = LocalAssetsProvider.current
+    val context = LocalContext.current
     var assets by remember { mutableStateOf<List<AssetItem>>(emptyList()) }
     val selectedAssets by viewModel.selectedAssets.collectAsState()
 
@@ -169,6 +171,15 @@ fun SelectAssetsScreen(
                     }
                     IconButton(
                         onClick = {
+                            if (selected.isEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.select_at_least_one_asset),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                Log.d(TAG, "Avançar sem seleção")
+                                return@IconButton
+                            }
                             viewModel.updateSelectedAssets(selected)
                             viewModel.setAllAssetsChecked(allChecked)
                             Log.d(
@@ -176,8 +187,7 @@ fun SelectAssetsScreen(
                                 "Botão Avançar clicado, ativos selecionados: ${selected.map { it.ticker }}"
                             )
                             onNextClick()
-                        },
-                        enabled = selected.isNotEmpty()
+                        }
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowForward,
