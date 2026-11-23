@@ -7,6 +7,5 @@ data class ScreeningResult(
     val reliability: String,
     val indication: String,
     val indicationIcon: Int,
-    val displayShortName: String = "",
     val patternImageUrl: String? = null
 )

@@ -3,9 +3,7 @@ package br.com.rodorush.chartpatterntracker.viewmodel
 import androidx.lifecycle.ViewModel
 import br.com.rodorush.customlogs.Log
 import androidx.lifecycle.viewModelScope
-import br.com.rodorush.chartpatterntracker.BuildConfig
 import br.com.rodorush.chartpatterntracker.R
-import br.com.rodorush.chartpatterntracker.api.BrapiApiService
 import br.com.rodorush.chartpatterntracker.model.AssetItem
 import br.com.rodorush.chartpatterntracker.model.IntervalNotInPlanException
 import br.com.rodorush.chartpatterntracker.model.PatternItem
@@ -14,16 +12,12 @@ import br.com.rodorush.chartpatterntracker.model.ScreeningResult
 import br.com.rodorush.chartpatterntracker.model.TimeframeItem
 import br.com.rodorush.chartpatterntracker.util.loadImageUrlFromStorage
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class ScreeningViewModel(
@@ -83,52 +77,11 @@ class ScreeningViewModel(
 
     private var screeningJob: Job? = null
 
-    private val assetInfoCache = ConcurrentHashMap<String, Pair<String?, String?>>()
     private val patternImageCache = ConcurrentHashMap<String, String>()
-
-    private val retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://brapi.dev/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-    private val brapiService by lazy { retrofit.create(BrapiApiService::class.java) }
-
-    private suspend fun fetchAssetInfo(ticker: String): Pair<String?, String?> = withContext(Dispatchers.IO) {
-        assetInfoCache[ticker]?.let { return@withContext it }
-        try {
-            val resp = brapiService.getQuoteInfo(ticker, BuildConfig.BRAPI_TOKEN)
-            val info = resp.results.firstOrNull()
-            val sn = normalizeName(info?.shortName)
-            val ln = normalizeName(info?.longName)
-            val pair = sn to ln
-            assetInfoCache[ticker] = pair
-            pair
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.w(TAG, "Falha ao obter info do ativo $ticker: ${e.message}")
-            null to null
-        }
-    }
 
     private suspend fun fetchPatternImage(patternId: String): String? {
         patternImageCache[patternId]?.let { return it }
         return loadImageUrlFromStorage(patternId)?.also { patternImageCache[patternId] = it }
-    }
-
-    private fun normalizeName(s: String?): String? {
-        if (s.isNullOrBlank()) return null
-        return s.trim().replace(WHITESPACE, " ")
-    }
-
-    private fun resolveDisplayShortName(asset: AssetItem, fetched: String?): String {
-        val candidate = fetched
-            ?: asset.shortName.takeIf { it.isNotBlank() }
-            ?: asset.name.takeIf { it.isNotBlank() }
-            ?: asset.longName.takeIf { it.isNotBlank() }
-            ?: ""
-        return candidate.trim().replace(WHITESPACE, " ")
     }
 
     // As três atualizações de seleção cancelam a varredura em curso: ela foi lançada com a
@@ -231,12 +184,6 @@ class ScreeningViewModel(
                         val found = patterns.filter { !scan.patterns[it.id].isNullOrEmpty() }
                         if (found.isEmpty()) continue
 
-                        val (sn, ln) = fetchAssetInfo(asset.ticker)
-                        val enrichedAsset = asset.copy(
-                            shortName = sn ?: asset.shortName,
-                            longName = ln ?: asset.longName
-                        )
-                        val displayShortName = resolveDisplayShortName(enrichedAsset, sn)
                         for (pattern in found) {
                             val patternImage = fetchPatternImage(pattern.id)
 
@@ -245,12 +192,11 @@ class ScreeningViewModel(
                             results.add(
                                 ScreeningResult(
                                     pattern = pattern,
-                                    asset = enrichedAsset,
+                                    asset = asset,
                                     timeframe = timeframe,
                                     reliability = convertReliabilityToStars(reliabilityText),
                                     indication = indicationText,
                                     indicationIcon = convertIndicationToIcon(indicationText),
-                                    displayShortName = displayShortName,
                                     patternImageUrl = patternImage
                                 )
                             )
@@ -308,6 +254,5 @@ class ScreeningViewModel(
         const val TAG = "ScreeningViewModel"
         const val SCREENING_TIMEOUT_MS = 15_000L
         const val SCREENING_RANGE = "3mo"
-        val WHITESPACE = "\\s+".toRegex()
     }
 }
