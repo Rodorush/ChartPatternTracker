@@ -1,5 +1,6 @@
 package br.com.rodorush.chartpatterntracker.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -70,6 +71,7 @@ fun SelectChartPatternScreen(
     onNavigateToDetails: (String) -> Unit = {}
 ) {
     val patternProvider = LocalPatternProvider.current
+    val context = LocalContext.current
     var patterns by remember { mutableStateOf<List<PatternItem>>(emptyList()) }
     val selectedPatterns by viewModel.selectedPatterns.collectAsState()
 
@@ -171,6 +173,15 @@ fun SelectChartPatternScreen(
                     }
                     IconButton(
                         onClick = {
+                        if (selected.isEmpty()) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.select_at_least_one_pattern),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            Log.d(TAG, "Avançar sem seleção")
+                            return@IconButton
+                        }
                         viewModel.updateSelectedPatterns(selected)
                         viewModel.setAllPatternsChecked(allChecked)
                         Log.d(
@@ -178,8 +189,7 @@ fun SelectChartPatternScreen(
                             "Botão Avançar clicado, padrões selecionados: ${selected.map { it.id to it.getLocalized("name") }}"
                         )
                         onNextClick()
-                        },
-                        enabled = selected.isNotEmpty()
+                        }
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowForward,

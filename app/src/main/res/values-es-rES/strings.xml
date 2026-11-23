@@ -79,6 +79,9 @@
     <string name="select_the_timeframes">Seleccione los Tiempos Gráficos</string>
     <string name="search_timeframes">Buscar Tiempos Gráficos</string>
     <string name="step_3_of_3">Paso 3 de 3</string>
+    <string name="select_at_least_one_pattern">Seleccione al menos un patrón.</string>
+    <string name="select_at_least_one_asset">Seleccione al menos un activo.</string>
+    <string name="select_at_least_one_timeframe">Seleccione al menos un tiempo gráfico.</string>
     <string name="search_patterns_found" >Buscar patrones encontrados</string>
     <string name="patterns_found_completed">Patrones completos encontrados</string>
     <string name="settings">Configuraciones</string>
