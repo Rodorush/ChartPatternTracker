@@ -170,29 +170,6 @@ fun LoginScreen(
                 contentDescription = "Google",
                 onClick = launchGoogleSignIn
             )
-
-            SocialSignInButton(
-                iconId = R.drawable.f_facebook,
-                contentDescription = "Facebook",
-                onClick = {
-                    Toast.makeText(
-                        context,
-                        "Login com Facebook ainda não implementado",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            )
-
-            SocialSignInButton(
-                iconId = R.drawable.x_logo,
-                contentDescription = "Twitter",
-                onClick = {
-                    Toast.makeText(
-                        context,
-                        "Login com Facebook ainda não implementado",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                })
         }
 
         Spacer(modifier = Modifier.padding(16.dp))

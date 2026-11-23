@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,22 +72,9 @@ fun MainScreen(
             R.string.pattern_tracker,
             onClick = onNavigateToSelectChartPattern
         )
-        ButtonMenuItem(R.string.financial_news,
-            onClick = {
-                Toast.makeText(
-                    context,
-                    R.string.financial_news,
-                    Toast.LENGTH_SHORT
-                ).show()
-            })
+        ButtonMenuItem(R.string.financial_news, comingSoon = true)
         ButtonMenuItem(R.string.real_time_quotes, onClick = onNavigateToRealTimeQuotes)
-        ButtonMenuItem(R.string.technical_indicators, onClick = {
-            Toast.makeText(
-                context,
-                R.string.technical_indicators,
-                Toast.LENGTH_SHORT
-            ).show()
-        })
+        ButtonMenuItem(R.string.technical_indicators, comingSoon = true)
         ButtonMenuItem(R.string.settings, onClick = onNavigateToSettings)
         Spacer(modifier = Modifier.height(20.dp))
         TextButton(onClick = {
@@ -100,19 +90,47 @@ fun MainScreen(
     }
 }
 
+/**
+ * Item do menu principal.
+ *
+ * @param comingSoon `true` para recurso ainda não entregue: o botão fica desativado, ignora o
+ * [onClick] e mostra o selo "Em breve" ao lado do rótulo.
+ */
 @Composable
 fun ButtonMenuItem(
     texResId: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit = {},
+    comingSoon: Boolean = false
 ) {
     Button(
         onClick = onClick,
+        enabled = !comingSoon,
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(vertical = 8.dp)
     ) {
         Text(text = stringResource(texResId))
+        if (comingSoon) {
+            Spacer(modifier = Modifier.width(8.dp))
+            ComingSoonBadge()
+        }
+    }
+}
+
+/** Selo "Em breve". Tem cor própria, para não esmaecer junto com o botão desativado. */
+@Composable
+private fun ComingSoonBadge() {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+    ) {
+        Text(
+            text = stringResource(R.string.coming_soon),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
     }
 }
 

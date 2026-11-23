@@ -6,6 +6,7 @@
     <string name="financial_news">Financial News</string>
     <string name="real_time_quotes">Real-Time Quotes</string>
     <string name="technical_indicators">Technical Indicators</string>
+    <string name="coming_soon">Coming soon</string>
     <string name="logout">Logout</string>
     <string name="splash_slogan">Get ready to discover new opportunities</string>
     <string name="sign_in_your_account">Sign in your account</string>
@@ -136,5 +137,4 @@
     <string name="privacy_policy">Privacy Policy</string>
     <string name="terms_policy_agreement">I have read and agree to the %1$s and the %2$s.</string>
     <string name="legal_documents_title">Legal documents</string>
-    <string name="feature_not_implemented">Feature not implemented yet.</string>
 </resources>
