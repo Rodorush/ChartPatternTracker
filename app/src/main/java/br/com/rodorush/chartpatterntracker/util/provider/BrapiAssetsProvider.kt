@@ -104,7 +104,9 @@ private fun StockQuote.toAssetItem(): AssetItem {
     val norm = normalizeName(name)
     return AssetItem(
         ticker = stock,
-        shortName = norm, // será substituído por shortName do Firestore no item visível, quando houver
+        // A lista só traz `name`; os três campos levam o mesmo valor, e AssetItem.displayName
+        // decide o que aparece, sem o valor igual ao ticker.
+        shortName = norm,
         longName = norm,
         name = norm,
         lastPrice = close ?: 0.0,

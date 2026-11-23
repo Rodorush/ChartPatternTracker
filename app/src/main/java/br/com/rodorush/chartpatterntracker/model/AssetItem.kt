@@ -19,10 +19,12 @@ data class AssetItem(
      * Um valor igual ao ticker não conta, porque repetiria a linha de cima. A Brapi devolve o
      * ticker no lugar do nome em vários casos: no `shortName` da cotação individual e no `name`
      * da maioria dos BDRs no `/quote/list`. Vazio quando nenhum dos três serve.
+     *
+     * Calculado na construção, uma vez por instância: a busca da seleção o lê em todos os ativos
+     * da lista a cada tecla. Fica fora do `equals` e do `copy`, que o recalcula.
      */
-    val displayName: String
-        get() = sequenceOf(shortName, name, longName)
-            .map { it.trim().replace(WHITESPACE, " ") }
-            .firstOrNull { it.isNotEmpty() && !it.equals(ticker.trim(), ignoreCase = true) }
-            .orEmpty()
+    val displayName: String = sequenceOf(shortName, name, longName)
+        .map { it.trim().replace(WHITESPACE, " ") }
+        .firstOrNull { it.isNotEmpty() && !it.equals(ticker.trim(), ignoreCase = true) }
+        .orEmpty()
 }

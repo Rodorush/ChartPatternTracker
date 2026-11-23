@@ -208,9 +208,7 @@ fun ScreeningResultsScreen(
                     val q = searchText.trim()
                     if (q.isEmpty()) true else {
                         result.asset.ticker.contains(q, ignoreCase = true) ||
-                        result.asset.shortName.contains(q, ignoreCase = true) ||
-                        result.asset.longName.contains(q, ignoreCase = true) ||
-                        result.asset.name.contains(q, ignoreCase = true) ||
+                        result.asset.displayName.contains(q, ignoreCase = true) ||
                         result.pattern.getLocalized("name").contains(q, ignoreCase = true)
                     }
                 }
