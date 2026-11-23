@@ -38,6 +38,12 @@ class AssetItemTest {
     }
 
     @Test
+    fun semNenhumNomeFicaVazio() {
+        assertEquals("", AssetItem(ticker = "WEGE3").displayName)
+        assertEquals("", AssetItem(ticker = "WEGE3", shortName = "  ", name = "\t").displayName)
+    }
+
+    @Test
     fun espacosRepetidosViramUmSo() {
         val asset = AssetItem(ticker = "B3SA3", name = "  B3   S.A. -\tBRASIL  ")
         assertEquals("B3 S.A. - BRASIL", asset.displayName)
