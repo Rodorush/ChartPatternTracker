@@ -124,8 +124,8 @@ class ScreeningViewModel(
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
-     * acumulados quando a tela volta do gráfico. Mudar a seleção cancela a varredura
-     * em curso, então a que está rodando é sempre a da seleção atual.
+     * acumulados quando a tela volta do gráfico ou do Perfil. Mudar a seleção cancela a
+     * varredura em curso, então a que está rodando é sempre a da seleção atual.
      */
     fun startScreening() {
         if (screeningJob?.isActive == true) return
@@ -224,7 +224,7 @@ class ScreeningViewModel(
 
     /**
      * Interrompe a varredura em curso. Chamado ao sair da tela de resultados por Voltar ou
-     * Home e ao mudar a seleção; abrir o gráfico de um resultado não cancela.
+     * Home e ao mudar a seleção; abrir o gráfico de um resultado ou o Perfil não cancela.
      */
     fun cancelScreening() {
         screeningJob?.cancel()

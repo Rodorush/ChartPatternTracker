@@ -47,7 +47,8 @@ import coil.request.ImageRequest
 @Composable
 fun RealTimeQuotesScreen(
     onNavigateBack: () -> Unit = {},
-    onRowClick: (String) -> Unit = {}
+    onRowClick: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val assetsProvider = LocalAssetsProvider.current
     var assets by remember { mutableStateOf<List<AssetItem>>(emptyList()) }
@@ -79,7 +80,7 @@ fun RealTimeQuotesScreen(
                                 contentDescription = stringResource(R.string.back)
                             )
                         }
-                        IconButton(onClick = { /* profile */ }) {
+                        IconButton(onClick = onNavigateToProfile) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)

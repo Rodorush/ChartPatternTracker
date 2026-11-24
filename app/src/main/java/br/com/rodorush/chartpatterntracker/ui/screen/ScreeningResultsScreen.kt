@@ -67,7 +67,8 @@ fun ScreeningResultsScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
     onNavigateHome: () -> Unit = {},
-    onCardClick: (String, String, String) -> Unit = { _, _, _ -> }
+    onCardClick: (String, String, String) -> Unit = { _, _, _ -> },
+    onNavigateToProfile: () -> Unit = {}
 ) {
     Log.d(TAG, "Tela ScreeningResultsScreen carregada")
     val screeningResults by viewModel.screeningResults.collectAsState()
@@ -99,7 +100,7 @@ fun ScreeningResultsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil */ }) {
+                        IconButton(onClick = onNavigateToProfile) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)

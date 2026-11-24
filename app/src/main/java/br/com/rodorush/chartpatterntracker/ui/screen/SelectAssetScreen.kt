@@ -65,7 +65,8 @@ fun SelectAssetsScreen(
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {},
     onNavigateHome: () -> Unit = {},
-    onChartClick: (String) -> Unit = {}
+    onChartClick: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val assetsProvider = LocalAssetsProvider.current
     val context = LocalContext.current
@@ -107,7 +108,7 @@ fun SelectAssetsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil */ }) {
+                        IconButton(onClick = onNavigateToProfile) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)

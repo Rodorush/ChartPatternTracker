@@ -52,6 +52,12 @@ fun AppNavHost(
         }
     }
 
+    // Perfil aberto pelo ícone da barra superior e por Configurações. O launchSingleTop evita
+    // que um toque duplo empilhe dois Perfis.
+    val navigateToProfile: () -> Unit = {
+        navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -83,7 +89,8 @@ fun AppNavHost(
                 onNextClick = { navController.navigate(Screen.SelectAssets.route) },
                 onNavigateToDetails = { patternId ->
                     navController.navigate(Screen.ChartPatternDetail.createRoute(patternId))
-                }
+                },
+                onNavigateToProfile = navigateToProfile
             )
         }
 
@@ -99,7 +106,8 @@ fun AppNavHost(
                     onNavigateHome = { navController.popBackStack(Screen.Main.route, false) },
                     onChartClick = { ticker ->
                         navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", null, false))
-                    }
+                    },
+                    onNavigateToProfile = navigateToProfile
                 )
             }
         }
@@ -110,7 +118,8 @@ fun AppNavHost(
                     onNavigateBack = { navController.popBackStack() },
                     onRowClick = { ticker ->
                         navController.navigate(Screen.ChartDetail.createRoute(ticker, "1d", null, false))
-                    }
+                    },
+                    onNavigateToProfile = navigateToProfile
                 )
             }
         }
@@ -123,7 +132,8 @@ fun AppNavHost(
                 viewModel = screeningViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNextClick = { navController.navigate(Screen.ScreeningResults.route) },
-                onNavigateHome = { navController.popBackStack(Screen.Main.route, false) }
+                onNavigateHome = { navController.popBackStack(Screen.Main.route, false) },
+                onNavigateToProfile = navigateToProfile
             )
         }
 
@@ -137,7 +147,9 @@ fun AppNavHost(
                 onNavigateHome = { navController.popBackStack(Screen.Main.route, false) },
                 onCardClick = { ticker, timeframe, patternId ->
                     navController.navigate(Screen.ChartDetail.createRoute(ticker, timeframe, patternId))
-                }
+                },
+                // Como o gráfico, o Perfil não cancela a varredura: na volta, a lista segue.
+                onNavigateToProfile = navigateToProfile
             )
         }
 
@@ -180,7 +192,7 @@ fun AppNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToProfile = navigateToProfile,
                 onNavigateToDisclaimer = {
                     navController.navigate(Screen.Disclaimer.createRoute(readOnly = true))
                 }

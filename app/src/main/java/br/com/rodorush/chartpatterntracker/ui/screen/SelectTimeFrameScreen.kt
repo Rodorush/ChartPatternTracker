@@ -60,7 +60,8 @@ fun SelectTimeframesScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {},
-    onNavigateHome: () -> Unit = {}
+    onNavigateHome: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val timeframes = TimeframeItem.availableTimeframes
     val selectedTimeframes by viewModel.selectedTimeframes.collectAsState()
@@ -95,7 +96,7 @@ fun SelectTimeframesScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil */ }) {
+                        IconButton(onClick = onNavigateToProfile) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)

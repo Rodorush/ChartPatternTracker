@@ -68,7 +68,8 @@ fun SelectChartPatternScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {},
-    onNavigateToDetails: (String) -> Unit = {}
+    onNavigateToDetails: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val patternProvider = LocalPatternProvider.current
     val context = LocalContext.current
@@ -108,7 +109,7 @@ fun SelectChartPatternScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil */ }) {
+                        IconButton(onClick = onNavigateToProfile) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
