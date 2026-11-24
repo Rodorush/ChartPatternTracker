@@ -94,9 +94,10 @@ fun SelectAssetsScreen(
 
     // Ao abrir o gráfico ou o Perfil, a tela sai da composição e perde os checkStates; o
     // ViewModel os guarda. Só quando a seleção mudou: atualizar cancela a varredura e a refaz.
-    // Com a lista ainda vazia não há o que guardar, e a seleção vazia apagaria a salva.
+    // Com a lista ainda vazia, ou recém-chegada e sem recomposição, os checkStates não a cobrem:
+    // não há o que guardar, e a seleção vazia apagaria a salva.
     fun saveSelectionIfChanged() {
-        if (assets.isEmpty()) return
+        if (assets.isEmpty() || checkStates.size != assets.size) return
         val selected = assets.filterIndexed { i, _ -> checkStates[i] }
         val saved = viewModel.selectedAssets.value
         if (selected.map { it.ticker }.toSet() != saved.map { it.ticker }.toSet()) {
