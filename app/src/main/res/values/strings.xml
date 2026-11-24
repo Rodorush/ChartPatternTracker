@@ -5,6 +5,7 @@
     <string name="financial_news">Notícias Financeiras</string>
     <string name="real_time_quotes">Cotações em Tempo Real</string>
     <string name="technical_indicators">Indicadores Técnicos</string>
+    <string name="coming_soon">Em breve</string>
     <string name="logout">Sair</string>
     <string name="splash_slogan">Prepare-se para descobrir novas oportunidades</string>
     <string name="sign_in_your_account">Faça login na sua conta</string>
@@ -139,5 +140,4 @@
     <string name="privacy_policy">Política de Privacidade</string>
     <string name="terms_policy_agreement">Li e concordo com os %1$s e a %2$s.</string>
     <string name="legal_documents_title">Documentos legais</string>
-    <string name="feature_not_implemented">Recurso ainda não implementado.</string>
 </resources>

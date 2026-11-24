@@ -9,9 +9,8 @@ O nome "Chart Pattern Tracker", o logotipo do aplicativo e a marca "Rodorush"
 não são licenciados pela Apache License 2.0 (seção 6). Uma versão modificada
 deve ser distribuída com nome e identidade visual próprios.
 
-Os logotipos do Google, do Facebook e do X presentes em
-app/src/main/res/drawable/ são marcas de seus respectivos titulares e aparecem
-apenas para identificar os provedores de login.
+O logotipo do Google presente em app/src/main/res/drawable/ é marca de seu
+titular e aparece apenas para identificar o provedor de login.
 
 Componentes de terceiros
 ------------------------

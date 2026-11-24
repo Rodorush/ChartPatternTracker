@@ -228,28 +228,6 @@ fun RegisterScreen(
                     contentDescription = "Google",
                     onClick = launchGoogleSignIn
                 )
-                SocialSignInButton(
-                    iconId = R.drawable.f_facebook,
-                    contentDescription = "Facebook",
-                    onClick = {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.feature_not_implemented),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
-                SocialSignInButton(
-                    iconId = R.drawable.x_logo,
-                    contentDescription = "Twitter",
-                    onClick = {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.feature_not_implemented),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
             }
         }
 
