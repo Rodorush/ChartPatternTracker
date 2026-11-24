@@ -74,6 +74,16 @@ fun SelectTimeframesScreen(
             })
         }
     }
+
+    // Ao abrir o Perfil, a tela sai da composição e perde os checkStates; o ViewModel os guarda.
+    // Só quando a seleção mudou: atualizar cancela a varredura e a refaz.
+    fun saveSelectionIfChanged() {
+        val selected = timeframes.filterIndexed { i, _ -> checkStates[i] }
+        val saved = viewModel.selectedTimeframes.value
+        if (selected.map { it.value }.toSet() != saved.map { it.value }.toSet()) {
+            viewModel.updateSelectedTimeframes(selected)
+        }
+    }
     var searchText by remember { mutableStateOf("") }
     val context = LocalContext.current
     val filteredIndices = remember(searchText, timeframes, context) {
@@ -96,7 +106,10 @@ fun SelectTimeframesScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = onNavigateToProfile) {
+                        IconButton(onClick = {
+                            saveSelectionIfChanged()
+                            onNavigateToProfile()
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
