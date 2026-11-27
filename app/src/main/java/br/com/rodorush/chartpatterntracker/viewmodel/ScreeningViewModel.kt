@@ -117,10 +117,10 @@ class ScreeningViewModel(
     /**
      * Varre cada par (ativo, tempo gráfico) uma única vez, com todos os padrões selecionados,
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
-     * ser obtida, por erro, por recusa do plano do token da Brapi ou por tempo esgotado, vai
-     * para [screeningFailures]. Só o erro vai para o Crashlytics. O par varrido sobre a série
-     * vencida do Room, porque nenhuma fonte respondeu ou o tempo esgotou, vai para [stalePairs]
-     * e só cai nas falhas quando o Room também não tem a série. Se for
+     * ser obtida, por erro, por recusa do plano do token da Brapi ou por tempo esgotado, ou
+     * veio sem velas, vai para [screeningFailures]. Só o erro vai para o Crashlytics. O par
+     * varrido sobre a série vencida do Room, porque nenhuma fonte respondeu ou o tempo esgotou,
+     * vai para [stalePairs] e só cai nas falhas quando o Room também não tem a série. Se for
      * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
@@ -174,7 +174,9 @@ class ScreeningViewModel(
                             )
                             null
                         }
-                        if (scan == null) {
+                        // A série sem velas também vai para o aviso: sem isso, o par sumiria
+                        // dos resultados como se não tivesse padrão.
+                        if (scan == null || scan.emptySeries) {
                             _screeningFailures.update { it + ScreeningPair(asset.ticker, timeframe) }
                             continue
                         }
