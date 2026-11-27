@@ -65,7 +65,8 @@ fun SelectAssetsScreen(
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {},
     onNavigateHome: () -> Unit = {},
-    onChartClick: (String) -> Unit = {}
+    onChartClick: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val assetsProvider = LocalAssetsProvider.current
     val context = LocalContext.current
@@ -90,6 +91,19 @@ fun SelectAssetsScreen(
             })
         }
     }
+
+    // Ao abrir o gráfico ou o Perfil, a tela sai da composição e perde os checkStates; o
+    // ViewModel os guarda. Só quando a seleção mudou: atualizar cancela a varredura e a refaz.
+    // Com a lista ainda vazia, ou recém-chegada e sem recomposição, os checkStates não a cobrem:
+    // não há o que guardar, e a seleção vazia apagaria a salva.
+    fun saveSelectionIfChanged() {
+        if (assets.isEmpty() || checkStates.size != assets.size) return
+        val selected = assets.filterIndexed { i, _ -> checkStates[i] }
+        val saved = viewModel.selectedAssets.value
+        if (selected.map { it.ticker }.toSet() != saved.map { it.ticker }.toSet()) {
+            viewModel.updateSelectedAssets(selected)
+        }
+    }
     var searchText by remember { mutableStateOf("") }
     val filteredIndices = remember(searchText, assets) {
         assets.mapIndexedNotNull { index, asset ->
@@ -107,7 +121,10 @@ fun SelectAssetsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil */ }) {
+                        IconButton(onClick = {
+                            saveSelectionIfChanged()
+                            onNavigateToProfile()
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
@@ -267,13 +284,7 @@ fun SelectAssetsScreen(
                             }
                         }
                         IconButton(onClick = {
-                            // A tela sai da composição e perde os checkStates; o ViewModel os guarda.
-                            // Só quando a seleção mudou: atualizar cancela a varredura e a refaz.
-                            val selected = assets.filterIndexed { i, _ -> checkStates[i] }
-                            val saved = viewModel.selectedAssets.value
-                            if (selected.map { it.ticker }.toSet() != saved.map { it.ticker }.toSet()) {
-                                viewModel.updateSelectedAssets(selected)
-                            }
+                            saveSelectionIfChanged()
                             onChartClick(asset.ticker)
                         }) {
                             Icon(

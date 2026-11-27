@@ -68,7 +68,8 @@ fun SelectChartPatternScreen(
     viewModel: ScreeningViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
     onNextClick: () -> Unit = {},
-    onNavigateToDetails: (String) -> Unit = {}
+    onNavigateToDetails: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val patternProvider = LocalPatternProvider.current
     val context = LocalContext.current
@@ -92,6 +93,19 @@ fun SelectChartPatternScreen(
             })
         }
     }
+
+    // Ao abrir o Perfil, a tela sai da composição e perde os checkStates; o ViewModel os guarda.
+    // Só quando a seleção mudou: atualizar cancela a varredura e a refaz. Com a lista ainda
+    // vazia, ou recém-chegada e sem recomposição, os checkStates não a cobrem: não há o que
+    // guardar, e a seleção vazia apagaria a salva.
+    fun saveSelectionIfChanged() {
+        if (patterns.isEmpty() || checkStates.size != patterns.size) return
+        val selected = patterns.filterIndexed { i, _ -> checkStates[i] }
+        val saved = viewModel.selectedPatterns.value
+        if (selected.map { it.id }.toSet() != saved.map { it.id }.toSet()) {
+            viewModel.updateSelectedPatterns(selected)
+        }
+    }
     var searchText by remember { mutableStateOf("") }
     val filteredIndices = remember(searchText, patterns) {
         patterns.mapIndexedNotNull { index, pattern ->
@@ -108,7 +122,10 @@ fun SelectChartPatternScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /* Ação do perfil */ }) {
+                        IconButton(onClick = {
+                            saveSelectionIfChanged()
+                            onNavigateToProfile()
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = stringResource(R.string.profile)
