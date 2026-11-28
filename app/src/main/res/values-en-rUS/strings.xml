@@ -104,7 +104,7 @@
     <string name="view_chart">View chart</string>
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total results: %1$d</string>
-    <string name="screening_failures">Could not get data for:</string>
+    <string name="screening_failures">No data for:</string>
     <string name="dismiss_screening_failures">Dismiss notice</string>
     <string name="screening_stale">Saved data, may be out of date:</string>
     <string name="dismiss_screening_stale">Dismiss saved data notice</string>

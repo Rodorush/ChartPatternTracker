@@ -104,7 +104,7 @@
     <string name="view_chart">Ver gráfico</string>
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total de resultados: %1$d</string>
-    <string name="screening_failures">Não foi possível obter dados de:</string>
+    <string name="screening_failures">Sem dados de:</string>
     <string name="dismiss_screening_failures">Fechar aviso</string>
     <string name="screening_stale">Dados salvos, podem estar desatualizados:</string>
     <string name="dismiss_screening_stale">Fechar aviso de dados salvos</string>
