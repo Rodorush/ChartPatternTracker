@@ -89,7 +89,7 @@ Itens marcados com **Reservado ao mantenedor** não aceitam contribuição exter
 | NF-22 | `[ ]` **Verificação de email — fase 2 (Cloud Function + template próprio).** **Só executar se** branding total do email ou métricas de entrega/bounce virarem requisito. Migrar para `auth().generateEmailVerificationLink()` + envio via SendGrid/Resend; Firestore guardando `lastVerificationEmailSentAt` e contador de tentativas para rate limit server-side. | Diferimento explícito: enquanto o template do Console atender, evita custo de SendGrid e código a manter. |
 | NF-04 | `[ ]` **Chamadas à Brapi pelo servidor.** O app passa a consultar a Brapi pela Cloud Function, que guarda o token, e o build deixa de pedir `BRAPI_TOKEN`. | `Bugs e roteiro.txt` |
 | NF-05 | `[x]` **Tela de Disclaimer** sobre risco de operações no mercado financeiro. Gate de "Li e concordo" uma vez por conta no aparelho (aceite persistido por uid em `AppPreferences.disclaimerAcceptedUids`/`SharedPreferences`), ancorado no `AppNavHost` pós-login como `startDestination` quando a conta atual ainda não aceitou; reacessível em modo leitura via card em `SettingsScreen` (rota `disclaimer?readOnly={readOnly}`). Nova `DisclaimerScreen`, `util/AppPreferences.kt` (single Koin reusando o store `app_prefs`), strings nos 3 locales + default. | `Bugs e roteiro.txt` |
-| NF-06 | `[ ]` **Fonte de dados internacional** ativando o `AlphaVantageApi` (já parcialmente implementado em `data/AlphaVantageApi.kt`). | Código |
+| NF-06 | `[ ]` **Fonte de dados internacional** ativando o `AlphaVantageApi` (já parcialmente implementado em `data/AlphaVantageApi.kt`). Hoje o campo `timeSeries` não casa com a chave `Time Series (Daily)` da resposta, então essa fonte sempre falha. | Código |
 
 ---
 

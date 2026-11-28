@@ -106,6 +106,8 @@
     <string name="total_results_found">Total results: %1$d</string>
     <string name="screening_failures">Could not get data for:</string>
     <string name="dismiss_screening_failures">Dismiss notice</string>
+    <string name="screening_no_candles">No candles in the period:</string>
+    <string name="dismiss_screening_no_candles">Dismiss no candles notice</string>
     <string name="screening_stale">Saved data, may be out of date:</string>
     <string name="dismiss_screening_stale">Dismiss saved data notice</string>
     <string name="chart_stale_data">Could not update. Showing saved data, which may be out of date.</string>

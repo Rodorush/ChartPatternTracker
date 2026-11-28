@@ -76,6 +76,8 @@ fun ScreeningResultsScreen(
     val dismissedFailures by viewModel.dismissedFailures.collectAsState()
     val stalePairs by viewModel.stalePairs.collectAsState()
     val dismissedStale by viewModel.dismissedStale.collectAsState()
+    val emptyPairs by viewModel.emptyPairs.collectAsState()
+    val dismissedEmpty by viewModel.dismissedEmpty.collectAsState()
     val isScreening by viewModel.isScreening.collectAsState()
     val shouldRefresh by viewModel.shouldRefresh.collectAsState()
 
@@ -178,6 +180,18 @@ fun ScreeningResultsScreen(
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
                     dismissLabel = stringResource(R.string.dismiss_screening_failures),
                     onDismiss = { viewModel.dismissFailures() }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (emptyPairs.any { it !in dismissedEmpty }) {
+                PairsNotice(
+                    title = stringResource(R.string.screening_no_candles),
+                    pairs = emptyPairs,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    dismissLabel = stringResource(R.string.dismiss_screening_no_candles),
+                    onDismiss = { viewModel.dismissEmpty() }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }

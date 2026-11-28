@@ -27,10 +27,13 @@ import org.json.JSONObject
  *
  * @property stale `true` quando a série veio do Room vencido: a tela avisa que o par foi
  * varrido sobre dados que podem estar desatualizados.
+ * @property emptySeries `true` quando a série do par veio sem velas, como a do ativo sem
+ * negócios no período: a varredura avisa o par à parte das falhas de busca.
  */
 data class ScreeningScan(
     val patterns: Map<String, List<PatternOccurrence>>,
-    val stale: Boolean
+    val stale: Boolean,
+    val emptySeries: Boolean = false
 )
 
 class ChartViewModel(
@@ -261,7 +264,8 @@ class ChartViewModel(
      * A série vem de [loadSeries]: quando nem o repositório nem a fonte direta respondem, vale
      * a série vencida do Room, e o resultado sai marcado como desatualizado.
      *
-     * @return ocorrências por ID de padrão, vazias quando a série existe mas não tem velas.
+     * @return ocorrências por ID de padrão; sem nenhuma e com [ScreeningScan.emptySeries] quando
+     * a série veio sem velas.
      * @throws IntervalNotInPlanException quando o plano do token da Brapi não libera o
      * intervalo. A fonte direta não é tentada, porque recusaria o mesmo intervalo.
      * @throws Exception quando nenhuma fonte, nem o Room vencido, entrega a série, para o
@@ -286,7 +290,10 @@ class ChartViewModel(
             },
             fromStaleCache = { repository.cachedCandlesticks(ticker, interval) }
         )
-        if (load.candles.isEmpty()) return ScreeningScan(emptyMap(), stale = false)
+        if (load.candles.isEmpty()) {
+            Log.w(TAG, "runScreening($ticker,$interval): série sem velas")
+            return ScreeningScan(emptyMap(), stale = false, emptySeries = true)
+        }
         return ScreeningScan(repository.detectPatterns(patternIds, load.candles), load.stale)
     }
 

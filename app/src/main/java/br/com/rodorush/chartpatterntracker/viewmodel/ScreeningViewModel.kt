@@ -60,6 +60,19 @@ class ScreeningViewModel(
     /** Pares de [stalePairs] que o usuário já dispensou, com a mesma regra de [dismissedFailures]. */
     val dismissedStale: StateFlow<Set<ScreeningPair>> = _dismissedStale
 
+    private val _emptyPairs = MutableStateFlow<List<ScreeningPair>>(emptyList())
+
+    /**
+     * Pares cuja série a fonte devolveu sem velas, como a do ativo sem negócios no período. Não
+     * são falha de busca: a tela os avisa à parte de [screeningFailures].
+     */
+    val emptyPairs: StateFlow<List<ScreeningPair>> = _emptyPairs
+
+    private val _dismissedEmpty = MutableStateFlow<Set<ScreeningPair>>(emptySet())
+
+    /** Pares de [emptyPairs] que o usuário já dispensou, com a mesma regra de [dismissedFailures]. */
+    val dismissedEmpty: StateFlow<Set<ScreeningPair>> = _dismissedEmpty
+
     private val _shouldRefresh = MutableStateFlow(true)
     val shouldRefresh: StateFlow<Boolean> = _shouldRefresh
 
@@ -108,6 +121,7 @@ class ScreeningViewModel(
         _shouldRefresh.value = true
         _dismissedFailures.value = emptySet()
         _dismissedStale.value = emptySet()
+        _dismissedEmpty.value = emptySet()
     }
 
     fun setAllPatternsChecked(value: Boolean) { _allPatternsChecked.value = value }
@@ -118,10 +132,11 @@ class ScreeningViewModel(
      * Varre cada par (ativo, tempo gráfico) uma única vez, com todos os padrões selecionados,
      * e publica os achados em [screeningResults] à medida que saem. O par cuja série não pôde
      * ser obtida, por erro, por recusa do plano do token da Brapi ou por tempo esgotado, vai
-     * para [screeningFailures]. Só o erro vai para o Crashlytics. O par varrido sobre a série
-     * vencida do Room, porque nenhuma fonte respondeu ou o tempo esgotou, vai para [stalePairs]
-     * e só cai nas falhas quando o Room também não tem a série. Se for
-     * cancelada, [shouldRefresh] continua ligado e a tela a refaz ao reabrir.
+     * para [screeningFailures]. Só o erro vai para o Crashlytics. O par cuja série veio sem
+     * velas vai para [emptyPairs]. O par varrido sobre a série vencida do Room, porque nenhuma
+     * fonte respondeu ou o tempo esgotou, vai para [stalePairs] e só cai nas falhas quando o
+     * Room também não tem a série. Se for cancelada, [shouldRefresh] continua ligado e a tela a
+     * refaz ao reabrir.
      *
      * Com uma varredura em curso, a chamada não faz nada: é o que preserva os resultados
      * acumulados quando a tela volta do gráfico ou do Perfil. Mudar a seleção cancela a
@@ -134,6 +149,7 @@ class ScreeningViewModel(
             _screeningResults.value = emptyList()
             _screeningFailures.value = emptyList()
             _stalePairs.value = emptyList()
+            _emptyPairs.value = emptyList()
             val results = mutableListOf<ScreeningResult>()
             val patterns = _selectedPatterns.value
             val patternIds = patterns.map { it.id }
@@ -178,6 +194,12 @@ class ScreeningViewModel(
                             _screeningFailures.update { it + ScreeningPair(asset.ticker, timeframe) }
                             continue
                         }
+                        // Sem este aviso, o par sem velas sumiria dos resultados como se não
+                        // tivesse padrão.
+                        if (scan.emptySeries) {
+                            _emptyPairs.update { it + ScreeningPair(asset.ticker, timeframe) }
+                            continue
+                        }
                         if (scan.stale) {
                             _stalePairs.update { it + ScreeningPair(asset.ticker, timeframe) }
                         }
@@ -220,6 +242,11 @@ class ScreeningViewModel(
     /** Fecha o aviso de séries vencidas até surgir um par novo ou a seleção mudar. */
     fun dismissStale() {
         _dismissedStale.value = _stalePairs.value.toSet()
+    }
+
+    /** Fecha o aviso de séries sem velas até surgir um par novo ou a seleção mudar. */
+    fun dismissEmpty() {
+        _dismissedEmpty.value = _emptyPairs.value.toSet()
     }
 
     /**
