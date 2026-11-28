@@ -28,7 +28,7 @@ import org.json.JSONObject
  * @property stale `true` quando a série veio do Room vencido: a tela avisa que o par foi
  * varrido sobre dados que podem estar desatualizados.
  * @property emptySeries `true` quando a série do par veio sem velas, como a do ativo sem
- * negócios no período: a varredura põe o par no aviso de falhas.
+ * negócios no período: a varredura avisa o par à parte das falhas de busca.
  */
 data class ScreeningScan(
     val patterns: Map<String, List<PatternOccurrence>>,

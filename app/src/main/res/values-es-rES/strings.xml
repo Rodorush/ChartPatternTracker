@@ -104,8 +104,10 @@
     <string name="view_chart">Ver gráfico</string>
     <string name="chart_detail_title">%1$s - %2$s</string>
     <string name="total_results_found">Total de resultados: %1$d</string>
-    <string name="screening_failures">Sin datos de:</string>
+    <string name="screening_failures">No se pudieron obtener datos de:</string>
     <string name="dismiss_screening_failures">Cerrar aviso</string>
+    <string name="screening_no_candles">Sin velas en el período:</string>
+    <string name="dismiss_screening_no_candles">Cerrar aviso de pares sin velas</string>
     <string name="screening_stale">Datos guardados, pueden estar desactualizados:</string>
     <string name="dismiss_screening_stale">Cerrar aviso de datos guardados</string>
     <string name="chart_stale_data">No se pudo actualizar. Se muestran datos guardados, que pueden estar desactualizados.</string>

@@ -104,7 +104,7 @@ A varredura em três passos e o que ela devolve:
 
 ### Timeframes
 - Lista com os intervalos que a Brapi conhece: 1m, 2m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo.
-- Quais deles respondem depende do plano do token da Brapi e do ativo; o que o token da bancada entrega está medido em [`docs/estado.md`](docs/estado.md). O par ativo e tempo que falha ou volta sem velas aparece em aviso na tela de resultados.
+- Quais deles respondem depende do plano do token da Brapi e do ativo; o que o token da bancada entrega está medido em [`docs/estado.md`](docs/estado.md). Na tela de resultados, o par ativo e tempo que falha aparece em um aviso, e o que volta sem velas, em outro.
 - Seleção múltipla para varredura em lote.
 
 ### Rastreamento (screening)
