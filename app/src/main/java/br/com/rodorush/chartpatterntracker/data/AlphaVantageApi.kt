@@ -42,8 +42,12 @@ class AlphaVantageDataSource : AssetDataSource {
     override suspend fun getHistoricalData(ticker: String, range: String, interval: String): Result<List<Candlestick>> {
         return try {
             val response = service.getTimeSeries(symbol = ticker, interval = interval, apiKey = apiKey)
+            // Resposta sem série não diz se há velas: vira falha, como na Brapi, para a varredura
+            // não a avisar como série sem velas.
+            val series = response.timeSeries
+                ?: return Result.failure(IllegalStateException("Resposta da AlphaVantage sem série temporal"))
             val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            val data = response.timeSeries?.map { (time, values) ->
+            val data = series.map { (time, values) ->
                 val timestamp = formatter.parse(time)?.time ?: 0L // Já em milissegundos
                 Candlestick(
                     time = timestamp,
@@ -52,7 +56,7 @@ class AlphaVantageDataSource : AssetDataSource {
                     low = values.low.toFloat(),
                     close = values.close.toFloat()
                 )
-            } ?: emptyList()
+            }
             Result.success(data)
         } catch (e: Exception) {
             Result.failure(e)
